@@ -77,7 +77,7 @@ app.post('/send-pdf-report', async (req, res) => {
     html += Activity.getReportFooter() + '\n';
     html += Activity.getReportStyles();
 
-    const pdfName = applet.getPDFFileName(activityId, activityFlowId);
+    const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses);
     const filename = `outputs/${appletId}/${activityId}/${pdfName}.pdf`;
 
     await convertHtmlToPdf(
@@ -90,8 +90,10 @@ app.post('/send-pdf-report', async (req, res) => {
       applet.getPDFPassword()
     )
 
+    console.log('configs', applet.getEmailConfigs(activityId, activityFlowId, responses));
+
     // send pdf to backend server
-    await uploadPDF(token, appletId, responseId, applet.getEmailConfigs(pdfName), filename);
+    // await uploadPDF(token, appletId, responseId, applet.getEmailConfigs(activityId, activityFlowId), filename);
 
     res.status(200).json({ 'message': 'success' });
   } catch (e) {

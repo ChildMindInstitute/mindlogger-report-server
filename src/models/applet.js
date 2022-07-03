@@ -3,6 +3,7 @@ import Activity from './activity.js';
 import ActivityFlow from './activity-flow.js';
 import convertMarkdownToHtml from '../markdown-utils.js';
 import crypto from 'crypto';
+import moment from "moment-timezone";
 import _ from 'lodash';
 
 const sha256Hasher = crypto.createHmac("sha256", process.env.OWNER_PASSWORD);
@@ -11,7 +12,9 @@ export default class Applet {
   constructor (data) {
     this.json = data;
 
+    this.timestamp = Date.now();
     this.accountId = data.accountId;
+    this.user = data.user;
     this.schemaId = data.applet[reprolib.id];
     this.id = data.applet._id.split('/').pop();
     this.name = _.get(data.applet, [reprolib.prefLabel, 0, '@value'], '');
@@ -89,22 +92,52 @@ export default class Applet {
     return imageHTML;
   }
 
-  getEmailConfigs () {
+  getEmailConfigs (activityId, activityFlowId, responses) {
     return {
       body: convertMarkdownToHtml(this.reportConfigs.emailBody),
-      subject: this.name,
-      attachment: this.getPDFFileName(),
+      subject: this.getSubject(activityId, activityFlowId, responses),
+      attachment: this.getPDFFileName(activityId, activityFlowId, responses),
       emailRecipients: this.reportConfigs.emailRecipients
     }
   }
 
   getPDFPassword () {
     const hash = sha256Hasher.update(this.id).digest("base64");
-
     return hash;
   }
 
-  getPDFFileName () {
-    return this.name;
+  getPDFFileName (activityId, activityFlowId, responses) {
+    const activityFlow = this.activityFlows.find(flow => flow.id === activityFlowId);
+    const activity = this.activities.find(activity => activity.id === activityId);
+    const userId = this.user.MRN || this.user.email;
+    const configs = this.reportConfigs;
+
+    let pdfName = 'REPORT';
+
+    if (configs.includeUserId) {
+      pdfName += `_${userId}`;
+    }
+
+    pdfName += `_${this.name}`;
+    pdfName += `_${activityFlow ? activityFlow.name : activity.name}`;
+    pdfName += `_${moment.utc(this.timestamp).format('YYYY-MM-DD-HHmmss')}`;
+    return pdfName;
+  }
+
+  getSubject (activityId, activityFlowId, responses) {
+    const activityFlow = this.activityFlows.find(flow => flow.id === activityFlowId);
+    const activity = this.activities.find(activity => activity.id === activityId);
+    const userId = this.user.MRN || this.user.email;
+    const configs = this.reportConfigs;
+
+    let subject = 'Report by';
+
+    if (configs.includeUserId) {
+      subject += ` ${userId}`;
+    }
+
+    subject += `: ${this.name} / ${activityFlow ? activityFlow.name : activity.name}`;
+
+    return subject;
   }
 }
