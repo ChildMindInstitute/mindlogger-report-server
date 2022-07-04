@@ -100,6 +100,31 @@ img {
   margin: 0px 10px;
 }
 
+.item-print.slider .option > input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 75%;
+  height: 2.5px;
+  background: #7CBDF3;
+
+  position: relative;
+  bottom: 7.5px;
+}
+
+.item-print.slider .option > input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #02639B;
+}
+
+.item-print.radio .option img, .item-print.checkbox .option img {
+  position: relative;
+  top: 2.5px;
+  margin-right: 2.5px;
+}
+
 .item-print .slider-value {
   position: relative;
   top: -5px;
