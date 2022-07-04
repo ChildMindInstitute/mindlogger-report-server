@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <g data-name="Layer 2" fill="#595bd4" class="color000000 svgShape">
+    <g data-name="radio-button-off" fill="#595bd4" class="color000000 svgShape">
+      <rect width="24" height="24" opacity="0" fill="#595bd4" class="color000000 svgShape"></rect>
+      <path d="M12 22a10 10 0 1 1 10-10 10 10 0 0 1-10 10zm0-18a8 8 0 1 0 8 8 8 8 0 0 0-8-8z" fill="#6A6B6E" class="color000000 svgShape">
+      </path>
+    </g>
+  </g>
+</svg>
