@@ -1,6 +1,7 @@
 import reprolib from './reprolib.js';
 import _ from 'lodash';
 
+const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
 export default class Item {
   constructor (data = {}) {
     this.json = data;
@@ -135,8 +136,10 @@ export default class Item {
           typeof value === 'string' && option.name === value
         );
 
+        const icon = ICON_URL + `${type}-${checked ? 'checked' : 'unchecked'}.svg`;
+
         optionsHtml += '<div class="option">';
-        optionsHtml += `<input type="${this.multipleChoice ? 'checkbox' : 'radio'}" ${checked ? 'checked' : ''}>`;
+        optionsHtml += `<img class="${type}" src="${icon}" width="15" height="15">`;
         optionsHtml += `<label>${option.name}</label>`;
         optionsHtml += '</div>';
       }
