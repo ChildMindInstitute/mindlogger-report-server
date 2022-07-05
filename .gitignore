@@ -1,5 +1,7 @@
+.env
 node_modules
 outputs/
+keys/
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
