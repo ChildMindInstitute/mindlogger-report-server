@@ -2,7 +2,9 @@
 import crypto from 'crypto';
 import fs from 'fs';
 
-const privateKeyFile = fs.readFileSync('keys/private.pem');
+const KEYS_FOLDER = process.env.KEYS_FOLDER;
+
+const privateKeyFile = fs.readFileSync(`${KEYS_FOLDER}/private.pem`);
 const privateKey = crypto.createPrivateKey({
   key: privateKeyFile,
   format: 'pem',
@@ -11,7 +13,7 @@ const privateKey = crypto.createPrivateKey({
   encoding: 'utf-8'
 });
 
-const publicKeyFile = fs.readFileSync('keys/public');
+const publicKeyFile = fs.readFileSync(`${KEYS_FOLDER}/public`);
 const publicKey = crypto.createPublicKey({
   key: publicKeyFile,
   format: 'pem',
