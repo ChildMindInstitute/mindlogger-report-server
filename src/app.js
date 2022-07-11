@@ -41,7 +41,7 @@ app.put('/preview-report', async (req, res) => {
     });
     pdf.pipe(res);
   } catch (e) {
-    res.status(403).json({ 'message': e.message });
+    res.status(403).json({ 'message': 'invalid request data' });
   }
 })
 
