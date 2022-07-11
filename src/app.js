@@ -11,6 +11,7 @@ import fs from 'fs';
 
 const app = express();
 const port = process.env.PORT || 3000;
+const ouputsFolder = process.env.OUTPUTS_FOLDER;
 
 app.use(cors());
 app.use(express.json());
@@ -23,7 +24,7 @@ app.put('/preview-report', async (req, res) => {
     const images = req.body.images;
     const token = req.headers.token;
 
-    const filename = `outputs/previews/${Date.now()}-${token}.pdf`
+    const filename = `${ouputsFolder}/previews/${Date.now()}-${token}.pdf`
 
     let html = '';
 
@@ -82,7 +83,7 @@ app.post('/send-pdf-report', async (req, res) => {
     html += Activity.getReportStyles();
 
     const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses);
-    const filename = `outputs/${appletId}/${activityId}/${pdfName}.pdf`;
+    const filename = `${ouputsFolder}/${appletId}/${activityId}/${pdfName}.pdf`;
 
     await convertHtmlToPdf(
       html,
