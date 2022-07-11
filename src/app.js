@@ -17,28 +17,32 @@ app.use(express.json());
 app.use(authenticate);
 
 app.put('/preview-report', async (req, res) => {
-  const reports = req.body.reports;
-  const items = req.body.items;
-  const images = req.body.images;
-  const token = req.headers.token;
+  try {
+    const reports = req.body.reports;
+    const items = req.body.items;
+    const images = req.body.images;
+    const token = req.headers.token;
 
-  const filename = `outputs/previews/${Date.now()}-${token}.pdf`
+    const filename = `outputs/previews/${Date.now()}-${token}.pdf`
 
-  let html = '';
+    let html = '';
 
-  html += Activity.getSplashImageHTML(false, { splashImage: images.splash }) + '\n';
-  html += Applet.getAppletImageHTML({ image: images.applet }) + '\n';
-  html += convertMarkdownToHtml(Activity.getReportPreview(reports, items)) + '\n';
-  html += Activity.getReportFooter() + '\n';
-  html += Activity.getReportStyles();
+    html += Activity.getSplashImageHTML(false, { splashImage: images.splash }) + '\n';
+    html += Applet.getAppletImageHTML({ image: images.applet }) + '\n';
+    html += convertMarkdownToHtml(Activity.getReportPreview(reports, items)) + '\n';
+    html += Activity.getReportFooter() + '\n';
+    html += Activity.getReportStyles();
 
-  await convertHtmlToPdf(html, filename)
+    await convertHtmlToPdf(html, filename)
 
-  const pdf = fs.createReadStream(filename);
-  pdf.on('end', function() {
-    fs.unlink(filename, () => {});
-  });
-  pdf.pipe(res);
+    const pdf = fs.createReadStream(filename);
+    pdf.on('end', function() {
+      fs.unlink(filename, () => {});
+    });
+    pdf.pipe(res);
+  } catch (e) {
+    res.status(403).json({ 'message': e.message });
+  }
 })
 
 app.post('/send-pdf-report', async (req, res) => {

@@ -5,7 +5,6 @@ export const authenticate = async (req, res, next) => {
     await login(req.headers.token);
     next();
   } catch(e) {
-    console.log('error', e)
     res.status(403).json({ message: 'permission denied' })
   }
 }
