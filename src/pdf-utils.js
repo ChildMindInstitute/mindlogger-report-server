@@ -9,9 +9,9 @@ export const convertHtmlToPdf = (html, filename) =>
   new Promise((resolve, reject) => {
     pdf.create(html, options).toFile(filename, (err, res) => {
       if (err) {
-        reject();
+        reject(err);
       } else {
-        resolve();
+        resolve(res);
       }
     })
   })

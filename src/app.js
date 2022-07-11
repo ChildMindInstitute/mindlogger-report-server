@@ -42,7 +42,7 @@ app.put('/preview-report', async (req, res) => {
     });
     pdf.pipe(res);
   } catch (e) {
-    res.status(403).json({ 'message': 'invalid request data' });
+    res.status(403).json({ 'message': e?.message || 'invalid request data' });
   }
 })
 
