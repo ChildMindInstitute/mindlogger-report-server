@@ -14,7 +14,7 @@ export default class Activity {
     this.schemaId = data[reprolib.id];
     this.id = (data._id || '').split('/').pop();
     this.name = _.get(data, [reprolib.prefLabel, 0, '@value'], '');
-    this.splashImage = _.get(data, [reprolib.splash, 0, '@value']) || 'https://mindlogger-applet-contents.s3.amazonaws.com/video_or_image/snapwSzshBq67cXTCWUaYR.png';
+    this.splashImage = _.get(data, [reprolib.splash, 0, '@value']);
 
     const itemOrder = _.get(data, [reprolib.order, 0, '@list'], []).map(item => item['@id']);
     this.items = itemOrder.map(id => {

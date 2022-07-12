@@ -17,7 +17,7 @@ export default class Applet {
     this.id = data.applet._id.split('/').pop();
     this.name = _.get(data.applet, [reprolib.prefLabel, 0, '@value'], '');
     this.description = _.get(data.applet, [reprolib.description, 0, '@value'], '');
-    this.image = _.get(data.applet, [reprolib.options.image]) || 'https://mindlogger-applet-contents.s3.amazonaws.com/image/raokBZTzDPRLQifMajF3Et.png';
+    this.image = _.get(data.applet, [reprolib.options.image]);
     // parse activities
     const activityOrder = _.get(data.applet, [reprolib.order, 0, '@list'], []).map(item => item['@id']);
 
