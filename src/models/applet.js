@@ -100,9 +100,10 @@ export default class Applet {
   }
 
   getPDFPassword () {
-    const sha256Hasher = crypto.createHmac("sha256", process.env.OWNER_PASSWORD)
-    const hash = sha256Hasher.update(this.id).digest("base64");
-    return hash;
+    return process.env.OWNER_PASSWORD;
+    // const sha256Hasher = crypto.createHmac("sha256", process.env.OWNER_PASSWORD)
+    // const hash = sha256Hasher.update(this.id).digest("base64");
+    // return hash;
   }
 
   getPDFFileName (activityId, activityFlowId, responses) {
