@@ -92,7 +92,7 @@ export default class Activity {
             scores[report.id] = reportScore;
             break;
           case 'percentage':
-            scores[report.id] = Number(reportMaxScore ? 0 : reportScore / reportMaxScore).toFixed(2);
+            scores[report.id] = Number(!reportMaxScore ? 0 : reportScore / reportMaxScore * 100).toFixed(2);
             break;
           case 'average':
             scores[report.id] = Number(reportScore / report.jsExpression.split('+').length).toFixed(2);
