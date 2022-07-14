@@ -121,7 +121,7 @@ export default class Activity {
 
           if (isVis) {
             markdown += this.replaceScoresInMarkdown(conditional.message, scores, now) + '\n';
-            markdown += this.getPrintedItems(report.printItems, responses) + '\n';
+            markdown += this.getPrintedItems(conditional.printItems, responses) + '\n';
           }
         }
       }
