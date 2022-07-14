@@ -84,7 +84,7 @@ app.post('/send-pdf-report', async (req, res) => {
     html += Activity.getReportStyles();
 
     const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses);
-    const filename = `${ouputsFolder}/${appletId}/${activityId}/${pdfName}.pdf`;
+    const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}.pdf`;
 
     await convertHtmlToPdf(
       html,
