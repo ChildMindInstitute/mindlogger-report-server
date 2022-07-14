@@ -115,7 +115,7 @@ export default class Item {
   }
 
   getPrinted (value) {
-    if (this.inputType !== 'radio' && this.inputType !== 'checkbox' && this.inputType !== 'slider') {
+    if (this.inputType !== 'radio' && this.inputType !== 'checkbox' && this.inputType !== 'slider' && this.inputType !== 'text') {
       return '';
     }
 
@@ -143,7 +143,7 @@ export default class Item {
         optionsHtml += `<label>${option.name}</label>`;
         optionsHtml += '</div>';
       }
-    } else {
+    } else if (this.inputType === 'slider' ) {
       const minTick = Math.min(...this.options.map(option => option.value));
       const maxTick = Math.max(...this.options.map(option => option.value));
 
@@ -151,6 +151,8 @@ export default class Item {
       const maxValue = `<span class="slider-value">${this.maxValue}</span>`;
 
       optionsHtml += `<div class="option">${minValue}<input type="range" min="${minTick}" max="${maxTick}" value="${response[0]}">${maxValue}</div>`;
+    } else if (this.inputType === 'text') {
+      optionsHtml += response[0];
     }
 
     return `<div class="item-print-container"><div class="item-print ${type}"><div class="item-name">${this.schemaId}</div><div class="question">${questionHTML}</div><div class="options">${optionsHtml}</div></div></div>`;

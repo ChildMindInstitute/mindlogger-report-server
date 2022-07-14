@@ -11,7 +11,7 @@ import fs from 'fs';
 
 const app = express();
 const port = process.env.PORT || 3000;
-const ouputsFolder = process.env.OUTPUTS_FOLDER;
+const outputsFolder = process.env.OUTPUTS_FOLDER;
 
 app.use(cors());
 app.use(express.json());
@@ -24,7 +24,7 @@ app.put('/preview-report', async (req, res) => {
     const images = req.body.images;
     const token = req.headers.token;
 
-    const filename = `${ouputsFolder}/previews/${Date.now()}-${token}.pdf`
+    const filename = `${outputsFolder}/previews/${Date.now()}-${token}.pdf`
 
     let html = '';
 
@@ -57,6 +57,7 @@ app.post('/send-pdf-report', async (req, res) => {
 
   try {
     const responses = decryptData(req.body.responses);
+    const now = req.body.now;
 
     const appletJSON = await fetchApplet(token, appletId);
     const applet = new Applet(appletJSON);
@@ -67,7 +68,7 @@ app.post('/send-pdf-report', async (req, res) => {
       const activity = applet.activities.find(activity => activity.id == response.activityId);
 
       if (activity) {
-        const markdown = activity.evaluateReports(response.data);
+        const markdown = activity.evaluateReports(response.data, now);
 
         html += Activity.getSplashImageHTML(pageBreak, activity) + '\n';
         html += Applet.getAppletImageHTML(applet) + '\n';

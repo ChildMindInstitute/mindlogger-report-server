@@ -68,7 +68,7 @@ export default class Activity {
     });
   }
 
-  evaluateReports (responses) {
+  evaluateReports (responses, now = '') {
     const scores = {}, maxScores = {};
 
     for (let i = 0; i < responses.length; i++) {
@@ -109,18 +109,18 @@ export default class Activity {
         const isVis = this.testVisibility(report.isVis, scores);
 
         if (isVis) {
-          markdown += this.replaceScoresInMarkdown(report.message, scores) + '\n';
+          markdown += this.replaceScoresInMarkdown(report.message, scores, now) + '\n';
           markdown += this.getPrintedItems(report.printItems, responses) + '\n';
         }
       } else {
-        markdown += this.replaceScoresInMarkdown(report.message, scores) + '\n';
+        markdown += this.replaceScoresInMarkdown(report.message, scores, now) + '\n';
         markdown += this.getPrintedItems(report.printItems, responses) + '\n';
 
         for (const conditional of report.conditionals) {
           const isVis = this.testVisibility(conditional.isVis, scores);
 
           if (isVis) {
-            markdown += this.replaceScoresInMarkdown(conditional.message, scores) + '\n';
+            markdown += this.replaceScoresInMarkdown(conditional.message, scores, now) + '\n';
             markdown += this.getPrintedItems(report.printItems, responses) + '\n';
           }
         }
@@ -146,13 +146,15 @@ export default class Activity {
     return markdown;
   }
 
-  replaceScoresInMarkdown (message, scores) {
+  replaceScoresInMarkdown (message, scores, now = '') {
     let markdown = message;
 
     for (const scoreId in scores) {
       const reg = new RegExp(`\\[\\[${scoreId}\\]\\]`, "gi");
       markdown = markdown.replace(reg, scores[scoreId]);
     }
+
+    markdown = markdown.replace(/\[\[sys\.date\]\]/g, now);
 
     return markdown;
   }
