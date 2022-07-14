@@ -2,7 +2,8 @@ import pdf from 'html-pdf';
 import HummusRecipe from 'hummus-recipe';
 
 const options = {
-  format: process.env.PDF_PAGE_FORMAT
+  width: '8.5in',
+  height: '11in',
 }
 
 export const convertHtmlToPdf = (html, filename) =>

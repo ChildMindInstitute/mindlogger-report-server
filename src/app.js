@@ -34,7 +34,10 @@ app.put('/preview-report', async (req, res) => {
     html += Activity.getReportFooter() + '\n';
     html += Activity.getReportStyles();
 
-    await convertHtmlToPdf(html, filename)
+    await convertHtmlToPdf(
+      `<div class="container">${html}</div>`,
+      filename
+    )
 
     const pdf = fs.createReadStream(filename);
     pdf.on('end', function() {
@@ -87,7 +90,7 @@ app.post('/send-pdf-report', async (req, res) => {
     const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}.pdf`;
 
     await convertHtmlToPdf(
-      html,
+      `<div class="container">${html}</div>`,
       filename
     )
 

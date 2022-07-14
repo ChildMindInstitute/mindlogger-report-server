@@ -1,6 +1,9 @@
-html {
-  font-size: 22px;
-  font-family: Arial, Helvetica, sans-serif;
+@import url('https://fonts.googleapis.com/css?family=Open%20Sans&display=swap');
+
+.container {
+  font-size: 18pt;
+  color: #2F3033;
+  font-family: 'Open Sans', sans-serif;
 }
 .hljs-left {
   text-align: left;
