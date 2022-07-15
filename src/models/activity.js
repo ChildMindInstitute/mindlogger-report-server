@@ -103,24 +103,32 @@ export default class Activity {
 
     let markdown = '';
 
+    const values = { ...scores };
+    for (let i = 0; i < responses.length; i++) {
+      const response = responses[i];
+      const item = this.items[i];
+
+      values[item.schemaId] = item.getVariableValue(response);
+    }
+
     // evaluate isVis field and get markdown
     for (const report of this.reports) {
       if (report.dataType == 'section') {
         const isVis = this.testVisibility(report.isVis, scores);
 
         if (isVis) {
-          markdown += this.replaceScoresInMarkdown(report.message, scores, now) + '\n';
+          markdown += this.replaceValuesInMarkdown(report.message, values, now) + '\n';
           markdown += this.getPrintedItems(report.printItems, responses) + '\n';
         }
       } else {
-        markdown += this.replaceScoresInMarkdown(report.message, scores, now) + '\n';
+        markdown += this.replaceValuesInMarkdown(report.message, values, now) + '\n';
         markdown += this.getPrintedItems(report.printItems, responses) + '\n';
 
         for (const conditional of report.conditionals) {
           const isVis = this.testVisibility(conditional.isVis, scores);
 
           if (isVis) {
-            markdown += this.replaceScoresInMarkdown(conditional.message, scores, now) + '\n';
+            markdown += this.replaceValuesInMarkdown(conditional.message, values, now) + '\n';
             markdown += this.getPrintedItems(conditional.printItems, responses) + '\n';
           }
         }
@@ -146,7 +154,7 @@ export default class Activity {
     return markdown;
   }
 
-  replaceScoresInMarkdown (message, scores, now = '') {
+  replaceValuesInMarkdown (message, scores, now = '') {
     let markdown = message;
 
     for (const scoreId in scores) {

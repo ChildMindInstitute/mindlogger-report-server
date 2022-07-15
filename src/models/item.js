@@ -95,6 +95,39 @@ export default class Item {
     return totalScore;
   }
 
+  getVariableValue (value) {
+    const allowedTypes = ['radio', 'checkbox', 'slider', 'date', 'text'];
+
+    if (value === null || !allowedTypes.includes(this.inputType)) {
+      return '';
+    }
+
+    let response = this.convertResponseToArray(value);
+
+    if (this.inputType == 'text') {
+      return response[0] || '';
+    }
+    if (this.inputType == 'date') {
+      return response[0] && `${response[0].month.toString().padStart(2, '0')}/${response[0].day.toString().padStart(2, '0')}/${response[0].year}` || '';
+    }
+
+    const options = [];
+    for (let value of response) {
+      if (typeof value === 'number' || typeof value === 'string') {
+        let option = this.options.find(option =>
+          typeof value === 'number' && option.value === value ||
+          typeof value === 'string' && option.name === value
+        );
+
+        if (option) {
+          options.push(option.name);
+        }
+      }
+    }
+
+    return options.join(', ');
+  }
+
   getMaxScore () {
     if (this.inputType !== 'radio' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
       return 0;
