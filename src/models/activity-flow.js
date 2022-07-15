@@ -7,7 +7,7 @@ export default class ActivityFlow {
 
     this.schemaId = data[reprolib.id];
     this.id = data._id.split('/').pop();
-    this.name = _.get(data, [reprolib.prefLabel, 0, '@value'], '');
+    this.name = _.get(data, [reprolib.options.name, 0, '@value'], '');
 
     const order = _.get(data, [reprolib.order, 0, '@list'], []).map(item => item['@id']);
 
