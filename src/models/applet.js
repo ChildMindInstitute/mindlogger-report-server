@@ -52,7 +52,7 @@ export default class Applet {
       includeUserId: false,
       includeCaseId: false,
       emailBody: '',
-      serverAppletId,
+      serverAppletId: '',
     }
 
     return configs.reduce((configs, option) => {

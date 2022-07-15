@@ -7,7 +7,7 @@ import { convertHtmlToPdf, encryptPDF } from './pdf-utils.js';
 import { fetchApplet, uploadPDF } from './mindlogger-api.js';
 import { Applet, Activity } from './models/index.js';
 import { verifyPublicKey, decryptData } from './encryption.js';
-import { setAppletPassword } from './db.js';
+import { setAppletPassword, getAppletPassword } from './db.js';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 
@@ -120,11 +120,14 @@ app.post('/send-pdf-report', async (req, res) => {
 
 app.put('/verify', async (req, res) => {
   const publicKey = req.body.publicKey;
+  const serverAppletId = req.body.serverAppletId;
 
   if (verifyPublicKey(publicKey)) {
+    const password = await getAppletPassword(serverAppletId);
+
     res.status(200).json({
       'message': 'ok',
-      'serverAppletId': uuidv4()
+      'serverAppletId': password ? serverAppletId : uuidv4()
     });
   } else {
     res.status(403).json({ 'message': 'invalid public key' });
