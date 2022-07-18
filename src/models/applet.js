@@ -111,11 +111,11 @@ export default class Applet {
                 ${
                   scores.map(score => `
                     <div class="score-message ${score.flagScore ? 'flag' : ''}">
-                      <img class="score-flag" src="${ICON_URL + 'score-flag.png'} width="15" height="15">
+                      <img class="score-flag" src="${ICON_URL + 'score-flag.png'}" width="15" height="15">
                       <span>${score.prefLabel}</span>
                       <div class="score-value">${score.value}</div>
                     </div>
-                  `)
+                  `).join('\r\n')
                 }
               </div>
             </div>
@@ -134,14 +134,14 @@ export default class Applet {
     for (const alert of alerts) {
       alertsHTML += `
         <div>
-          <img class="alert-icon" src="${ICON_URL + 'alert-icon.png'} width="15" height="15">
+          <img class="alert-icon" src="${ICON_URL + 'alert-icon.png'}" width="15" height="15">
           <span class="alert-message">${alert}</span>
         </div>
       `;
     }
 
     let output = `
-      <h3>Report Summary</h3>
+      <div class="summary-title">Report Summary</div>
       <div class="alerts-list">${alertsHTML}</div>
       ${scoresHTML}
     `;

@@ -5,8 +5,6 @@ import { Parser } from 'expr-eval';
 import fs from 'fs';
 import Mimoza from "mimoza";
 
-const pdfStyles = fs.readFileSync('src/static/pdf-styles.css');
-
 export default class Activity {
   constructor (data={}, items=[]) {
     this.json = data;
@@ -325,6 +323,7 @@ export default class Activity {
   }
 
   static getReportStyles () {
+    const pdfStyles = fs.readFileSync('src/static/pdf-styles.css');
     return `<style>${pdfStyles.toString()}</style>`
   }
 

@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css?family=Open%20Sans&display=swap');
 
 .container {
-  font-size: 18pt;
+  font-size: 15px;
   color: #2F3033;
   font-family: 'Open Sans', sans-serif;
 }
@@ -51,7 +51,7 @@ table tr:nth-child(2n) {
 table th, td {
   padding: 6px 13px;
   border: 1px solid #dfe2e5;
-  font-size: 18pt;
+  font-size: 14px;
 }
 
 .divider-line {
@@ -162,10 +162,9 @@ img {
 
 .item-print-container {
   padding: 10px 10px;
-  page-break-inside: avoid;
 }
 
-table, img {
+.item-print-container, table, img, .item-print .options .option {
   page-break-inside: avoid;
 }
 
@@ -182,11 +181,13 @@ table, img {
 .alerts-title {
   font-size: 22px;
   font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .alert-icon {
   position: relative;
   top: 2.5px;
+  margin-right: 5px;
 }
 
 .alert-message {
@@ -208,6 +209,9 @@ table, img {
 .score-message {
   font-size: 18px;
   color: black;
+  padding: 5px 10px 5px 10px;
+  margin: 5px 0px;
+  position: relative;
 }
 
 .score-message.flag {
@@ -218,6 +222,7 @@ table, img {
   position: relative;
   top: 2.5px;
   display: none;
+  margin-right: 5px;
 }
 
 .score-message.flag {
@@ -225,7 +230,9 @@ table, img {
 }
 
 .score-message .score-value {
-  float: right;
+  position: absolute;
+  right: 0px;
+  top: 0px;
   padding: 5px 40px;
   border-radius: 10px;
 }
@@ -233,4 +240,10 @@ table, img {
 .score-message.flag .score-value {
   background-color: #FFE2E2;
   font-weight: bold;
+}
+
+.summary-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
