@@ -67,6 +67,8 @@ app.post('/send-pdf-report', async (req, res) => {
 
     let html = '', pageBreak = false;
 
+    html += applet.getSummary(responses);
+
     for (const response of responses) {
       const activity = applet.activities.find(activity => activity.id == response.activityId);
 

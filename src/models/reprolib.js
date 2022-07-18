@@ -23,12 +23,15 @@ export default {
   scoring: 'reprolib:terms/scoring',
   multiple: 'reprolib:terms/multipleChoice',
   splash: 'schema:splash',
+  flagScore: 'reprolib:terms/flagScore',
+  allow: 'reprolib:terms/allow',
 
   options: {
     image: 'schema:image',
     name: 'schema:name',
     value: 'schema:value',
     score: 'schema:score',
+    alert: 'schema:alert',
     dataType: 'schema:DataType',
     itemList: 'schema:itemListElement',
   },

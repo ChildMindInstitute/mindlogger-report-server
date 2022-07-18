@@ -6,6 +6,8 @@ import crypto from 'crypto';
 import moment from "moment-timezone";
 import _ from 'lodash';
 
+const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
+
 export default class Applet {
   constructor (data) {
     this.json = data;
@@ -88,6 +90,63 @@ export default class Applet {
     `
 
     return imageHTML;
+  }
+
+  getSummary (responses) {
+    let alerts = [];
+    let alertsHTML = '', scoresHTML = '';
+
+    for (const response of responses) {
+      const activity = this.activities.find(activity => activity.id == response.activityId);
+
+      if (activity && activity.allowSummary) {
+        alerts = alerts.concat(activity.getAlertsForSummary(response.data));
+
+        const scores = activity.getScoresForSummary(response.data);
+        if (scores.length) {
+          scoresHTML += `
+            <div class="score-messages">
+              <div class="activity-title">${activity.name}</div>
+              <div>
+                ${
+                  scores.map(score => `
+                    <div class="score-message ${score.flagScore ? 'flag' : ''}">
+                      <img class="score-flag" src="${ICON_URL + 'score-flag.png'} width="15" height="15">
+                      <span>${score.prefLabel}</span>
+                      <div class="score-value">${score.value}</div>
+                    </div>
+                  `)
+                }
+              </div>
+            </div>
+          `
+        }
+      }
+    }
+
+    if (!alerts.length && !scoresHTML) {
+      return '';
+    }
+
+    if (alerts.length) {
+      alertsHTML = '<div class="alerts-title">Alerts</div>';
+    }
+    for (const alert of alerts) {
+      alertsHTML += `
+        <div>
+          <img class="alert-icon" src="${ICON_URL + 'alert-icon.png'} width="15" height="15">
+          <span class="alert-message">${alert}</span>
+        </div>
+      `;
+    }
+
+    let output = `
+      <h3>Report Summary</h3>
+      <div class="alerts-list">${alertsHTML}</div>
+      ${scoresHTML}
+    `;
+
+    return `<div class="report-summary">${output}</div>`
   }
 
   getEmailConfigs (activityId, activityFlowId, responses) {

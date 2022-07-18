@@ -46,6 +46,7 @@ export default class Item {
         name: _.get(choice, [reprolib.options.name, 0, '@value']),
         value: Number(_.get(choice, [reprolib.options.value, 0, '@value'])),
         score: Number(_.get(choice, [reprolib.options.score, 0, '@value'])),
+        alert: _.get(choice, [reprolib.options.alert, 0, '@value']),
       }));
     }
 
@@ -93,6 +94,29 @@ export default class Item {
     }
 
     return totalScore;
+  }
+
+  getAlerts (value) {
+    if (value === null || this.inputType !== 'radio' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
+      return 0;
+    }
+
+    let response = this.convertResponseToArray(value);
+
+    return response.map(value => {
+      if (typeof value === 'number' || typeof value === 'string') {
+        let option = this.options.find(option =>
+          typeof value === 'number' && option.value === value ||
+          typeof value === 'string' && option.name === value
+        );
+
+        if (option && option.alert) {
+          return option.alert;
+        }
+      }
+
+      return '';
+    }).filter(alert => alert.length > 0);
   }
 
   getVariableValue (value) {

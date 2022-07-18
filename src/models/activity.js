@@ -27,6 +27,9 @@ export default class Activity {
 
     this.reportIncludeItem = _.get(data, [reprolib.reportIncludeItem, 0, '@value'], '');
     this.reports = this.extractReports(_.get(data, [reprolib.reports, 0, '@list'], []));
+
+    const allowList = _.get(data, [reprolib.allow, 0, '@list']).map(item => item['@id']);
+    this.allowSummary = !allowList.some((item) => item.includes('disable_summary'))
   }
 
   extractReports (reports) {
@@ -56,6 +59,7 @@ export default class Activity {
               id: conditional[reprolib.id],
               message,
               printItems,
+              flagScore: _.get(conditional, [reprolib.flagScore, 0, '@value']),
               isVis: _.get(conditional, [reprolib.isVis, 0, '@value']),
             }
           })
@@ -68,7 +72,7 @@ export default class Activity {
     });
   }
 
-  evaluateReports (responses, now = '') {
+  evaluateScores (responses) {
     const scores = {}, maxScores = {};
 
     for (let i = 0; i < responses.length; i++) {
@@ -100,6 +104,12 @@ export default class Activity {
         }
       }
     }
+
+    return scores;
+  }
+
+  evaluateReports (responses, now = '') {
+    const scores = this.evaluateScores(responses);
 
     let markdown = '';
 
@@ -136,6 +146,42 @@ export default class Activity {
     }
 
     return `<div class="activity-report">${markdown}</div>`;
+  }
+
+  getAlertsForSummary (responses) {
+    let alerts = [];
+    for (let i = 0; i < responses.length; i++) {
+      alerts = alerts.concat(this.items[i].getAlerts(responses[i]));
+    }
+
+    return alerts;
+  }
+
+  getScoresForSummary (responses) {
+    let scores = this.evaluateScores(responses);
+
+    let result = [];
+    for (const report of this.reports) {
+      if (report.dataType == 'score') {
+        let flagScore = false;
+
+        for (const conditional of report.conditionals) {
+          const isVis = this.testVisibility(conditional.isVis, scores);
+          if (isVis && conditional.flagScore) {
+            flagScore = true;
+            break;
+          }
+        }
+
+        result.push({
+          prefLabel: report.prefLabel,
+          value: scores[report.id],
+          flagScore
+        })
+      }
+    }
+
+    return result;
   }
 
   getPrintedItems (items, responses) {

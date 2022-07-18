@@ -168,3 +168,70 @@ img {
 table, img {
   page-break-inside: avoid;
 }
+
+.report-summary {
+  page-break-after: always;
+}
+
+.alerts-list {
+  background-color: #ECDFDF;
+  padding: 20;
+  border-radius: 10;
+}
+
+.alerts-title {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.alert-icon {
+  position: relative;
+  top: 2.5px;
+}
+
+.alert-message {
+  font-size: 16px;
+}
+
+.score-messages {
+  border-top-color: #E0E0E0;
+  border-top-width: 1;
+  margin-top: 20px;
+  padding: 15px 20px;
+}
+
+.activity-title {
+  font-weight: 600;
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.score-message {
+  font-size: 18px;
+  color: black;
+}
+
+.score-message.flag {
+  color: #D33134;
+}
+
+.score-flag {
+  position: relative;
+  top: 2.5px;
+  display: none;
+}
+
+.score-message.flag {
+  display: inline;
+}
+
+.score-message .score-value {
+  float: right;
+  padding: 5px 40px;
+  border-radius: 10px;
+}
+
+.score-message.flag .score-value {
+  background-color: #FFE2E2;
+  font-weight: bold;
+}
