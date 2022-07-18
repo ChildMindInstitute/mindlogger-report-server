@@ -4,7 +4,7 @@ import { authenticate } from './middleware/index.js';
 import convertMarkdownToHtml from './markdown-utils.js';
 import cors from 'cors';
 import { convertHtmlToPdf, encryptPDF } from './pdf-utils.js';
-import { fetchApplet, uploadPDF } from './mindlogger-api.js';
+import { fetchApplet, uploadPDF, getAccountPermissions } from './mindlogger-api.js';
 import { Applet, Activity } from './models/index.js';
 import { verifyPublicKey, decryptData } from './encryption.js';
 import { setAppletPassword, getAppletPassword } from './db.js';
@@ -127,7 +127,7 @@ app.put('/verify', async (req, res) => {
 
     res.status(200).json({
       'message': 'ok',
-      'serverAppletId': password ? serverAppletId : uuidv4()
+      'serverAppletId': password?.key ? serverAppletId : uuidv4()
     });
   } else {
     res.status(403).json({ 'message': 'invalid public key' });
@@ -135,13 +135,34 @@ app.put('/verify', async (req, res) => {
 })
 
 app.post('/set-password', async (req, res) => {
+  const token = req.headers.token;
   const password = req.body.password;
   const serverAppletId = req.body.serverAppletId;
+  const appletId = req.body.appletId;
+  const accountId = req.body.accountId;
 
   try {
-    const pdfPassword = decryptData(password);
+    const permissions = await getAccountPermissions(token, accountId, appletId);
 
-    await setAppletPassword(serverAppletId, pdfPassword.password);
+    if (
+      !permissions.includes('editor') &&
+      !permissions.includes('manager') &&
+      !permissions.includes('owner')
+    ) {
+      throw new Error('permission denied');
+    }
+
+    const pdfPassword = decryptData(password);
+    await setAppletPassword(serverAppletId, pdfPassword.password, pdfPassword.privateKey, appletId || '', accountId);
+
+    if (appletId) { // verify applet password
+      const appletJSON = await fetchApplet(token, appletId);
+      const applet = new Applet(appletJSON);
+
+      if (!await applet.getPDFPassword(serverAppletId)) {
+        throw new Error('invalid applet password');
+      }
+    }
 
     res.status(200).json({ 'message': 'success' });
   } catch (e) {

@@ -59,3 +59,15 @@ export const uploadPDF = (token, appletId, responseId, emailConfig, pdfPath) => 
     data: form
   })
 }
+
+export const getAccountPermissions = (token, accountId, appletId) => axios({
+  method: 'get',
+  url: `${apiHost}/account/permissions`,
+  headers: {
+    'Girder-Token': token,
+    'Content-Type': 'multipart/form-data'
+  },
+  params: {
+    accountId, appletId
+  }
+}).then(res => res.data)

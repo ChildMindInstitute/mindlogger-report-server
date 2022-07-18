@@ -52,3 +52,23 @@ export const decryptData = (response) => {
   const data = crypto.privateDecrypt(privateKey, Buffer.from(response, 'base64'))
   return JSON.parse(data);
 }
+
+export const verifyAppletPassword = (appletPrivate, encryption) => {
+  if (!encryption || !encryption.appletPrime || !encryption.appletPublicKey) return false;
+
+  const key = crypto.createDiffieHellman(
+    Buffer.from(encryption.appletPrime),
+    Buffer.from(encryption.base)
+  );
+
+  key.setPrivateKey(Buffer.from(appletPrivate));
+  key.generateKeys();
+
+  if (
+    key.getPublicKey().equals(Buffer.from(encryption.appletPublicKey))
+  ) {
+    return true;
+  }
+
+  return false;
+}
