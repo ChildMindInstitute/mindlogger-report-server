@@ -2,6 +2,7 @@ import reprolib from './reprolib.js';
 import _ from 'lodash';
 import Item from './item.js';
 import { Parser } from 'expr-eval';
+import convertMarkdownToHtml from '../markdown-utils.js';
 import fs from 'fs';
 import Mimoza from "mimoza";
 
@@ -125,18 +126,18 @@ export default class Activity {
         const isVis = this.testVisibility(report.isVis, scores);
 
         if (isVis) {
-          markdown += this.replaceValuesInMarkdown(report.message, values, now) + '\n';
+          markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, now)) + '\n';
           markdown += this.getPrintedItems(report.printItems, responses) + '\n';
         }
       } else {
-        markdown += this.replaceValuesInMarkdown(report.message, values, now) + '\n';
+        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, now)) + '\n';
         markdown += this.getPrintedItems(report.printItems, responses) + '\n';
 
         for (const conditional of report.conditionals) {
           const isVis = this.testVisibility(conditional.isVis, scores);
 
           if (isVis) {
-            markdown += this.replaceValuesInMarkdown(conditional.message, values, now) + '\n';
+            markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, now)) + '\n';
             markdown += this.getPrintedItems(conditional.printItems, responses) + '\n';
           }
         }
