@@ -169,7 +169,7 @@ export default class Applet {
       row.verified = verifyAppletPassword(row.privateKey, this.encryption, this.accountId)
 
       if (!row.verified) {
-        // await deleteAppletPassword(row.serverId, row.key);
+        await deleteAppletPassword(row.serverId, row.key);
       } else {
         await setPasswordVerified(row.serverId, row.key, this.id);
       }
