@@ -1,5 +1,6 @@
 import reprolib from './reprolib.js';
 import _ from 'lodash';
+import convertMarkdownToHtml from '../markdown-utils.js';
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
 export default class Item {
@@ -178,7 +179,7 @@ export default class Item {
 
     let response = this.convertResponseToArray(value);
 
-    let questionHTML = this.getQuestionText();
+    let questionHTML = convertMarkdownToHtml(this.getQuestionText());
 
     let optionsHtml = '', type = this.inputType;
 
