@@ -2,8 +2,9 @@ import reprolib from './reprolib.js';
 import Activity from './activity.js';
 import ActivityFlow from './activity-flow.js';
 import convertMarkdownToHtml from '../markdown-utils.js';
-import crypto from 'crypto';
 import moment from "moment-timezone";
+import { getAppletPassword, deleteAppletPassword, setPasswordVerified } from '../db.js';
+import { verifyAppletPassword } from '../encryption.js';
 import _ from 'lodash';
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
@@ -42,6 +43,7 @@ export default class Applet {
     }).filter(flow => flow !== null);
 
     this.reportConfigs = this.extractReportConfigs(_.get(data.applet, [reprolib.reportConfigs, 0, '@list']));
+    this.encryption = data?.applet?.encryption || null;
   }
 
   extractReportConfigs (configs) {
@@ -51,7 +53,8 @@ export default class Applet {
       emailRecipients: [],
       includeUserId: false,
       includeCaseId: false,
-      emailBody: ''
+      emailBody: '',
+      serverAppletId: '',
     }
 
     return configs.reduce((configs, option) => {
@@ -158,11 +161,21 @@ export default class Applet {
     }
   }
 
-  getPDFPassword () {
-    return process.env.OWNER_PASSWORD;
-    // const sha256Hasher = crypto.createHmac("sha256", process.env.OWNER_PASSWORD)
-    // const hash = sha256Hasher.update(this.id).digest("base64");
-    // return hash;
+  async getPDFPassword (serverAppletId = '') {
+    const row = await getAppletPassword(serverAppletId || this.reportConfigs.serverAppletId);
+    if (!row) return '';
+
+    if (!row.verified && row.key) {
+      row.verified = verifyAppletPassword(row.privateKey, this.encryption, this.accountId)
+
+      if (!row.verified) {
+        await deleteAppletPassword(row.serverId, row.key);
+      } else {
+        await setPasswordVerified(row.serverId, row.key, this.id);
+      }
+    }
+
+    return row.verified ? row.key : '';
   }
 
   getPDFFileName (activityId, activityFlowId, responses) {

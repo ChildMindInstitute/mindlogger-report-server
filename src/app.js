@@ -4,9 +4,11 @@ import { authenticate } from './middleware/index.js';
 import convertMarkdownToHtml from './markdown-utils.js';
 import cors from 'cors';
 import { convertHtmlToPdf, encryptPDF } from './pdf-utils.js';
-import { fetchApplet, uploadPDF } from './mindlogger-api.js';
+import { fetchApplet, uploadPDF, getAccountPermissions } from './mindlogger-api.js';
 import { Applet, Activity } from './models/index.js';
 import { verifyPublicKey, decryptData } from './encryption.js';
+import { setAppletPassword, getAppletPassword } from './db.js';
+import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 
 const app = express();
@@ -22,9 +24,8 @@ app.put('/preview-report', async (req, res) => {
     const reports = req.body.reports;
     const items = req.body.items;
     const images = req.body.images;
-    const token = req.headers.token;
 
-    const filename = `${outputsFolder}/previews/${Date.now()}-${token}.pdf`
+    const filename = `${outputsFolder}/previews/${uuidv4()}.pdf`
 
     let html = '';
 
@@ -64,6 +65,11 @@ app.post('/send-pdf-report', async (req, res) => {
 
     const appletJSON = await fetchApplet(token, appletId);
     const applet = new Applet(appletJSON);
+    const pdfPassword = await applet.getPDFPassword();
+
+    if (!pdfPassword) {
+      throw new Error('invalid password');
+    }
 
     let html = '', pageBreak = false;
 
@@ -98,7 +104,7 @@ app.post('/send-pdf-report', async (req, res) => {
 
     await encryptPDF(
       filename,
-      applet.getPDFPassword()
+      pdfPassword
     )
 
     // send pdf to backend server
@@ -114,11 +120,54 @@ app.post('/send-pdf-report', async (req, res) => {
 
 app.put('/verify', async (req, res) => {
   const publicKey = req.body.publicKey;
+  const serverAppletId = req.body.serverAppletId;
 
   if (verifyPublicKey(publicKey)) {
-    res.status(200).json({ 'message': 'ok' });
+    const password = await getAppletPassword(serverAppletId);
+
+    res.status(200).json({
+      'message': 'ok',
+      'serverAppletId': password?.key ? serverAppletId : uuidv4()
+    });
   } else {
     res.status(403).json({ 'message': 'invalid public key' });
+  }
+})
+
+app.post('/set-password', async (req, res) => {
+  const token = req.headers.token;
+  const password = req.body.password;
+  const serverAppletId = req.body.serverAppletId;
+  const appletId = req.body.appletId;
+  const accountId = req.body.accountId;
+
+  try {
+    const permissions = await getAccountPermissions(token, accountId, appletId);
+
+    if (
+      !permissions.includes('editor') &&
+      !permissions.includes('manager') &&
+      !permissions.includes('owner')
+    ) {
+      throw new Error('permission denied');
+    }
+
+    const pdfPassword = decryptData(password);
+    await setAppletPassword(serverAppletId, pdfPassword.password, pdfPassword.privateKey, appletId || '', accountId);
+
+    if (appletId) { // verify applet password
+      const appletJSON = await fetchApplet(token, appletId);
+      const applet = new Applet(appletJSON);
+
+      if (!await applet.getPDFPassword(serverAppletId)) {
+        throw new Error('invalid applet password');
+      }
+    }
+
+    res.status(200).json({ 'message': 'success' });
+  } catch (e) {
+    console.log('error', e)
+    res.status(403).json({ 'message': 'invalid password' });
   }
 })
 
