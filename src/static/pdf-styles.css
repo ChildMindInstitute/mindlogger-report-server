@@ -224,6 +224,7 @@ img {
   padding: 5px 10px 5px 10px;
   margin: 5px 0px;
   position: relative;
+  width: 100%;
 }
 
 .score-message.flag {
@@ -235,10 +236,6 @@ img {
   top: 2.5px;
   display: none;
   margin-right: 5px;
-}
-
-.score-message.flag {
-  display: inline;
 }
 
 .score-message .score-value {
