@@ -101,6 +101,10 @@ export default class Activity {
             scores[report.id] = Number(reportScore / report.jsExpression.split('+').length).toFixed(2);
             break;
         }
+
+        for (const conditional of report.conditionals) {
+          scores[conditional.id] = this.testVisibility(conditional.isVis, scores)
+        }
       }
     }
 
@@ -134,7 +138,7 @@ export default class Activity {
         markdown += this.getPrintedItems(report.printItems, responses) + '\n';
 
         for (const conditional of report.conditionals) {
-          const isVis = this.testVisibility(conditional.isVis, scores);
+          const isVis = scores[conditional.id];
 
           if (isVis) {
             markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, now)) + '\n';
