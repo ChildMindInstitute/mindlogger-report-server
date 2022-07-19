@@ -202,10 +202,10 @@ export default class Applet {
     const userId = this.user.MRN || this.user.email;
     const configs = this.reportConfigs;
 
-    let subject = 'Report by';
+    let subject = 'Report';
 
     if (configs.includeUserId) {
-      subject += ` ${userId}`;
+      subject += ` by ${userId}`;
     }
 
     subject += `: ${this.name} / ${activityFlow ? activityFlow.name : activity.name}`;
