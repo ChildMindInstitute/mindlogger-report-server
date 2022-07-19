@@ -118,7 +118,7 @@ img {
 .item-print.slider .option > input {
   -webkit-appearance: none;
   appearance: none;
-  width: 75%;
+  width: 60%;
   height: 2.5px;
   background: #7CBDF3;
 
