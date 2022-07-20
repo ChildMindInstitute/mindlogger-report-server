@@ -154,11 +154,17 @@ export default class Applet {
 
   getEmailConfigs (activityId, activityFlowId, responses) {
     return {
-      body: convertMarkdownToHtml(this.reportConfigs.emailBody),
+      body: this.applyInlineStyles(convertMarkdownToHtml(this.reportConfigs.emailBody)),
       subject: this.getSubject(activityId, activityFlowId, responses),
       attachment: this.getPDFFileName(activityId, activityFlowId, responses),
       emailRecipients: this.reportConfigs.emailRecipients
     }
+  }
+
+  applyInlineStyles (html) {
+    return html.replace(/<tr>/g, '<tr style="background-color: #fff; border-top: 1px solid #c6cbd1;">')
+            .replace(/<th>/g, `<th style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px; font-weight: 600;">`)
+            .replace(/<td>/g, `<td style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px;">`)
   }
 
   async getPDFPassword (serverAppletId = '') {
