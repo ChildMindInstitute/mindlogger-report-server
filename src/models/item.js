@@ -205,8 +205,8 @@ export default class Item {
       const minTick = Math.min(...this.options.map(option => option.value));
       const maxTick = Math.max(...this.options.map(option => option.value));
 
-      const minValue = `<span class="slider-value">${this.minValue}</span>`;
-      const maxValue = `<span class="slider-value">${this.maxValue}</span>`;
+      const minValue = `<div class="slider-value">${this.minValue}</div>`;
+      const maxValue = `<div class="slider-value">${this.maxValue}</div>`;
 
       optionsHtml += `<div class="option">${minValue}<input type="range" min="${minTick}" max="${maxTick}" value="${response[0]}">${maxValue}</div>`;
     } else if (this.inputType === 'text') {

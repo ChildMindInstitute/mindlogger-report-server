@@ -88,6 +88,8 @@ img {
 
 .item-print .question {
   font-size: 16px;
+  white-space: pre-wrap;
+  word-wrap: break-word !important;
 }
 
 .item-print .options {
@@ -107,18 +109,14 @@ img {
   margin-bottom: 10px;
 }
 
-.item-print.slider {
-  text-align: center;
-}
-
 .item-print.slider .options .option > * {
-  margin: 0px 10px;
+  margin: 10px 5px;
 }
 
 .item-print.slider .option > input {
   -webkit-appearance: none;
   appearance: none;
-  width: 60%;
+  width: 50%;
   height: 2.5px;
   background: #7CBDF3;
 
@@ -140,9 +138,20 @@ img {
   margin-right: 2.5px;
 }
 
+.item-print .slider-value:first-child {
+  float: left;
+}
+
+.item-print .slider-value:last-child {
+  float: right;
+}
+
 .item-print .slider-value {
   position: relative;
-  top: -5px;
+  top: -17px;
+  width: 20%;
+  word-wrap: break-word !important;
+  text-align: center;
 }
 
 .splash-image {

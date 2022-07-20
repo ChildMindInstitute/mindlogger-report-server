@@ -127,6 +127,7 @@ export default class Applet {
       }
     }
 
+    alerts = alerts.filter(alert => alert && alert != '0');
     if (!alerts.length && !scoresHTML) {
       return '';
     }
@@ -134,10 +135,6 @@ export default class Applet {
     if (alerts.length) {
       alertsHTML = '<div class="alerts-title">Alerts</div>';
       for (const alert of alerts) {
-        if (!alert || alert == '0') {
-          alertsHTML = '';
-          break;
-        } 
         alertsHTML += `
           <div>
             <img class="alert-icon" src="${ICON_URL + 'alert-icon.png'}" width="15" height="15">
