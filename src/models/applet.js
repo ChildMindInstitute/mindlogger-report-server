@@ -199,8 +199,33 @@ export default class Applet {
 
     pdfName += `_${this.name}`;
     pdfName += `_${activityFlow ? activityFlow.name : activity.name}`;
+
+    const itemName = this.getReportIncludeItem(activity, activityFlow, responses);
+    if (itemName) {
+      pdfName += ` [${itemName}]`
+    }
+
     pdfName += `_${moment.utc(this.timestamp).format('YYYY-MM-DD-HHmmss')}`;
     return pdfName;
+  }
+
+  getReportIncludeItem (activity, activityFlow, responses) {
+    let includeActivity = null, includeItem = null;
+    if (activityFlow) {
+      const [activityName, itemName] = activityFlow.reportIncludeItem.split('/');
+      includeActivity = this.activities.find(activity => activity.name == activityName);
+
+      if (includeActivity) {
+        includeItem = includeActivity.items.find(item => item.name == itemName);
+      }
+    } else if (activity) {
+      includeActivity = activity;
+      includeItem = activity.items.find(item => item.name == activity.reportIncludeItem);
+    }
+
+    if (!includeActivity || !includeItem) return '';
+
+    return includeItem.name;
   }
 
   getSubject (activityId, activityFlowId, responses) {
@@ -216,6 +241,11 @@ export default class Applet {
     }
 
     subject += `: ${this.name} / ${activityFlow ? activityFlow.name : activity.name}`;
+
+    const itemName = this.getReportIncludeItem(activity, activityFlow, responses);
+    if (itemName) {
+      subject += ` [${itemName}]`
+    }
 
     return subject;
   }
