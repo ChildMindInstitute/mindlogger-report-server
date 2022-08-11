@@ -1,10 +1,39 @@
 # mindlogger-report-server
 Server for MindLogger PDF reports
 
-# Requirements
+## Requirements
 - Node >= 16
 
-# Installation
-- npm install
-- npm run start
-- put public and private key in "keys" folder
+## Installation
+
+### Install dependencies
+```
+npm install
+```
+
+### Configure environment variables and folders
+```
+cp env.example .env
+mkdir keys
+mkdir outputs
+```
+
+### Generate keys and create database
+```
+cd keys
+openssl genpkey -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -out private.pem
+openssl rsa -in private.pem -pubout -out public
+sqlite3 passwords "VACUUM;"
+```
+After running those commands you will have 3 files:
+```
+ls
+passwords  private.pem	public
+```
+The server public key will be in keys/public
+
+### Start the app
+```
+npm run start
+```
+open http://localhost:3000
