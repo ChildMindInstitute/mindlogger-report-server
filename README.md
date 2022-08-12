@@ -10,6 +10,11 @@ Server for MindLogger PDF reports
 ```
 npm install
 ```
+fontconfig
+```
+sudo apt-get install libfontconfig
+sudo yum install fontconfig
+```
 
 ### Configure environment variables and folders
 ```
