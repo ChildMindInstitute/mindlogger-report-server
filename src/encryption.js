@@ -49,7 +49,14 @@ export const encryptData = (data) => {
 
 export const decryptData = (response) => {
   const privateKey = getPrivateKey();
-  const data = crypto.privateDecrypt(privateKey, Buffer.from(response, 'base64'))
+  let data = '';
+  if (Array.isArray(response)) {
+    for (let i = 0; i < response.length; i++) {
+      data += crypto.privateDecrypt(privateKey, Buffer.from(response[i], 'base64'));
+    }
+  } else {
+    data = crypto.privateDecrypt(privateKey, Buffer.from(response, 'base64'));
+  }
   return JSON.parse(data);
 }
 
