@@ -146,7 +146,7 @@ export default class Applet {
 
     let output = `
       <div class="summary-title">Report Summary</div>
-      ${alertsHTML ? '<div class="alerts-list">${alertsHTML}</div>' : ''}
+      ${alertsHTML ? `<div class="alerts-list">${alertsHTML}</div>` : ''}
       ${scoresHTML}
     `;
 

@@ -1,8 +1,7 @@
-.env
-node_modules
+# From .gitignore
+.env*
 outputs/
 keys/
-
 *.log
 .idea/
 
