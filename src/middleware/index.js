@@ -2,10 +2,15 @@ import { login } from '../mindlogger-api.js';
 
 export const authenticate = async (req, res, next) => {
   try {
-    await login(req.headers.token);
+    if (!isHealthCheck(req)) {
+      await login(req.headers.token);
+    }
     next();
   } catch(e) {
     res.status(403).json({ message: 'permission denied' })
   }
 }
 
+function isHealthCheck(req) {
+  return req.method === 'GET' && req.url === '/';
+}

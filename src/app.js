@@ -19,6 +19,10 @@ app.use(cors());
 app.use(express.json());
 app.use(authenticate);
 
+app.get('/', async (req, res) => {
+  res.status(200).send('MindLogger Report Server is UP');
+});
+
 app.put('/preview-report', async (req, res) => {
   try {
     const reports = req.body.reports;
