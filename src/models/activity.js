@@ -131,18 +131,18 @@ export default class Activity {
 
         if (isVis) {
           markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, now)) + '\n';
-          markdown += this.getPrintedItems(report.printItems, responses) + '\n';
+          markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.printItems, responses), values, now) + '\n';
         }
       } else {
         markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, now)) + '\n';
-        markdown += this.getPrintedItems(report.printItems, responses) + '\n';
+        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.printItems, responses), values, now) + '\n';
 
         for (const conditional of report.conditionals) {
           const isVis = scores[conditional.id];
 
           if (isVis) {
             markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, now)) + '\n';
-            markdown += this.getPrintedItems(conditional.printItems, responses) + '\n';
+            markdown += this.replaceValuesInMarkdown(this.getPrintedItems(conditional.printItems, responses), values, now) + '\n';
           }
         }
       }
