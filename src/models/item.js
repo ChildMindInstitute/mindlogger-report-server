@@ -121,36 +121,42 @@ export default class Item {
   }
 
   getVariableValue (value) {
-    const allowedTypes = ['radio', 'checkbox', 'slider', 'date', 'text'];
+    const response = this.convertResponseToArray(value);
 
-    if (value === null || !allowedTypes.includes(this.inputType)) {
+    if (response.length === 0) {
       return '';
     }
 
-    let response = this.convertResponseToArray(value);
-
-    if (this.inputType == 'text') {
-      return response[0] || '';
-    }
-    if (this.inputType == 'date') {
+    if (this.inputType === 'date') {
       return response[0] && `${(response[0].month + 1).toString().padStart(2, '0')}/${response[0].day.toString().padStart(2, '0')}/${response[0].year}` || '';
     }
 
-    const options = [];
-    for (let value of response) {
-      if (typeof value === 'number' || typeof value === 'string') {
-        let option = this.options.find(option =>
-          typeof value === 'number' && option.value === value ||
-          typeof value === 'string' && option.name === value
-        );
+    if (Array.isArray(this.options)) {
+      const options = [];
+      for (let value of response) {
+        if (typeof value === 'number' || typeof value === 'string') {
+          let option = this.options.find(option =>
+            typeof value === 'number' && option.value === value ||
+            typeof value === 'string' && option.name === value
+          );
 
-        if (option) {
-          options.push(option.name);
+          if (option) {
+            options.push(option.name);
+          }
         }
       }
+      return options.join(', ');
     }
 
-    return options.join(', ');
+    if (typeof response[0] === 'string') {
+      return response[0];
+    }
+
+    if (typeof response[0] === 'number') {
+      return response[0].toString();
+    }
+
+    return '';
   }
 
   getMaxScore () {
