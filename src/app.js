@@ -112,7 +112,7 @@ app.post('/send-pdf-report', async (req, res) => {
     )
 
     // send pdf to backend server
-    await uploadPDF(token, appletId, responseId, applet.getEmailConfigs(activityId, activityFlowId, responses), filename);
+    await uploadPDF(token, appletId, responseId, applet.getEmailConfigs(activityId, activityFlowId, responses, now), filename);
 
     res.status(200).json({ 'message': 'success' });
   } catch (e) {

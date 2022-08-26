@@ -111,18 +111,21 @@ export default class Activity {
     return scores;
   }
 
-  evaluateReports (responses, now = '') {
-    const scores = this.evaluateScores(responses);
-
-    let markdown = '';
-
+  scoresToValues(scores, responses) {
     const values = { ...scores };
     for (let i = 0; i < responses.length; i++) {
       const response = responses[i];
       const item = this.items[i];
-
       values[item.schemaId] = item.getVariableValue(response);
     }
+    return values;
+  }
+
+  evaluateReports (responses, now = '') {
+    const scores = this.evaluateScores(responses);
+    const values = this.scoresToValues(scores, responses);
+
+    let markdown = '';
 
     // evaluate isVis field and get markdown
     for (const report of this.reports) {
