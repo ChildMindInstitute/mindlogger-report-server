@@ -305,8 +305,11 @@ export default class Activity {
 
     try {
       const expr = parser.parse(expression);
-
-      const result = expr.evaluate(scores);
+      const scoresForCheck = {};
+      for (const key in scores) {
+          scoresForCheck[key] = parseFloat(scores[key]);
+      }
+      const result = expr.evaluate(scoresForCheck);
       return !!result; // Cast the result to true or false
     } catch (error) {
       return true; // Default to true if we can't parse the expression
