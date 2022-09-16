@@ -210,16 +210,26 @@ export default class Activity {
     let markdown = message;
 
     for (const scoreId in scores) {
-      const reg = new RegExp(`\\[\\[${scoreId}\\]\\]`, "gi");
-      markdown = markdown.replace(reg, scores[scoreId]);
+      const reg = new RegExp(`\\[\\[${this.escapeRegExp(scoreId)}\\]\\]`, "gi");
+      markdown = markdown.replace(reg, this.escapeReplacement(scores[scoreId]));
     }
 
-    markdown = markdown.replace(/\[\[sys\.date\]\]/ig, now);
+    markdown = markdown.replace(/\[\[sys\.date\]\]/ig, this.escapeReplacement(now));
 
-    const nickName = !!user.nickName ? user.nickName : `${user.firstName} ${user.lastName}`.trim();
-    markdown = markdown.replace(/\[nickname\]/ig, nickName);
+    if ('nickName' in user) {
+      const nickName = !!user.nickName ? user.nickName : `${user.firstName} ${user.lastName}`.trim();
+      markdown = markdown.replace(/\[nickname\]/ig, this.escapeReplacement(nickName));
+    }
 
     return markdown;
+  }
+
+  escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+  }
+
+  escapeReplacement(string) {
+    return string.replace(/\$/g, '$$$$');
   }
 
   evaluateExpression (jsExpression, scores) {
