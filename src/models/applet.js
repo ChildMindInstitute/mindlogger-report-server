@@ -153,7 +153,7 @@ export default class Applet {
     return `<div class="report-summary">${output}</div>`
   }
 
-  getEmailConfigs (activityId, activityFlowId, responses, now) {
+  getEmailConfigs (activityId, activityFlowId, responses, user, now) {
     let emailBody = this.reportConfigs.emailBody;
     for (const response of responses) {
       const activity = this.activities.find(activity => activity.id === response.activityId);
@@ -161,7 +161,7 @@ export default class Applet {
       const values = activity.scoresToValues(scores, response.data);
       const addActivityPrefix = key => `${activity.name}/${key}`;
       const renameKeys = o => Object.keys(o).reduce((acc, k) => ({...acc, [addActivityPrefix(k)]: o[k] }), {});
-      emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), now);
+      emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), user, now);
     }
     return {
       body: this.applyInlineStyles(convertMarkdownToHtml(emailBody)),
