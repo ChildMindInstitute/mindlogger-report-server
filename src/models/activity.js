@@ -121,7 +121,7 @@ export default class Activity {
     return values;
   }
 
-  evaluateReports (responses, now = '') {
+  evaluateReports (responses, user, now = '') {
     const scores = this.evaluateScores(responses);
     const values = this.scoresToValues(scores, responses);
 
@@ -133,19 +133,19 @@ export default class Activity {
         const isVis = this.testVisibility(report.isVis, scores);
 
         if (isVis) {
-          markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, now)) + '\n';
-          markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.printItems, responses), values, now) + '\n';
+          markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
+          markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.printItems, responses), values, user, now) + '\n';
         }
       } else {
-        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, now)) + '\n';
-        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.printItems, responses), values, now) + '\n';
+        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
+        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.printItems, responses), values, user, now) + '\n';
 
         for (const conditional of report.conditionals) {
           const isVis = scores[conditional.id];
 
           if (isVis) {
-            markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, now)) + '\n';
-            markdown += this.replaceValuesInMarkdown(this.getPrintedItems(conditional.printItems, responses), values, now) + '\n';
+            markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user, now)) + '\n';
+            markdown += this.replaceValuesInMarkdown(this.getPrintedItems(conditional.printItems, responses), values, user, now) + '\n';
           }
         }
       }
@@ -206,7 +206,7 @@ export default class Activity {
     return markdown;
   }
 
-  replaceValuesInMarkdown (message, scores, now = '') {
+  replaceValuesInMarkdown (message, scores, user, now = '') {
     let markdown = message;
 
     for (const scoreId in scores) {
@@ -214,7 +214,10 @@ export default class Activity {
       markdown = markdown.replace(reg, scores[scoreId]);
     }
 
-    markdown = markdown.replace(/\[\[sys\.date\]\]/g, now);
+    markdown = markdown.replace(/\[\[sys\.date\]\]/ig, now);
+
+    const nickName = !!user.nickName ? user.nickName : `${user.firstName} ${user.lastName}`.trim();
+    markdown = markdown.replace(/\[nickname\]/ig, nickName);
 
     return markdown;
   }

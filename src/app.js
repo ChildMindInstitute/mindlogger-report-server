@@ -83,7 +83,7 @@ app.post('/send-pdf-report', async (req, res) => {
       const activity = applet.activities.find(activity => activity.id == response.activityId);
 
       if (activity) {
-        const markdown = activity.evaluateReports(response.data, now);
+        const markdown = activity.evaluateReports(response.data, applet.user, now);
 
         html += Activity.getSplashImageHTML(pageBreak, activity) + '\n';
         html += Applet.getAppletImageHTML(applet) + '\n';
@@ -112,7 +112,7 @@ app.post('/send-pdf-report', async (req, res) => {
     )
 
     // send pdf to backend server
-    await uploadPDF(token, appletId, responseId, applet.getEmailConfigs(activityId, activityFlowId, responses, now), filename);
+    await uploadPDF(token, appletId, responseId, applet.getEmailConfigs(activityId, activityFlowId, responses, applet.user, now), filename);
 
     res.status(200).json({ 'message': 'success' });
   } catch (e) {
