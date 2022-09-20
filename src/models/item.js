@@ -121,6 +121,12 @@ export default class Item {
   }
 
   getVariableValue (value) {
+    const allowedTypes = ['radio', 'checkbox', 'slider', 'date', 'text', 'ageSelector'];
+
+    if (value === null || !allowedTypes.includes(this.inputType)) {
+      return '';
+    }
+
     const response = this.convertResponseToArray(value);
 
     if (response.length === 0) {
@@ -133,11 +139,11 @@ export default class Item {
 
     if (Array.isArray(this.options)) {
       const options = [];
-      for (let value of response) {
-        if (typeof value === 'number' || typeof value === 'string') {
+      for (const v of response) {
+        if (typeof v === 'number' || typeof v === 'string') {
           let option = this.options.find(option =>
-            typeof value === 'number' && option.value === value ||
-            typeof value === 'string' && option.name === value
+            typeof v === 'number' && option.value === v ||
+            typeof v === 'string' && option.name === v
           );
 
           if (option) {
