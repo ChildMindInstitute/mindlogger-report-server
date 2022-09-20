@@ -5,6 +5,7 @@ import { Parser } from 'expr-eval';
 import convertMarkdownToHtml from '../markdown-utils.js';
 import fs from 'fs';
 import Mimoza from "mimoza";
+import {isFloat} from "../utils.js";
 
 export default class Activity {
   constructor (data={}, items=[]) {
@@ -113,10 +114,12 @@ export default class Activity {
 
   scoresToValues(scores, responses) {
     const values = { ...scores };
+    const rawValues = { ...scores };
     for (let i = 0; i < responses.length; i++) {
       const response = responses[i];
       const item = this.items[i];
       values[item.schemaId] = item.getVariableValue(response);
+      rawValues[item.schemaId] = response?.value;
     }
     return values;
   }
@@ -130,7 +133,7 @@ export default class Activity {
     // evaluate isVis field and get markdown
     for (const report of this.reports) {
       if (report.dataType == 'section') {
-        const isVis = this.testVisibility(report.isVis, scores);
+        const isVis = this.testVisibility(report.isVis, rawValues);
 
         if (isVis) {
           markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
@@ -271,7 +274,7 @@ export default class Activity {
       .replace(/\|\|/g, ' or ')
       .replace('===', '==')
       .replace('!==', '!=')
-      .replace(/(\w+\.)/g, 'arrayIncludes($&')
+      .replace(/(\w+\.includes)/g, 'arrayIncludes($&')
       .replace(/.includes\(/g, ', ')
       .replace(/!arrayIncludes/g, 'arrayNotIncludes');
 
@@ -279,6 +282,9 @@ export default class Activity {
     const arrayIncludes = (array, element) => {
       if (array === undefined || array === null) {
         return false;
+      }
+      if (!Array.isArray(array)) {
+        return array === element;
       }
       for (let i = 0; i < array.length; i += 1) {
         if (array[i] === element) {
@@ -307,7 +313,7 @@ export default class Activity {
       const expr = parser.parse(expression);
       const scoresForCheck = {};
       for (const key in scores) {
-          scoresForCheck[key] = parseFloat(scores[key]);
+          scoresForCheck[key] = isFloat(scores[key]) ? parseFloat(scores[key]) : scores[key];
       }
       const result = expr.evaluate(scoresForCheck);
       return !!result; // Cast the result to true or false
