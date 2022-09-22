@@ -121,12 +121,12 @@ export default class Activity {
       values[item.schemaId] = item.getVariableValue(response);
       rawValues[item.schemaId] = response?.value;
     }
-    return values;
+    return [values, rawValues];
   }
 
   evaluateReports (responses, user, now = '') {
     const scores = this.evaluateScores(responses);
-    const values = this.scoresToValues(scores, responses);
+    const [values, rawValues] = this.scoresToValues(scores, responses);
 
     let markdown = '';
 
