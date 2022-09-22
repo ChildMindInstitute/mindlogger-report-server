@@ -158,7 +158,7 @@ export default class Applet {
     for (const response of responses) {
       const activity = this.activities.find(activity => activity.id === response.activityId);
       const scores = activity.evaluateScores(response.data);
-      const values = activity.scoresToValues(scores, response.data);
+      const [values, rawValues] = activity.scoresToValues(scores, response.data);
       const addActivityPrefix = key => `${activity.name}/${key}`;
       const renameKeys = o => Object.keys(o).reduce((acc, k) => ({...acc, [addActivityPrefix(k)]: o[k] }), {});
       emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), user, now);
