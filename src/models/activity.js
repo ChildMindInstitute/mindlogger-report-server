@@ -214,7 +214,7 @@ export default class Activity {
 
     for (const scoreId in scores) {
       const reg = new RegExp(`\\[\\[${this.escapeRegExp(scoreId)}\\]\\]`, "gi");
-      markdown = markdown.replace(reg, this.escapeReplacement(scores[scoreId]));
+      markdown = markdown.replace(reg, this.escapeReplacement(String(scores[scoreId])));
     }
 
     markdown = markdown.replace(/\[\[sys\.date\]\]/ig, this.escapeReplacement(now));
