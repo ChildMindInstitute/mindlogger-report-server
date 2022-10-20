@@ -332,6 +332,8 @@ export default class Activity {
           <img src="${image}" alt="Splash Activity">
         </div>
       `;
+    }else if (pageBreakBefore === true){
+      return `<div style="page-break-before: always"/>`
     }
 
     return '';
