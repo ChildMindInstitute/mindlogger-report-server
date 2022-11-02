@@ -98,7 +98,7 @@ export default class Item {
   }
 
   getAlerts (value) {
-    if (value === null || this.inputType !== 'radio' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
+    if (value === null || this.inputType !== 'radio' && this.inputType !== 'checkbox' && this.inputType !== 'slider') {
       return 0;
     }
 
