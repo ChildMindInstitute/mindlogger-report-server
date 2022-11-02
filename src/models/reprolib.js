@@ -28,6 +28,7 @@ export default {
 
   options: {
     image: 'schema:image',
+    watermark: 'schema:watermark',
     name: 'schema:name',
     value: 'schema:value',
     score: 'schema:score',

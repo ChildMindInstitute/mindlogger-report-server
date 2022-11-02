@@ -21,6 +21,8 @@ export default class Applet {
     this.name = _.get(data.applet, [reprolib.prefLabel, 0, '@value'], '');
     this.description = _.get(data.applet, [reprolib.description, 0, '@value'], '');
     this.image = _.get(data.applet, [reprolib.options.image]);
+    this.watermark = _.get(data.applet, [reprolib.options.watermark, 0, '@id']);
+    
     // parse activities
     const activityOrder = _.get(data.applet, [reprolib.order, 0, '@list'], []).map(item => item['@id']);
 
@@ -78,15 +80,15 @@ export default class Applet {
     }, defaultConfig)
   }
 
-  static getAppletImageHTML (applet) {
-    if (!applet.image) {
+  static getAppletWatermarkHTML (applet) {
+    if (!applet.watermark) {
       return '';
     }
 
     const imageHTML = `
       <div class="applet-image">
         <img
-          src="${applet.image}"
+          src="${applet.watermark}"
           alt=''
         />
       </div>

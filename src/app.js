@@ -34,7 +34,7 @@ app.put('/preview-report', async (req, res) => {
     let html = '';
 
     html += Activity.getSplashImageHTML(false, { splashImage: images.splash }) + '\n';
-    html += Applet.getAppletImageHTML({ image: images.applet }) + '\n';
+    html += Applet.getAppletWatermarkHTML({ image: images.applet }) + '\n';
     html += convertMarkdownToHtml(Activity.getReportPreview(reports, items)) + '\n';
     html += Activity.getReportFooter() + '\n';
     html += Activity.getReportStyles();
@@ -86,7 +86,7 @@ app.post('/send-pdf-report', async (req, res) => {
         const markdown = activity.evaluateReports(response.data, applet.user, now);
 
         html += Activity.getSplashImageHTML(pageBreak, activity) + '\n';
-        html += Applet.getAppletImageHTML(applet) + '\n';
+        html += Applet.getAppletWatermarkHTML(applet) + '\n';
         html += convertMarkdownToHtml(markdown) + '\n';
 
         pageBreak = true;
