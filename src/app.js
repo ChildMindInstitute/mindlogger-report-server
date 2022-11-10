@@ -3,7 +3,7 @@ import express from 'express';
 import { authenticate } from './middleware/index.js';
 import convertMarkdownToHtml from './markdown-utils.js';
 import cors from 'cors';
-import { convertHtmlToPdf, encryptPDF } from './pdf-utils.js';
+import { convertHtmlToPdf, encryptPDF, getCurrentCount, watermarkPDF } from './pdf-utils.js';
 import { fetchApplet, uploadPDF, getAccountPermissions } from './mindlogger-api.js';
 import { Applet, Activity } from './models/index.js';
 import { verifyPublicKey, decryptData } from './encryption.js';
@@ -34,7 +34,6 @@ app.put('/preview-report', async (req, res) => {
     let html = '';
 
     html += Activity.getSplashImageHTML(false, { splashImage: images.splash }) + '\n';
-    html += Applet.getAppletWatermarkHTML({ image: images.applet }) + '\n';
     html += convertMarkdownToHtml(Activity.getReportPreview(reports, items)) + '\n';
     html += Activity.getReportFooter() + '\n';
     html += Activity.getReportStyles();
@@ -76,19 +75,37 @@ app.post('/send-pdf-report', async (req, res) => {
     }
 
     let html = '', pageBreak = false;
+    let splashPage = undefined;
 
     html += applet.getSummary(responses);
+
+    const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses);
+    const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}.pdf`;
+    html += Activity.getReportStyles();
+    
+    let watermarkStart = 0;
+    let pageCount = 0;
+    let skipPages = [];
+
+    watermarkStart = await getCurrentCount(html, filename);
+    pageCount = watermarkStart;
 
     for (const response of responses) {
       const activity = applet.activities.find(activity => activity.id == response.activityId);
 
       if (activity) {
         const markdown = activity.evaluateReports(response.data, applet.user, now);
+        splashPage = Activity.getSplashImageHTML(pageBreak, activity);
+        
+        html += splashPage + '\n';
+        html += convertMarkdownToHtml(markdown, splashPage, skipPages) + '\n';
 
-        html += Activity.getSplashImageHTML(pageBreak, activity) + '\n';
-        html += Applet.getAppletWatermarkHTML(applet) + '\n';
-        html += convertMarkdownToHtml(markdown) + '\n';
+        const count = await getCurrentCount(html, filename);
+        if(splashPage != '') {
+          skipPages.push(pageCount+1);
+        }
 
+        pageCount = count;
         pageBreak = true;
       } else {
         throw new Error(`unable to find ${response.activityId}`);
@@ -96,20 +113,20 @@ app.post('/send-pdf-report', async (req, res) => {
     }
 
     html += Activity.getReportFooter() + '\n';
-    html += Activity.getReportStyles();
-
-    const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses);
-    const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}.pdf`;
-
+    
     await convertHtmlToPdf(
       `<div class="container">${html}</div>`,
       filename
     )
-
+    
+    const watermarkURL = Applet.getAppletWatermarkURL(applet);
+    
+    await watermarkPDF(filename, watermarkURL, watermarkStart, skipPages);
+    
     await encryptPDF(
       filename,
       pdfPassword
-    )
+    );
 
     // send pdf to backend server
     await uploadPDF(token, appletId, responseId, applet.getEmailConfigs(activityId, activityFlowId, responses, applet.user, now), filename);
