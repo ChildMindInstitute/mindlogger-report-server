@@ -96,6 +96,14 @@ export default class Applet {
 
     return imageHTML;
   }
+  static getAppletWatermarkURL(applet) {
+    if (!applet.watermark) {
+        return '';
+      }
+  
+    return applet.watermark
+  }
+
 
   getSummary (responses) {
     let alerts = [];

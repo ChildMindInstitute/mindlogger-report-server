@@ -190,7 +190,7 @@ img {
 }
 
 .report-summary {
-  page-break-after: always;
+  /* page-break-after: always; */
 }
 
 .alerts-list {

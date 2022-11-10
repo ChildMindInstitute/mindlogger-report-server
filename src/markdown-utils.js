@@ -45,9 +45,14 @@ md.use(emoji)
       }
     }).use(markdownItImSize)
 
-const convertMarkdownToHtml = (markdown) => {
+const convertMarkdownToHtml = (markdown, splashPage, skipPages) => {
   const html = md.render(markdown);
-  return html;
+  if(splashPage=='' && skipPages.length==0){
+    return `<div style="page-break-before: always}">${html}</div>`;
+
+  } else {
+    return html;
+  }
 }
 
 export default convertMarkdownToHtml;
