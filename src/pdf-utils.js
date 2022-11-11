@@ -85,14 +85,16 @@ async function countPages(pdfFile) {
   const pdfDoc = await PDFDocument.load(fs.readFileSync(pdfFile));
   const pages = pdfDoc.getPages();
   const numberOfPages = pages.length;
+  fs.unlinkSync(pdfFile);
   return numberOfPages;
 }
 
-export async function getCurrentCount(html, filename){
+export async function getCurrentCount(html){
+  const tmpFile = `tmp/tmp.pdf`
   await convertHtmlToPdf(
     `<div class="container">${html}</div>`,
-    filename
+    tmpFile
   );
-  const count = await countPages(filename);
+  const count = await countPages(tmpFile);
   return count;
 }

@@ -87,7 +87,7 @@ app.post('/send-pdf-report', async (req, res) => {
     let pageCount = 0;
     let skipPages = [];
 
-    watermarkStart = await getCurrentCount(html, filename);
+    watermarkStart = await getCurrentCount(html);
     pageCount = watermarkStart;
 
     for (const response of responses) {
@@ -100,7 +100,7 @@ app.post('/send-pdf-report', async (req, res) => {
         html += splashPage + '\n';
         html += convertMarkdownToHtml(markdown, splashPage, skipPages) + '\n';
 
-        const count = await getCurrentCount(html, filename);
+        const count = await getCurrentCount(html);
         if(splashPage != '') {
           skipPages.push(pageCount+1);
         }
