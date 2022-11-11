@@ -2,7 +2,6 @@
 node_modules
 outputs/
 keys/
-tmp/
 
 *.log
 .idea/

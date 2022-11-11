@@ -3,6 +3,7 @@ import HummusRecipe from 'hummus-recipe';
 import {PDFDocument} from 'pdf-lib';
 import fs from 'fs';
 import fetch from 'node-fetch';
+import os from 'os';
 
 const options = {
   width: '8.5in',
@@ -90,7 +91,7 @@ async function countPages(pdfFile) {
 }
 
 export async function getCurrentCount(html){
-  const tmpFile = `tmp/tmp.pdf`
+  const tmpFile = `${os.tmpdir()}/tmp.pdf`
   await convertHtmlToPdf(
     `<div class="container">${html}</div>`,
     tmpFile
