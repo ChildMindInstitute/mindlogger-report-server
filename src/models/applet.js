@@ -124,7 +124,8 @@ export default class Applet {
                 ${
                   scores.map(score => `
                     <div class="score-message ${score.flagScore ? 'flag' : ''}">
-                      <img class="score-flag" src="${ICON_URL + 'score-flag.png'}" width="15" height="15">
+                      <img class="score-flag" src="${ICON_URL + 'score-flag.png'}" width="15" height="15"
+                        style="${score.flagScore ? '' : 'display: none;'}">
                       <span style="${score.flagScore ? 'font-weight: bold' : ''}">${score.prefLabel}</span>
                       <div class="score-value">${score.value}</div>
                     </div>
