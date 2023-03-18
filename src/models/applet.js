@@ -164,7 +164,7 @@ export default class Applet {
     return `<div class="report-summary">${output}</div>`
   }
 
-  getEmailConfigs (activityId, activityFlowId, responses, user, now) {
+  getEmailConfigs (activityId, activityFlowId, responses, user, now, timestamp) {
     let emailBody = this.reportConfigs.emailBody;
     for (const response of responses) {
       const activity = this.activities.find(activity => activity.id === response.activityId);
@@ -177,7 +177,7 @@ export default class Applet {
     return {
       body: this.applyInlineStyles(convertMarkdownToHtml(emailBody)),
       subject: this.getSubject(activityId, activityFlowId, responses),
-      attachment: this.getPDFFileName(activityId, activityFlowId, responses),
+      attachment: this.getPDFFileName(activityId, activityFlowId, responses, timestamp),
       emailRecipients: this.reportConfigs.emailRecipients
     }
   }
@@ -205,7 +205,7 @@ export default class Applet {
     return row.verified ? row.key : '';
   }
 
-  getPDFFileName (activityId, activityFlowId, responses) {
+  getPDFFileName (activityId, activityFlowId, responses, timestamp) {
     const activityFlow = this.activityFlows.find(flow => flow.id === activityFlowId);
     const activity = this.activities.find(activity => activity.id === activityId);
     const userId = this.user.MRN || this.user.email;
@@ -225,7 +225,7 @@ export default class Applet {
       pdfName += ` [${itemName}]`
     }
 
-    pdfName += `_${moment.utc(this.timestamp).format('YYYY-MM-DD-HHmmss')}`;
+    pdfName += `_${moment.utc(timestamp ?? this.timestamp).format('YYYY-MM-DD-HHmmss')}`;
     return pdfName;
   }
 

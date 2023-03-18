@@ -65,6 +65,7 @@ app.post('/send-pdf-report', async (req, res) => {
   try {
     const responses = decryptData(req.body.responses);
     const now = req.body.now;
+    const timestamp = req.body.timestamp;
 
     const appletJSON = await fetchApplet(token, appletId);
     const applet = new Applet(appletJSON);
@@ -79,7 +80,7 @@ app.post('/send-pdf-report', async (req, res) => {
 
     html += applet.getSummary(responses);
 
-    const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses);
+    const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses, timestamp);
     const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}.pdf`;
     html += Activity.getReportStyles();
     
@@ -129,7 +130,7 @@ app.post('/send-pdf-report', async (req, res) => {
     );
 
     // send pdf to backend server
-    await uploadPDF(token, appletId, responseId, applet.getEmailConfigs(activityId, activityFlowId, responses, applet.user, now), filename);
+    await uploadPDF(token, appletId, responseId, applet.getEmailConfigs(activityId, activityFlowId, responses, applet.user, now, timestamp), filename);
 
     res.status(200).json({ 'message': 'success' });
   } catch (e) {
