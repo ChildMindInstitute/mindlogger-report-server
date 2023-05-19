@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3';
 
-const PASSWORD_FILE = `${process.env.KEYS_FOLDER}/passwords`;
+const KEYS_FOLDER = process.env.KEYS_FOLDER || 'keys';
+const PASSWORD_FILE = `${KEYS_FOLDER}/passwords`;
 let db = null;
 
 const runQuery = (db, query, args) => new Promise((resolve, reject) => {
@@ -19,54 +20,41 @@ const initDB = () => new Promise(resolve => {
       if (row?.name) {
         resolve();
       } else {
-        runQuery(db, `CREATE TABLE pdf_keys ( serverId VARCHAR(255), key VARCHAR(255), privateKey VARCHAR(255), appletId VARCHAR(255), verified TINYINT, accountId VARCHAR(255) )`)
-          .then(() => runQuery(db, `CREATE INDEX SERVER_ID_INDEX ON pdf_keys (serverId)`))
+        runQuery(db, `CREATE TABLE pdf_keys ( appletId VARCHAR(255), key VARCHAR(255) )`)
+          .then(() => runQuery(db, `CREATE INDEX APPLET_ID_INDEX ON pdf_keys (appletId)`))
           .then(() => resolve())
       }
     })
   })
 })
 
-export const deleteAppletPassword = async (serverId, key) => {
+export const deleteAppletPassword = async (appletId, key) => {
   if (!db) await initDB();
-  await runQuery(db, 'DELETE from pdf_keys where serverId=? and key=?', [serverId, key]);
+  await runQuery(db, 'DELETE from pdf_keys where appletId=? and key=?', [appletId, key]);
 }
 
-export const setPasswordVerified = async (serverId, key, appletId) => {
-  if (!db) await initDB();
-  await runQuery(db, 'UPDATE pdf_keys set verified=1, appletId=? where serverId=? and key=?', [appletId, serverId, key]);
-}
-
-export const setAppletPassword = async (serverId, password, privateKey, appletId, accountId) => {
+export const setAppletPassword = async (appletId, password) => {
   if (!db) await initDB();
 
-  const row = await getAppletPassword(serverId)
+  const row = await getAppletPassword(appletId)
 
-  if (row && row.verified) {
-    if (!row.appletId && row.appletId != appletId || row.accountId != accountId) {
-      throw new Error('permission denied');
-    }
-
-    return ;
-  }
-
-  if (row && !row.verified && (!row.appletId || appletId)) {
-    const stmt = db.prepare(`UPDATE pdf_keys SET key=?, privateKey=?, appletId=?, accountId=? WHERE serverId=?`);
-    stmt.run(password, privateKey, appletId, accountId, serverId);
+  if (row) {
+    const stmt = db.prepare(`UPDATE pdf_keys SET key=? WHERE appletId=?`);
+    stmt.run(password, appletId);
     stmt.finalize();
   } else {
-    const stmt = db.prepare(`INSERT INTO pdf_keys VALUES (?, ?, ?, ?, false, ?)`);
-    stmt.run(serverId, password, privateKey, appletId, accountId);
+    const stmt = db.prepare(`INSERT INTO pdf_keys VALUES (?, ?)`);
+    stmt.run(appletId, password);
     stmt.finalize();
   }
 }
 
-export const getAppletPassword = (serverId) => {
+export const getAppletPassword = (appletId) => {
   let preprocess = Promise.resolve();
   if (!db) preprocess = initDB();
 
   return preprocess.then(() => new Promise(resolve => {
-    db.get(`SELECT * from pdf_keys where serverId=?`, [serverId], (err, row) => {
+    db.get(`SELECT * from pdf_keys where appletId=?`, [appletId], (err, row) => {
       if (err) resolve(null);
       resolve(row);
     })

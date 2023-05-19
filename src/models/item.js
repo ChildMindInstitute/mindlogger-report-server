@@ -7,19 +7,19 @@ export default class Item {
   constructor (data = {}) {
     this.json = data;
 
-    this.schemaId = data[reprolib.id];
-    this.id = (data._id || '').split('/').pop();
-    this.name = _.get(data, [reprolib.prefLabel, 0, '@value'], '');
-    this.question = _.get(data, [reprolib.question, 0, '@value'], '');
+    this.schemaId = data.id;
+    this.id = data.id;
+    this.name = data.name;
+    this.question = data.question;
 
-    this.inputType = _.get(data, [reprolib.inputType, 0, '@value']);
+    this.inputType = data.responseType;
 
-    this.multipleChoice = _.get(data, [reprolib.responseOptions, 0, reprolib.multiple, 0, '@value'], false);
-    this.scoring = _.get(data, [reprolib.responseOptions, 0, reprolib.scoring, 0, '@value'], false);
-    this.options = this.extractResponseOptions(data[reprolib.responseOptions], this.inputType);
+    this.multipleChoice = data.responseType = 'multiSelect'; // TODO
+    this.scoring = data.config?.addScores || false;
+    this.options = data.responseValues?.options; //this.extractResponseOptions(, this.inputType);
 
-    this.minValue = _.get(data, [reprolib.responseOptions, 0, reprolib.minValue, 0, '@value']) || '';
-    this.maxValue = _.get(data, [reprolib.responseOptions, 0, reprolib.maxValue, 0, '@value']) || '';
+    // this.minValue = _.get(data, [reprolib.responseOptions, 0, reprolib.minValue, 0, '@value']) || '';
+    // this.maxValue = _.get(data, [reprolib.responseOptions, 0, reprolib.maxValue, 0, '@value']) || '';
   }
 
   static getItem (itemPreview) {
@@ -32,27 +32,27 @@ export default class Item {
     return item;
   }
 
-  extractResponseOptions (options, inputType) {
-    if (
-      !options || !Array.isArray(options) || typeof(options[0]) != 'object'
-    ) {
-      return null;
-    }
-
-    if (inputType == 'radio' || this.inputType !== 'checkbox' || inputType == 'slider') {
-      const itemListElement = options[0][reprolib.options.itemList];
-      if (!itemListElement) return null;
-
-      return itemListElement.map((choice) => ({
-        name: _.get(choice, [reprolib.options.name, 0, '@value']),
-        value: Number(_.get(choice, [reprolib.options.value, 0, '@value'])),
-        score: Number(_.get(choice, [reprolib.options.score, 0, '@value'])),
-        alert: _.get(choice, [reprolib.options.alert, 0, '@value']),
-      }));
-    }
-
-    return null;
-  }
+  // extractResponseOptions (options, inputType) {
+  //   if (
+  //     !options || !Array.isArray(options) || typeof(options[0]) != 'object'
+  //   ) {
+  //     return null;
+  //   }
+  //
+  //   if (inputType == 'singleSelect' || this.inputType !== 'checkbox' || inputType == 'slider') {
+  //     const itemListElement = options[0][reprolib.options.itemList];
+  //     if (!itemListElement) return null;
+  //
+  //     return itemListElement.map((choice) => ({
+  //       name: _.get(choice, [reprolib.options.name, 0, '@value']),
+  //       value: Number(_.get(choice, [reprolib.options.value, 0, '@value'])),
+  //       score: Number(_.get(choice, [reprolib.options.score, 0, '@value'])),
+  //       alert: _.get(choice, [reprolib.options.alert, 0, '@value']),
+  //     }));
+  //   }
+  //
+  //   return null;
+  // }
 
   convertResponseToArray (response) {
     if (response === null) {
@@ -73,7 +73,7 @@ export default class Item {
   }
 
   getScore (value) {
-    if (value === null || this.inputType !== 'radio' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
+    if (value === null || this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
       return 0;
     }
 
@@ -84,8 +84,8 @@ export default class Item {
     for (let value of response) {
       if (typeof value === 'number' || typeof value === 'string') {
         let option = this.options.find(option =>
-          typeof value === 'number' && option.value === value ||
-          typeof value === 'string' && option.name === value
+          typeof value === 'number' && option.id === value ||
+          typeof value === 'string' && option.text === value
         );
 
         if (option && option.score) {
@@ -98,7 +98,7 @@ export default class Item {
   }
 
   getAlerts (value) {
-    if (value === null || this.inputType !== 'radio' && this.inputType !== 'checkbox' && this.inputType !== 'slider') {
+    if (value === null || this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider') {
       return 0;
     }
 
@@ -107,8 +107,8 @@ export default class Item {
     return response.map(value => {
       if (typeof value === 'number' || typeof value === 'string') {
         let option = this.options.find(option =>
-          typeof value === 'number' && option.value === value ||
-          typeof value === 'string' && option.name === value
+          typeof value === 'number' && option.id === value ||
+          typeof value === 'string' && option.text === value
         );
 
         if (option && option.alert) {
@@ -121,7 +121,7 @@ export default class Item {
   }
 
   getVariableValue (value) {
-    const allowedTypes = ['radio', 'checkbox', 'slider', 'date', 'text', 'ageSelector'];
+    const allowedTypes = ['singleSelect', 'checkbox', 'slider', 'date', 'text', 'ageSelector'];
 
     if (value === null || !allowedTypes.includes(this.inputType)) {
       return '';
@@ -142,12 +142,12 @@ export default class Item {
       for (const v of response) {
         if (typeof v === 'number' || typeof v === 'string') {
           let option = this.options.find(option =>
-            typeof v === 'number' && option.value === v ||
-            typeof v === 'string' && option.name === v
+            typeof v === 'number' && option.id === v ||
+            typeof v === 'string' && option.text === v
           );
 
           if (option) {
-            options.push(option.name);
+            options.push(option.text);
           }
         }
       }
@@ -166,7 +166,7 @@ export default class Item {
   }
 
   getMaxScore () {
-    if (this.inputType !== 'radio' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
+    if (this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
       return 0;
     }
 
@@ -185,7 +185,7 @@ export default class Item {
   }
 
   getPrinted (value) {
-    if (this.inputType !== 'radio' && this.inputType !== 'checkbox' && this.inputType !== 'slider' && this.inputType !== 'text') {
+    if (this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider' && this.inputType !== 'text') {
       return '';
     }
 
@@ -195,27 +195,27 @@ export default class Item {
 
     let optionsHtml = '', type = this.inputType;
 
-    if (this.inputType === 'radio' || this.inputType === 'checkbox') {
+    if (this.inputType === 'singleSelect' || this.inputType === 'checkbox') {
       if (this.multipleChoice) {
         type = 'checkbox';
       }
 
       for (const option of this.options) {
         const checked = response.some(value =>
-          typeof value === 'number' && option.value === value ||
-          typeof value === 'string' && option.name === value
+          typeof value === 'number' && option.id === value ||
+          typeof value === 'string' && option.text === value
         );
 
         const icon = ICON_URL + `${type}-${checked ? 'checked' : 'unchecked'}.svg`;
 
         optionsHtml += '<div class="option">';
         optionsHtml += `<img class="${type}" src="${icon}" width="15" height="15">`;
-        optionsHtml += `<label>${option.name}</label>`;
+        optionsHtml += `<label>${option.text}</label>`;
         optionsHtml += '</div>';
       }
     } else if (this.inputType === 'slider' ) {
-      const minTick = Math.min(...this.options.map(option => option.value));
-      const maxTick = Math.max(...this.options.map(option => option.value));
+      const minTick = Math.min(...this.options.map(option => option.id));
+      const maxTick = Math.max(...this.options.map(option => option.id));
 
       const minValue = `<div class="slider-value">${this.minValue}</div>`;
       const maxValue = `<div class="slider-value">${this.maxValue}</div>`;

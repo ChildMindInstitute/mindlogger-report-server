@@ -6,39 +6,21 @@ const apiHost = process.env.BACKEND_SERVER;
 
 export const login = (token) => axios({
   method: 'get',
-  url: `${apiHost}/user/authentication`,
-  headers: { "Girder-Token": token },
-  params: {
-    lang: 'en',
-  },
+  url: `${apiHost}/users/me`,
+  headers: { "Authorization": `bearer ${token}` },
 })
 
-export const fetchApplet = (token, appletId, nextActivity = '') => axios({
+export const fetchApplet = (token, appletId) => axios({
   method: 'get',
-  url: `${apiHost}/applet/${appletId}`,
-  headers: { "Girder-Token": token },
-  params: {
-    nextActivity
-  }
-}).then(res => {
-  const applet = res.data;
+  url: `${apiHost}/applets/${appletId}`,
+  headers: { "Authorization": `bearer ${token}` },
+}).then(res => res.data.result)
 
-  if (applet.nextActivity) {
-    return new Promise(resolve => setTimeout(() => resolve(fetchApplet(token, appletId, applet.nextActivity).then(next => {
-      for (const IRI in next.data.items) {
-        applet.items[IRI] = next.data.items[IRI]
-      }
-
-      for (const IRI in next.data.activities) {
-        applet.activities[IRI] = next.data.activities[IRI]
-      }
-
-      return applet;
-    })), 50));
-  }
-
-  return applet;
-})
+export const fetchActivity = (token, activityId) => axios({
+  method: 'get',
+  url: `${apiHost}/activities/${activityId}`,
+  headers: { "Authorization": `bearer ${token}` },
+}).then(res => res.data.result)
 
 export const uploadPDF = (token, appletId, responseId, emailConfig, pdfPath) => {
   const form = new FormData();
@@ -60,7 +42,7 @@ export const uploadPDF = (token, appletId, responseId, emailConfig, pdfPath) => 
   })
 }
 
-export const getAccountPermissions = (token, accountId, appletId) => axios({
+export const getAccountPermissions = (token, appletId) => axios({
   method: 'get',
   url: `${apiHost}/account/permissions`,
   headers: {
@@ -68,6 +50,6 @@ export const getAccountPermissions = (token, accountId, appletId) => axios({
     'Content-Type': 'multipart/form-data'
   },
   params: {
-    accountId, appletId
+    appletId
   }
 }).then(res => res.data)

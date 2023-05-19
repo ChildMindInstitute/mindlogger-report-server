@@ -5,17 +5,12 @@ export default class ActivityFlow {
   constructor (data, activities) {
     this.json = data;
 
-    this.schemaId = data[reprolib.id];
-    this.id = data._id.split('/').pop();
-    this.name = _.get(data, [reprolib.options.name, 0, '@value'], '');
+    this.schemaId = data.id;
+    this.id = data.id;
+    this.name = data.name;
 
-    const order = _.get(data, [reprolib.order, 0, '@list'], []).map(item => item['@id']);
+    this.activities = activities;
 
-    this.activities = order.map(id => {
-      const activity = activities.find(activity => activity.schemaId == id);
-      return activity;
-    }).filter(activity => activity !== null);
-
-    this.reportIncludeItem = _.get(data, [reprolib.reportIncludeItem, 0, '@value'], '');
+    this.reportIncludeItem = true; //data.isSingleReport;
   }
 }

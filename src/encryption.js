@@ -2,7 +2,7 @@
 import crypto from 'crypto';
 import fs from 'fs';
 
-const KEYS_FOLDER = process.env.KEYS_FOLDER;
+const KEYS_FOLDER = process.env.KEYS_FOLDER || 'keys';
 
 const getPrivateKey = () => {
   const file = fs.readFileSync(`${KEYS_FOLDER}/private.pem`);
@@ -61,10 +61,10 @@ export const decryptData = (response) => {
 }
 
 export const verifyAppletPassword = (appletPrivate, encryption) => {
-  if (!encryption || !encryption.appletPrime || !encryption.appletPublicKey) return false;
+  if (!encryption || !encryption.prime || !encryption.publicKey) return false;
 
   const key = crypto.createDiffieHellman(
-    Buffer.from(encryption.appletPrime),
+    Buffer.from(encryption.prime),
     Buffer.from(encryption.base)
   );
 
@@ -72,7 +72,7 @@ export const verifyAppletPassword = (appletPrivate, encryption) => {
   key.generateKeys();
 
   if (
-    key.getPublicKey().equals(Buffer.from(encryption.appletPublicKey))
+    key.getPublicKey().equals(Buffer.from(encryption.publicKey))
   ) {
     return true;
   }

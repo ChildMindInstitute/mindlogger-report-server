@@ -11,25 +11,22 @@ export default class Activity {
   constructor (data={}, items=[]) {
     this.json = data;
 
-    this.schemaId = data[reprolib.id];
-    this.id = (data._id || '').split('/').pop();
-    this.name = _.get(data, [reprolib.prefLabel, 0, '@value'], '');
-    this.splashImage = _.get(data, [reprolib.splash, 0, '@value']);
+    this.schemaId = data.id;
+    this.id = data.id;
+    this.name = data.name;
+    this.splashImage = data.splashScreen;
 
-    const itemOrder = _.get(data, [reprolib.order, 0, '@list'], []).map(item => item['@id']);
-    this.items = itemOrder.map(id => {
-      if (items[id]) {
-        return new Item(items[id]);
-      }
+    //TODO items order
+    this.items = items.map(item => {
+      return new Item(item);
+    });
 
-      return null;
-    }).filter(item => item !== null);
-
-    this.reportIncludeItem = _.get(data, [reprolib.reportIncludeItem, 0, '@value'], '');
-    this.reports = this.extractReports(_.get(data, [reprolib.reports, 0, '@list'], []));
-
-    const allowList = _.get(data, [reprolib.allow, 0, '@list']).map(item => item['@id']);
-    this.allowSummary = !allowList.some((item) => item.includes('disable_summary'))
+    // this.reportIncludeItem = _.get(data, [reprolib.reportIncludeItem, 0, '@value'], '');
+    // this.reports = this.extractReports(_.get(data, [reprolib.reports, 0, '@list'], []));
+    //
+    // const allowList = _.get(data, [reprolib.allow, 0, '@list']).map(item => item['@id']);
+    // this.allowSummary = !allowList.some((item) => item.includes('disable_summary'))
+    this.allowSummary = true;
   }
 
   extractReports (reports) {

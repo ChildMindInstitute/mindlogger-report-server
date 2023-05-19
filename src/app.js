@@ -4,7 +4,7 @@ import { authenticate } from './middleware/index.js';
 import convertMarkdownToHtml from './markdown-utils.js';
 import cors from 'cors';
 import { convertHtmlToPdf, encryptPDF, getCurrentCount, watermarkPDF } from './pdf-utils.js';
-import { fetchApplet, uploadPDF, getAccountPermissions } from './mindlogger-api.js';
+import {fetchApplet, uploadPDF, getAccountPermissions, fetchActivity} from './mindlogger-api.js';
 import { Applet, Activity } from './models/index.js';
 import { verifyPublicKey, decryptData } from './encryption.js';
 import { setAppletPassword, getAppletPassword } from './db.js';
@@ -13,7 +13,7 @@ import fs from 'fs';
 
 const app = express();
 const port = process.env.PORT || 3000;
-const outputsFolder = process.env.OUTPUTS_FOLDER;
+const outputsFolder = process.env.OUTPUTS_FOLDER || '/tmp';
 
 app.use(cors());
 app.use(express.json());
@@ -64,15 +64,31 @@ app.post('/send-pdf-report', async (req, res) => {
 
   try {
     const responses = decryptData(req.body.responses);
+    // responses[0]['activityId'] = '3b5bc3bd-0d00-41ac-941b-de57b5a93d03'
     const now = req.body.now;
 
     const appletJSON = await fetchApplet(token, appletId);
+    for (let i = 0; i < appletJSON.activities.length; i++) {
+      appletJSON.activities[i] = await fetchActivity(token, appletJSON.activities[i].id);
+    }
     const applet = new Applet(appletJSON);
+
+    // const appletJSON = await fetchApplet(token, appletId);
+    // const applet = new Applet(appletJSON);
     const pdfPassword = await applet.getPDFPassword();
 
     if (!pdfPassword) {
       throw new Error('invalid password');
     }
+
+
+    // if (appletId) { // verify applet password
+
+    //   if (!await applet.getPDFPassword(appletId)) {
+    //     throw new Error('invalid applet password');
+    //   }
+    // }
+
 
     let html = '', pageBreak = false;
     let splashPage = undefined;
@@ -141,14 +157,9 @@ app.post('/send-pdf-report', async (req, res) => {
 
 app.put('/verify', async (req, res) => {
   const publicKey = req.body.publicKey;
-  const serverAppletId = req.body.serverAppletId;
-
   if (verifyPublicKey(publicKey)) {
-    const password = await getAppletPassword(serverAppletId);
-
     res.status(200).json({
       'message': 'ok',
-      'serverAppletId': password?.key ? serverAppletId : uuidv4()
     });
   } else {
     res.status(403).json({ 'message': 'invalid public key' });
@@ -158,32 +169,21 @@ app.put('/verify', async (req, res) => {
 app.post('/set-password', async (req, res) => {
   const token = req.headers.token;
   const password = req.body.password;
-  const serverAppletId = req.body.serverAppletId;
   const appletId = req.body.appletId;
-  const accountId = req.body.accountId;
 
   try {
-    const permissions = await getAccountPermissions(token, accountId, appletId);
-
-    if (
-      !permissions.includes('editor') &&
-      !permissions.includes('manager') &&
-      !permissions.includes('owner')
-    ) {
-      throw new Error('permission denied');
-    }
+    // const permissions = await getAccountPermissions(token, appletId);
+    //
+    // if (
+    //   !permissions.includes('editor') &&
+    //   !permissions.includes('manager') &&
+    //   !permissions.includes('owner')
+    // ) {
+    //   throw new Error('permission denied');
+    // }
 
     const pdfPassword = decryptData(password);
-    await setAppletPassword(serverAppletId, pdfPassword.password, pdfPassword.privateKey, appletId || '', accountId);
-
-    if (appletId) { // verify applet password
-      const appletJSON = await fetchApplet(token, appletId);
-      const applet = new Applet(appletJSON);
-
-      if (!await applet.getPDFPassword(serverAppletId)) {
-        throw new Error('invalid applet password');
-      }
-    }
+    await setAppletPassword(appletId, pdfPassword.password);
 
     res.status(200).json({ 'message': 'success' });
   } catch (e) {

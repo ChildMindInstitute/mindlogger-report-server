@@ -7,7 +7,7 @@ export const authenticate = async (req, res, next) => {
     }
     next();
   } catch(e) {
-    res.status(403).json({ message: 'permission denied' })
+    res.status(403).json({ message: 'Invalid token' })
   }
 }
 

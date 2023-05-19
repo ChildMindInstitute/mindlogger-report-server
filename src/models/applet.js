@@ -3,8 +3,7 @@ import Activity from './activity.js';
 import ActivityFlow from './activity-flow.js';
 import convertMarkdownToHtml from '../markdown-utils.js';
 import moment from "moment-timezone";
-import { getAppletPassword, deleteAppletPassword, setPasswordVerified } from '../db.js';
-import { verifyAppletPassword } from '../encryption.js';
+import { getAppletPassword } from '../db.js';
 import _ from 'lodash';
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
@@ -14,70 +13,37 @@ export default class Applet {
     this.json = data;
 
     this.timestamp = Date.now();
-    this.accountId = data.accountId;
-    this.user = data.user;
-    this.schemaId = data.applet[reprolib.id];
-    this.id = data.applet._id.split('/').pop();
-    this.name = _.get(data.applet, [reprolib.prefLabel, 0, '@value'], '');
-    this.description = _.get(data.applet, [reprolib.description, 0, '@value'], '');
-    this.image = _.get(data.applet, [reprolib.options.image]);
-    this.watermark = _.get(data.applet, [reprolib.options.watermark, 0, '@id']);
+    // this.user = data.user; //TODO
+    this.schemaId = data.id;
+    this.id = data.id;
+    this.name = data.displayName;
+    this.description = data.description;
+    this.image = data.image;
+    this.watermark = data.watermark;
     
     // parse activities
-    const activityOrder = _.get(data.applet, [reprolib.order, 0, '@list'], []).map(item => item['@id']);
-
-    this.activities = activityOrder.map(id => {
-      if (data.activities[id]) {
-        return new Activity(data.activities[id], data.items);
-      }
-
-      return null;
-    }).filter(activity => activity !== null);
+    this.activities = data.activities.map(item => {
+      return new Activity(item, item.items);
+    });
 
     // parse activity flows
-    const activityFlowOrder = _.get(data.applet, [reprolib.activityFlowOrder, 0, '@list'], []).map(item => item['@id']);
-    this.activityFlows = activityFlowOrder.map(id => {
-      if (data.activityFlows[id]) {
-        return new ActivityFlow(data.activityFlows[id], this.activities);
-      }
+    this.activityFlows = data.activityFlows.map(item => {
+      return new ActivityFlow(item, this.activities);
+    });
 
-      return null
-    }).filter(flow => flow !== null);
-
-    this.reportConfigs = this.extractReportConfigs(_.get(data.applet, [reprolib.reportConfigs, 0, '@list']));
-    this.encryption = data?.applet?.encryption || null;
+    this.reportConfigs = this.extractReportConfigs(data);
+    this.encryption = data?.encryption || null;
   }
 
-  extractReportConfigs (configs) {
-    const defaultConfig = {
-      serverIp: '',
-      publicEncryptionKey: '',
-      emailRecipients: [],
-      includeUserId: false,
-      includeCaseId: false,
-      emailBody: '',
-      serverAppletId: '',
+  extractReportConfigs (data) {
+    return {
+      serverIp: data.reportServerIp,
+      publicEncryptionKey: data.reportPublicKey,
+      emailRecipients: data.reportRecipients,
+      includeUserId: data.reportIncludeUserId,
+      includeCaseId: data.reportIncludeCaseId,
+      emailBody: data.reportEmailBody,
     }
-
-    return configs.reduce((configs, option) => {
-      const name = _.get(option, [reprolib.options.name, 0, '@value']);
-      const type = _.get(option, [reprolib.type, 0]);
-
-      let value = _.get(option, [reprolib.options.value], []).map(item => item['@value']);
-
-      if (type != reprolib.types.list) {
-        value = value[0];
-      }
-
-      if (value !== undefined) {
-        return {
-          ...configs,
-          [name]: value
-        }
-      }
-
-      return configs;
-    }, defaultConfig)
   }
 
   static getAppletWatermarkHTML (applet) {
@@ -188,21 +154,9 @@ export default class Applet {
             .replace(/<td>/g, `<td style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px;">`)
   }
 
-  async getPDFPassword (serverAppletId = '') {
-    const row = await getAppletPassword(serverAppletId || this.reportConfigs.serverAppletId);
-    if (!row) return '';
-
-    if (!row.verified && row.key) {
-      row.verified = verifyAppletPassword(row.privateKey, this.encryption, this.accountId)
-
-      if (!row.verified) {
-        await deleteAppletPassword(row.serverId, row.key);
-      } else {
-        await setPasswordVerified(row.serverId, row.key, this.id);
-      }
-    }
-
-    return row.verified ? row.key : '';
+  async getPDFPassword (appletId = '') {
+    const row = await getAppletPassword(appletId || this.id);
+    return row ? row.key : '';
   }
 
   getPDFFileName (activityId, activityFlowId, responses) {
