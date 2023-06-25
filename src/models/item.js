@@ -16,10 +16,23 @@ export default class Item {
 
     this.multipleChoice = data.responseType = 'multiSelect'; // TODO
     this.scoring = data.config?.addScores || false;
-    this.options = data.responseValues?.options; //this.extractResponseOptions(, this.inputType);
+    this.options = this.patchOptions(data.responseValues?.options); //this.extractResponseOptions(, this.inputType);
 
     // this.minValue = _.get(data, [reprolib.responseOptions, 0, reprolib.minValue, 0, '@value']) || '';
     // this.maxValue = _.get(data, [reprolib.responseOptions, 0, reprolib.maxValue, 0, '@value']) || '';
+  }
+
+  patchOptions(options) {
+    const clonedOptions = _.cloneDeep(options);
+    if (!clonedOptions || clonedOptions.length === 0) {
+      return clonedOptions;
+    }
+    if (clonedOptions[0].value === 1) {
+      for (const option of clonedOptions) {
+        option.value -= 1;
+      }
+    }
+    return clonedOptions;
   }
 
   static getItem (itemPreview) {
@@ -82,21 +95,27 @@ export default class Item {
     let totalScore = 0;
 
     for (let value of response) {
-      if (typeof value === 'number' || typeof value === 'string') {
-        let option = this.options.find(option =>
-          typeof value === 'number' && option.id === value ||
-          typeof value === 'string' && option.text === value
-        );
-
-        if (option && option.score) {
-          totalScore += option.score;
-        }
+      const option = this.matchOption(value);
+      if (option && option.score) {
+        totalScore += option.score;
       }
     }
 
     return totalScore;
   }
 
+  matchOption(value) {
+    let option = null;
+    if (typeof value === 'number') {
+      option = this.options.find(option => option.value === value);
+    }
+    if (typeof value === 'string') {
+      option = this.options.find(option => option.id === value || option.text === value);
+    }
+    return option;
+  }
+
+  //TODO: test alerts
   getAlerts (value) {
     if (value === null || this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider') {
       return 0;
@@ -105,18 +124,8 @@ export default class Item {
     let response = this.convertResponseToArray(value);
 
     return response.map(value => {
-      if (typeof value === 'number' || typeof value === 'string') {
-        let option = this.options.find(option =>
-          typeof value === 'number' && option.id === value ||
-          typeof value === 'string' && option.text === value
-        );
-
-        if (option && option.alert) {
-          return option.alert;
-        }
-      }
-
-      return '';
+      const option = this.matchOption(value);
+      return option && option.alert ? option.alert : '';
     }).filter(alert => alert.length > 0);
   }
 
@@ -142,7 +151,7 @@ export default class Item {
       for (const v of response) {
         if (typeof v === 'number' || typeof v === 'string') {
           let option = this.options.find(option =>
-            typeof v === 'number' && option.id === v ||
+            typeof v === 'number' && option.value === v ||
             typeof v === 'string' && option.text === v
           );
 
@@ -202,7 +211,7 @@ export default class Item {
 
       for (const option of this.options) {
         const checked = response.some(value =>
-          typeof value === 'number' && option.id === value ||
+          typeof value === 'number' && option.value === value ||
           typeof value === 'string' && option.text === value
         );
 

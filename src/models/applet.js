@@ -13,7 +13,6 @@ export default class Applet {
     this.json = data;
 
     this.timestamp = Date.now();
-    // this.user = data.user; //TODO
     this.schemaId = data.id;
     this.id = data.id;
     this.name = data.displayName;
@@ -76,7 +75,7 @@ export default class Applet {
     let alertsHTML = '', scoresHTML = '';
 
     for (const response of responses) {
-      const activity = this.activities.find(activity => activity.id == response.activityId);
+      const activity = this.activities.find(activity => activity.id === response.activityId);
 
       if (activity && activity.allowSummary) {
         alerts = alerts.concat(activity.getAlertsForSummary(response.data));
@@ -142,7 +141,7 @@ export default class Applet {
     }
     return {
       body: this.applyInlineStyles(convertMarkdownToHtml(emailBody)),
-      subject: this.getSubject(activityId, activityFlowId, responses),
+      subject: this.getSubject(activityId, activityFlowId, responses, user),
       attachment: this.getPDFFileName(activityId, activityFlowId, responses),
       emailRecipients: this.reportConfigs.emailRecipients
     }
@@ -159,10 +158,10 @@ export default class Applet {
     return row ? row.key : '';
   }
 
-  getPDFFileName (activityId, activityFlowId, responses) {
+  getPDFFileName (activityId, activityFlowId, responses, user) {
     const activityFlow = this.activityFlows.find(flow => flow.id === activityFlowId);
     const activity = this.activities.find(activity => activity.id === activityId);
-    const userId = this.user.MRN || this.user.email;
+    const userId = user.MRN || user.email;
     const configs = this.reportConfigs;
 
     let pdfName = 'REPORT';
@@ -183,6 +182,7 @@ export default class Applet {
     return pdfName;
   }
 
+  //TODO
   getReportIncludeItem (activity, activityFlow, responses) {
     let includeActivity = null, includeItem = null;
     if (activityFlow) {
@@ -202,10 +202,10 @@ export default class Applet {
     return includeItem.name;
   }
 
-  getSubject (activityId, activityFlowId, responses) {
+  getSubject (activityId, activityFlowId, responses, user) {
     const activityFlow = this.activityFlows.find(flow => flow.id === activityFlowId);
     const activity = this.activities.find(activity => activity.id === activityId);
-    const userId = this.user.MRN || this.user.email;
+    const userId = user.MRN || user.email;
     const configs = this.reportConfigs;
 
     let subject = 'Report';

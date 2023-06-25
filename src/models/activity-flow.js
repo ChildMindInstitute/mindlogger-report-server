@@ -11,6 +11,7 @@ export default class ActivityFlow {
 
     this.activities = activities;
 
-    this.reportIncludeItem = true; //data.isSingleReport;
+    // TODO const [activityName, itemName] = activityFlow.reportIncludeItem.split('/');
+    this.reportIncludeItem = ''; //TODO
   }
 }

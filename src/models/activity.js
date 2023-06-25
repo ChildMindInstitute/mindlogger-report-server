@@ -1,7 +1,6 @@
 import reprolib from './reprolib.js';
 import _ from 'lodash';
 import Item from './item.js';
-import { Parser } from 'expr-eval';
 import convertMarkdownToHtml from '../markdown-utils.js';
 import fs from 'fs';
 import Mimoza from "mimoza";
@@ -16,7 +15,6 @@ export default class Activity {
     this.name = data.name;
     this.splashImage = data.splashScreen;
 
-    //TODO items order
     this.items = items.map(item => {
       return new Item(item);
     });
@@ -26,20 +24,33 @@ export default class Activity {
     //
     // const allowList = _.get(data, [reprolib.allow, 0, '@list']).map(item => item['@id']);
     // this.allowSummary = !allowList.some((item) => item.includes('disable_summary'))
-    this.allowSummary = true;
+
+    //TODO: activity.items.find(item => item.name == activity.reportIncludeItem);
+    this.reportIncludeItem = ''; //TODO  data.scoresAndReports?.generateReport || false;
+
+    this.allowSummary = data.scoresAndReports?.showScoreSummary || false;
+    this.reportScores = data.scoresAndReports?.scores || [];
+    for (const report of this.reportScores) {
+      report.conditionalLogic = report.conditionalLogic.map(conditional => this.patchConditionalInScoreReport(conditional, report));
+    }
+
+    this.reportSections = data.scoresAndReports?.sections || [];
+    for (const report of this.reportSections) {
+      report.conditionalLogic = this.patchConditionalInReport(report.conditionalLogic, this.items);
+    }
+
   }
 
   extractReports (reports) {
     return reports.map((report) => {
       const dataType = _.get(report, [reprolib.options.dataType, 0, '@id']);
       const message = _.get(report, [reprolib.message, 0, '@value']);
-      const printItems = _.get(report, [reprolib.printItems, 0, '@list'], []).map(item => item['@value']);
 
       const data = {
         id: report[reprolib.id],
         prefLabel: _.get(report, [reprolib.prefLabel, 0, '@value']),
         message,
-        printItems,
+        itemsPrint: report.itemsPrint,
         dataType,
       }
 
@@ -49,13 +60,12 @@ export default class Activity {
           jsExpression: _.get(report, [reprolib.jsExpression, 0, '@value']),
           conditionals: _.get(report, [reprolib.conditionals, 0, '@list'], []).map((conditional) => {
             const message = _.get(conditional, [reprolib.message, 0, '@value']);
-            const printItems = _.get(conditional, [reprolib.printItems, 0, '@list']).map(item => item['@value']);
 
             return {
               prefLabel: _.get(conditional, [reprolib.prefLabel, 0, '@value']),
               id: conditional[reprolib.id],
               message,
-              printItems,
+              itemsPrint: conditional.itemsPrint,
               flagScore: _.get(conditional, [reprolib.flagScore, 0, '@value']),
               isVis: _.get(conditional, [reprolib.isVis, 0, '@value']),
             }
@@ -73,40 +83,83 @@ export default class Activity {
     const scores = {}, maxScores = {};
 
     for (let i = 0; i < responses.length; i++) {
-      const response = responses[i];
+      const response = responses[i];    
       const item = this.items[i];
 
-      scores[item.schemaId] = item.getScore(response);
-      maxScores[item.schemaId] = item.getMaxScore();
+      scores[item.name] = item.getScore(response);
+      maxScores[item.name] = item.getMaxScore();
     }
 
     // calculate scores first
-    for (const report of this.reports) {
-      if (report.dataType == 'score') {
-        const reportScore = this.evaluateExpression(report.jsExpression, scores);
-        const reportMaxScore = this.evaluateExpression(report.jsExpression, maxScores);
+    for (const report of this.reportScores) {
+      const reportMaxScore = _.sum(_.values(scores));
+      const reportScore = _.sum(_.values(maxScores));
 
-        maxScores[report.id] = reportMaxScore;
+      maxScores[report.id] = reportMaxScore;
 
-        switch (report.outputType) {
-          case 'cumulative':
-            scores[report.id] = reportScore;
-            break;
-          case 'percentage':
-            scores[report.id] = Number(!reportMaxScore ? 0 : reportScore / reportMaxScore * 100).toFixed(2);
-            break;
-          case 'average':
-            scores[report.id] = Number(reportScore / report.jsExpression.split('+').length).toFixed(2);
-            break;
-        }
+      switch (report.calculationType) {
+        case 'sum':
+          scores[report.id] = reportScore;
+          break;
+        case 'percentage':
+          scores[report.id] = Number(!reportMaxScore ? 0 : reportScore / reportMaxScore * 100).toFixed(2);
+          break;
+        case 'average':
+          scores[report.id] = Number(reportScore / report.jsExpression.split('+').length).toFixed(2);
+          break;
+      }
 
-        for (const conditional of report.conditionals) {
-          scores[conditional.id] = this.testVisibility(conditional.isVis, scores)
-        }
+      for (const conditional of report.conditionalLogic) {
+        scores[conditional.id] = this.testVisibility(conditional, scores)
       }
     }
 
     return scores;
+  }
+
+  patchConditionalInScoreReport(conditional, report) {
+    const condClone = _.cloneDeep(conditional);
+
+    for (const condition of condClone.conditions) {
+      if (report.id.endsWith(condition.itemName)) {
+        condition.itemName = report.id;
+      }
+    }
+    return condClone;
+  }
+
+  patchConditionalInReport(conditional, items) {
+    function lookupItemName(itemId) {
+      for (const item of items) {
+        if (item.id === itemId) {
+          return item.name;
+        }
+      }
+      return null;
+    }
+
+    function lookupOptionValue(itemId, optionId) {
+      for (const item of items) {
+        if (item.id === itemId) {
+          const option = item.options.find(o => o.id === optionId)
+          return option ? option.value - 1 : null;
+        }
+      }
+      return null;
+    }
+
+    const condClone = _.cloneDeep(conditional);
+
+    for (const condition of condClone.conditions) {
+      if (['EQUAL_TO_OPTION', 'NOT_EQUAL_TO_OPTION'].includes(condition.type)) {
+        const itemId = condition.itemName;
+        condition.itemName = lookupItemName(itemId);
+        if (condition.payload) {
+          condition.payload.optionId = lookupOptionValue(itemId, condition.payload.optionId);
+        }
+      }
+    }
+    return condClone;
   }
 
   scoresToValues(scores, responses) {
@@ -115,8 +168,8 @@ export default class Activity {
     for (let i = 0; i < responses.length; i++) {
       const response = responses[i];
       const item = this.items[i];
-      values[item.schemaId] = item.getVariableValue(response);
-      rawValues[item.schemaId] = response?.value;
+      values[item.name] = item.getVariableValue(response);
+      rawValues[item.name] = response?.value;
     }
     return [values, rawValues];
   }
@@ -128,26 +181,27 @@ export default class Activity {
     let markdown = '';
 
     // evaluate isVis field and get markdown
-    for (const report of this.reports) {
-      if (report.dataType == 'section') {
-        const isVis = this.testVisibility(report.isVis, rawValues);
+    for (const report of this.reportScores) {
+      markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
+      markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
+
+
+      for (const conditional of report.conditionalLogic) {
+        const isVis = scores[conditional.id];
 
         if (isVis) {
-          markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
-          markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.printItems, responses), values, user, now) + '\n';
+          markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user, now)) + '\n';
+          markdown += this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user, now) + '\n';
         }
-      } else {
+      }
+    }
+
+    for (const report of this.reportSections) {
+      const isVis = this.testVisibility(report.conditionalLogic, rawValues);
+
+      if (isVis) {
         markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
-        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.printItems, responses), values, user, now) + '\n';
-
-        for (const conditional of report.conditionals) {
-          const isVis = scores[conditional.id];
-
-          if (isVis) {
-            markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user, now)) + '\n';
-            markdown += this.replaceValuesInMarkdown(this.getPrintedItems(conditional.printItems, responses), values, user, now) + '\n';
-          }
-        }
+        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
       }
     }
 
@@ -167,24 +221,22 @@ export default class Activity {
     let scores = this.evaluateScores(responses);
 
     let result = [];
-    for (const report of this.reports) {
-      if (report.dataType == 'score') {
-        let flagScore = false;
+    for (const report of this.reportScores) {
+      let flagScore = false;
 
-        for (const conditional of report.conditionals) {
-          const isVis = this.testVisibility(conditional.isVis, scores);
-          if (isVis && conditional.flagScore) {
-            flagScore = true;
-            break;
-          }
+      for (const conditional of report.conditionalLogic) {
+        const isVis = this.testVisibility(conditional, scores);
+        if (isVis && conditional.flagScore) {
+          flagScore = true;
+          break;
         }
-
-        result.push({
-          prefLabel: report.prefLabel,
-          value: scores[report.id],
-          flagScore
-        })
       }
+
+      result.push({
+        prefLabel: report.name,
+        value: scores[report.id],
+        flagScore
+      })
     }
 
     return result;
@@ -196,7 +248,7 @@ export default class Activity {
     if (!items) return markdown;
 
     for (const itemId of items) {
-      const index = this.items.findIndex(item => item.schemaId == itemId);
+      const index = this.items.findIndex(item => item.id === itemId);
 
       if (index >= 0) {
         markdown += this.items[index].getPrinted(responses[index]) + '\n';
@@ -232,90 +284,65 @@ export default class Activity {
     return string.replace(/\$/g, '$$$$');
   }
 
-  evaluateExpression (jsExpression, scores) {
-    const parser = new Parser();
-
-    try {
-      let expression = jsExpression;
-
-      for (const variableName in scores) {
-        expression = expression.replace(
-          new RegExp(`\\b${variableName}\\b`, 'g'), scores[variableName]
-        );
+  testVisibility ({conditions, match}, scores) {
+    function checkCondition({type, payload}, scoreOrValue) {
+      switch (type) {
+        case 'BETWEEN':
+          return payload.minValue <= scoreOrValue && payload.maxValue >= scoreOrValue;
+        case 'OUTSIDE_OF':
+          return payload.minValue > scoreOrValue || payload.maxValue < scoreOrValue;
+        case 'EQUAL_TO_OPTION':
+          return scoreOrValue === payload.optionId; //actually value
+        case 'NOT_EQUAL_TO_OPTION':
+          return scoreOrValue !== payload.optionId; //actually value
+        case 'GREATER_THAN':
+          return scoreOrValue > payload.value;
+        case 'LESS_THAN':
+          return scoreOrValue < payload.value;
+        case 'EQUAL':
+          return scoreOrValue == payload.value;
+        case 'NOT_EQUAL':
+          return scoreOrValue != payload.value;
+        default:
+          return false;
       }
-
-      // Run the expression
-      const expr = parser.parse(expression);
-
-      const result = expr.evaluate();
-      return result;
-    } catch (error) {
-      console.log('error is', error);
-      return 0;
-    }
-  }
-
-  testVisibility (testExpression = true, scores = {}) {
-    // Short circuit for common testExpression
-    if (testExpression === true || testExpression === 'true') {
-      return true;
     }
 
-    const parser = new Parser({
-      logical: true,
-      comparison: true,
-    });
-
-    let expression = testExpression
-      .replace(/&&/g, ' and ')
-      .replace(/\|\|/g, ' or ')
-      .replace('===', '==')
-      .replace('!==', '!=')
-      .replace(/(\w+\.includes)/g, 'arrayIncludes($&')
-      .replace(/.includes\(/g, ', ')
-      .replace(/!arrayIncludes/g, 'arrayNotIncludes');
-
-    // Custom function to test if element is present in array
-    const arrayIncludes = (array, element) => {
-      if (array === undefined || array === null) {
-        return false;
-      }
-      if (!Array.isArray(array)) {
-        return array === element;
-      }
-      for (let i = 0; i < array.length; i += 1) {
-        if (array[i] === element) {
+    function checkAny(results) {
+      for (const result of results) {
+        if (result) {
           return true;
         }
       }
       return false;
-    };
+    }
 
-    const arrayNotIncludes = (array, element) => {
-      if (array === undefined || array === null) {
-        return false;
-      }
-      for (let i = 0; i < array.length; i += 1) {
-        if (array[i] === element) {
+    function checkAll(results) {
+      for (const result of results) {
+        if (!result) {
           return false;
         }
       }
-      return true;
-    };
+      return results.length > 0;
+    }
 
-    parser.functions.arrayIncludes = arrayIncludes;
-    parser.functions.arrayNotIncludes = arrayNotIncludes;
-
-    try {
-      const expr = parser.parse(expression);
-      const scoresForCheck = {};
-      for (const key in scores) {
-          scoresForCheck[key] = isFloat(scores[key]) ? parseFloat(scores[key]) : scores[key];
+    const results = [];
+    for (const condition of conditions) {
+      const key = condition.itemName;
+      if (key in scores) {
+        const score = isFloat(scores[key]) ? parseFloat(scores[key]) : scores[key];
+        results.push(checkCondition(condition, score));
+      } else {
+        results.push(false);
       }
-      const result = expr.evaluate(scoresForCheck);
-      return !!result; // Cast the result to true or false
-    } catch (error) {
-      return true; // Default to true if we can't parse the expression
+    }
+    switch (match) {
+      case 'all':
+        return checkAll(results);
+      case 'any':
+        return checkAny(results);
+      default:
+        return false;
     }
   }
 
@@ -372,11 +399,11 @@ export default class Activity {
     for (const report of reports) {
       if (report.dataType == 'section') {
         markdown += report.message + '\n';
-        markdown += activity.getPrintedItems(report.printItems, responses) + '\n';
+        markdown += activity.getPrintedItems(report.itemsPrint, responses) + '\n';
       } else {
         for (const conditional of report.conditionals) {
           markdown += conditional.message + '\n';
-          markdown += activity.getPrintedItems(report.printItems, responses) + '\n';
+          markdown += activity.getPrintedItems(report.itemsPrint, responses) + '\n';
         }
       }
     }

@@ -4,7 +4,7 @@ import { authenticate } from './middleware/index.js';
 import convertMarkdownToHtml from './markdown-utils.js';
 import cors from 'cors';
 import { convertHtmlToPdf, encryptPDF, getCurrentCount, watermarkPDF } from './pdf-utils.js';
-import {fetchApplet, uploadPDF, getAccountPermissions, fetchActivity} from './mindlogger-api.js';
+import {fetchApplet, fetchActivity} from './mindlogger-api.js';
 import { Applet, Activity } from './models/index.js';
 import { verifyPublicKey, decryptData } from './encryption.js';
 import { setAppletPassword, getAppletPassword } from './db.js';
@@ -63,8 +63,9 @@ app.post('/send-pdf-report', async (req, res) => {
   const token = req.headers.token;
 
   try {
+    const user = {MRN: 'test', email: 'test@gmail.com', firstName: 'first', lastName: 'last', nickName: 'nick'};
     const responses = decryptData(req.body.responses);
-    // responses[0]['activityId'] = '3b5bc3bd-0d00-41ac-941b-de57b5a93d03'
+    // responses[0]['activityId'] = '0656ccb3-3b25-4197-be8e-c8479599a12c' //EPDS 2 out of 2
     const now = req.body.now;
 
     const appletJSON = await fetchApplet(token, appletId);
@@ -73,29 +74,17 @@ app.post('/send-pdf-report', async (req, res) => {
     }
     const applet = new Applet(appletJSON);
 
-    // const appletJSON = await fetchApplet(token, appletId);
-    // const applet = new Applet(appletJSON);
     const pdfPassword = await applet.getPDFPassword();
-
     if (!pdfPassword) {
       throw new Error('invalid password');
     }
-
-
-    // if (appletId) { // verify applet password
-
-    //   if (!await applet.getPDFPassword(appletId)) {
-    //     throw new Error('invalid applet password');
-    //   }
-    // }
-
 
     let html = '', pageBreak = false;
     let splashPage = undefined;
 
     html += applet.getSummary(responses);
 
-    const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses);
+    const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses, user);
     const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}.pdf`;
     html += Activity.getReportStyles();
     
@@ -107,10 +96,10 @@ app.post('/send-pdf-report', async (req, res) => {
     pageCount = watermarkStart;
 
     for (const response of responses) {
-      const activity = applet.activities.find(activity => activity.id == response.activityId);
+      const activity = applet.activities.find(activity => activity.id === response.activityId);
 
       if (activity) {
-        const markdown = activity.evaluateReports(response.data, applet.user, now);
+        const markdown = activity.evaluateReports(response.data, user, now);
         splashPage = Activity.getSplashImageHTML(pageBreak, activity);
         
         html += splashPage + '\n';
@@ -134,7 +123,7 @@ app.post('/send-pdf-report', async (req, res) => {
       `<div class="container">${html}</div>`,
       filename
     )
-    
+
     const watermarkURL = Applet.getAppletWatermarkURL(applet);
     
     await watermarkPDF(filename, watermarkURL, watermarkStart, skipPages);
@@ -144,10 +133,11 @@ app.post('/send-pdf-report', async (req, res) => {
       pdfPassword
     );
 
-    // send pdf to backend server
-    await uploadPDF(token, appletId, responseId, applet.getEmailConfigs(activityId, activityFlowId, responses, applet.user, now), filename);
-
-    res.status(200).json({ 'message': 'success' });
+    const pdf = fs.createReadStream(filename);
+    pdf.on('end', function() {
+      fs.unlink(filename, () => {});
+    });
+    pdf.pipe(res);
   } catch (e) {
     console.log('error', e);
 
