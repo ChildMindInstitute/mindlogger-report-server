@@ -1,15 +1,15 @@
 import 'dotenv/config';
 import express from 'express';
-import { authenticate } from './middleware/index.js';
-import convertMarkdownToHtml from './markdown-utils.js';
+import { authenticate } from './middleware';
+import convertMarkdownToHtml from './markdown-utils';
 import cors from 'cors';
-import { convertHtmlToPdf, encryptPDF, getCurrentCount, watermarkPDF } from './pdf-utils.js';
-import {fetchApplet, fetchActivity} from './mindlogger-api.js';
-import { Applet, Activity } from './models/index.js';
-import { verifyPublicKey, decryptData } from './encryption.js';
-import { setAppletPassword, getAppletPassword } from './db.js';
-import { v4 as uuidv4 } from 'uuid';
+import { convertHtmlToPdf, encryptPDF, getCurrentCount, watermarkPDF } from './pdf-utils';
+import {fetchApplet, fetchActivity} from './mindlogger-api';
+import { Applet, Activity } from './models';
+import { verifyPublicKey, decryptData } from './encryption';
+import { setAppletPassword, getAppletPassword } from './db';
 import fs from 'fs';
+import {IResponse} from "./interfaces";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -19,57 +19,61 @@ app.use(cors());
 app.use(express.json());
 app.use(authenticate);
 
-app.get('/', async (req, res) => {
-  res.status(200).send('MindLogger Report Server is UP');
+app.get('/', async (req: express.Request, res: express.Response) => {
+  res.status(200).send('MindLogger Report Server is UP (typescript)');
 });
 
-app.put('/preview-report', async (req, res) => {
-  try {
-    const reports = req.body.reports;
-    const items = req.body.items;
-    const images = req.body.images;
+// app.put('/preview-report', async (req: Request, res: Response) => {
+//   try {
+//     const reports = req.body.reports;
+//     const items = req.body.items;
+//     const images = req.body.images;
+//
+//     const filename = `${outputsFolder}/previews/${uuidv4()}.pdf`
+//
+//     let html = '';
+//
+//     html += Activity.getSplashImageHTML(false, { splashImage: images.splash }) + '\n';
+//     html += convertMarkdownToHtml(Activity.getReportPreview(reports, items)) + '\n';
+//     html += Activity.getReportFooter() + '\n';
+//     html += Activity.getReportStyles();
+//
+//     await convertHtmlToPdf(
+//       `<div class="container">${html}</div>`,
+//       filename
+//     )
+//
+//     const pdf = fs.createReadStream(filename);
+//     pdf.on('end', function() {
+//       fs.unlink(filename, () => {});
+//     });
+//     pdf.pipe(res);
+//   } catch (e) {
+//     res.status(403).json({ 'message': e?.message || 'invalid request data' });
+//   }
+// })
 
-    const filename = `${outputsFolder}/previews/${uuidv4()}.pdf`
-
-    let html = '';
-
-    html += Activity.getSplashImageHTML(false, { splashImage: images.splash }) + '\n';
-    html += convertMarkdownToHtml(Activity.getReportPreview(reports, items)) + '\n';
-    html += Activity.getReportFooter() + '\n';
-    html += Activity.getReportStyles();
-
-    await convertHtmlToPdf(
-      `<div class="container">${html}</div>`,
-      filename
-    )
-
-    const pdf = fs.createReadStream(filename);
-    pdf.on('end', function() {
-      fs.unlink(filename, () => {});
-    });
-    pdf.pipe(res);
-  } catch (e) {
-    res.status(403).json({ 'message': e?.message || 'invalid request data' });
-  }
-})
-
-app.post('/send-pdf-report', async (req, res) => {
+app.post('/send-pdf-report', async (req: express.Request, res: express.Response) => {
   const {
     appletId,
     activityId,
     activityFlowId,
-    responseId,
-  } = req.query;
+  } = req.query as {appletId: string, activityId: string, activityFlowId: string|null};
   const token = req.headers.token;
 
   try {
+    if (!activityId) {
+      throw new Error('activityId is required');
+    }
     const user = {MRN: 'test', email: 'test@gmail.com', firstName: 'first', lastName: 'last', nickName: 'nick'};
-    const responses = decryptData(req.body.responses);
+    const responses = decryptData(req.body.responses) as IResponse[];
     // responses[0]['activityId'] = '0656ccb3-3b25-4197-be8e-c8479599a12c' //EPDS 2 out of 2
     const now = req.body.now;
 
+    // @ts-ignore
     const appletJSON = await fetchApplet(token, appletId);
     for (let i = 0; i < appletJSON.activities.length; i++) {
+      // @ts-ignore
       appletJSON.activities[i] = await fetchActivity(token, appletJSON.activities[i].id);
     }
     const applet = new Applet(appletJSON);
@@ -145,7 +149,7 @@ app.post('/send-pdf-report', async (req, res) => {
   }
 })
 
-app.put('/verify', async (req, res) => {
+app.put('/verify', async (req: express.Request, res: express.Response) => {
   const publicKey = req.body.publicKey;
   if (verifyPublicKey(publicKey)) {
     res.status(200).json({
@@ -156,7 +160,7 @@ app.put('/verify', async (req, res) => {
   }
 })
 
-app.post('/set-password', async (req, res) => {
+app.post('/set-password', async (req: express.Request, res: express.Response) => {
   const token = req.headers.token;
   const password = req.body.password;
   const appletId = req.body.appletId;

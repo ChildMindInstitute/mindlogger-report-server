@@ -2,16 +2,16 @@ import sqlite3 from 'sqlite3';
 
 const KEYS_FOLDER = process.env.KEYS_FOLDER || 'keys';
 const PASSWORD_FILE = `${KEYS_FOLDER}/passwords`;
-let db = null;
+let db: sqlite3.Database;
 
-const runQuery = (db, query, args) => new Promise((resolve, reject) => {
-  db.run(query, args, (err, rows) => {
+const runQuery = (db: sqlite3.Database, query: string, args: any = null) => new Promise((resolve, reject) => {
+  db.run(query, args, (err: Error|null, rows: any[]) => {
     if (err) reject(err);
     resolve(rows);
   })
 })
 
-const initDB = () => new Promise(resolve => {
+const initDB = () => new Promise<void>(resolve => {
   const sqlite = sqlite3.verbose();
   db = new sqlite.Database(PASSWORD_FILE);
 
@@ -28,12 +28,12 @@ const initDB = () => new Promise(resolve => {
   })
 })
 
-export const deleteAppletPassword = async (appletId, key) => {
+export const deleteAppletPassword = async (appletId: string, key: string) => {
   if (!db) await initDB();
   await runQuery(db, 'DELETE from pdf_keys where appletId=? and key=?', [appletId, key]);
 }
 
-export const setAppletPassword = async (appletId, password) => {
+export const setAppletPassword = async (appletId: string, password: string) => {
   if (!db) await initDB();
 
   const row = await getAppletPassword(appletId)
@@ -49,7 +49,7 @@ export const setAppletPassword = async (appletId, password) => {
   }
 }
 
-export const getAppletPassword = (appletId) => {
+export const getAppletPassword = (appletId: string): Promise<PdfKey|null> => {
   let preprocess = Promise.resolve();
   if (!db) preprocess = initDB();
 
@@ -59,6 +59,11 @@ export const getAppletPassword = (appletId) => {
       resolve(row);
     })
   }))
+}
+
+export interface PdfKey {
+  appletId: string;
+  key: string;
 }
 
 initDB();

@@ -1,15 +1,27 @@
-import reprolib from './reprolib.js';
-import Activity from './activity.js';
-import ActivityFlow from './activity-flow.js';
-import convertMarkdownToHtml from '../markdown-utils.js';
+import Activity from './activity';
+import ActivityFlow from './activity-flow';
+// import convertMarkdownToHtml from '../markdown-utils';
 import moment from "moment-timezone";
-import { getAppletPassword } from '../db.js';
-import _ from 'lodash';
+import { getAppletPassword } from '../db';
+import {IApplet, IAppletEncryption, IResponse, IUser} from "../interfaces";
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
 
 export default class Applet {
-  constructor (data) {
+  public json: IApplet;
+  public timestamp: number;
+  public schemaId: string;
+  public id: string;
+  public name: string;
+  public description: string;
+  public image: string;
+  public watermark: string;
+  public encryption: IAppletEncryption;
+  public reportConfigs: any;
+  public activities: Activity[];
+  public activityFlows: ActivityFlow[];
+
+  constructor (data: IApplet) {
     this.json = data;
 
     this.timestamp = Date.now();
@@ -26,15 +38,15 @@ export default class Applet {
     });
 
     // parse activity flows
-    this.activityFlows = data.activityFlows.map(item => {
-      return new ActivityFlow(item, this.activities);
+    this.activityFlows = data.activityFlows.map(flow => {
+      return new ActivityFlow(flow, this.activities);
     });
 
     this.reportConfigs = this.extractReportConfigs(data);
     this.encryption = data?.encryption || null;
   }
 
-  extractReportConfigs (data) {
+  extractReportConfigs (data: IApplet) {
     return {
       serverIp: data.reportServerIp,
       publicEncryptionKey: data.reportPublicKey,
@@ -45,7 +57,7 @@ export default class Applet {
     }
   }
 
-  static getAppletWatermarkHTML (applet) {
+  static getAppletWatermarkHTML (applet: Applet): string {
     if (!applet.watermark) {
       return '';
     }
@@ -61,7 +73,7 @@ export default class Applet {
 
     return imageHTML;
   }
-  static getAppletWatermarkURL(applet) {
+  static getAppletWatermarkURL(applet: Applet): string {
     if (!applet.watermark) {
         return '';
       }
@@ -70,8 +82,8 @@ export default class Applet {
   }
 
 
-  getSummary (responses) {
-    let alerts = [];
+  getSummary (responses: IResponse[]): string {
+    let alerts: any[] = []; //TODO - type
     let alertsHTML = '', scoresHTML = '';
 
     for (const response of responses) {
@@ -129,38 +141,40 @@ export default class Applet {
     return `<div class="report-summary">${output}</div>`
   }
 
-  getEmailConfigs (activityId, activityFlowId, responses, user, now) {
-    let emailBody = this.reportConfigs.emailBody;
-    for (const response of responses) {
-      const activity = this.activities.find(activity => activity.id === response.activityId);
-      const scores = activity.evaluateScores(response.data);
-      const [values, rawValues] = activity.scoresToValues(scores, response.data);
-      const addActivityPrefix = key => `${activity.name}/${key}`;
-      const renameKeys = o => Object.keys(o).reduce((acc, k) => ({...acc, [addActivityPrefix(k)]: o[k] }), {});
-      emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), user, now);
-    }
-    return {
-      body: this.applyInlineStyles(convertMarkdownToHtml(emailBody)),
-      subject: this.getSubject(activityId, activityFlowId, responses, user),
-      attachment: this.getPDFFileName(activityId, activityFlowId, responses),
-      emailRecipients: this.reportConfigs.emailRecipients
-    }
-  }
+  // getEmailConfigs (activityId: string, activityFlowId: string, responses, user, now) {
+  //   let emailBody = this.reportConfigs.emailBody;
+  //   for (const response of responses) {
+  //     const activity = this.activities.find(activity => activity.id === response.activityId);
+  //     const scores = activity.evaluateScores(response.data);
+  //     const [values, rawValues] = activity.scoresToValues(scores, response.data);
+  //     const addActivityPrefix = key => `${activity.name}/${key}`;
+  //     const renameKeys = o => Object.keys(o).reduce((acc, k) => ({...acc, [addActivityPrefix(k)]: o[k] }), {});
+  //     emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), user, now);
+  //   }
+  //   return {
+  //     body: this.applyInlineStyles(convertMarkdownToHtml(emailBody)),
+  //     subject: this.getSubject(activityId, activityFlowId, responses, user),
+  //     attachment: this.getPDFFileName(activityId, activityFlowId, responses),
+  //     emailRecipients: this.reportConfigs.emailRecipients
+  //   }
+  // }
+  // applyInlineStyles (html) {
+  //   return html.replace(/<tr>/g, '<tr style="background-color: #fff; border-top: 1px solid #c6cbd1;">')
+  //           .replace(/<th>/g, `<th style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px; font-weight: 600;">`)
+  //           .replace(/<td>/g, `<td style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px;">`)
+  // }
 
-  applyInlineStyles (html) {
-    return html.replace(/<tr>/g, '<tr style="background-color: #fff; border-top: 1px solid #c6cbd1;">')
-            .replace(/<th>/g, `<th style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px; font-weight: 600;">`)
-            .replace(/<td>/g, `<td style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px;">`)
-  }
-
-  async getPDFPassword (appletId = '') {
+  async getPDFPassword (appletId: string = ''): Promise<string> {
     const row = await getAppletPassword(appletId || this.id);
     return row ? row.key : '';
   }
 
-  getPDFFileName (activityId, activityFlowId, responses, user) {
-    const activityFlow = this.activityFlows.find(flow => flow.id === activityFlowId);
+  getPDFFileName (activityId: string, activityFlowId: string|null, responses: IResponse[], user: IUser): string {
+    const activityFlow = this.activityFlows.find(flow => flow.id === activityFlowId) ?? null;
     const activity = this.activities.find(activity => activity.id === activityId);
+    if (!activity) {
+      throw new Error('unable to find activity');
+    }
     const userId = user.MRN || user.email;
     const configs = this.reportConfigs;
 
@@ -183,7 +197,7 @@ export default class Applet {
   }
 
   //TODO
-  getReportIncludeItem (activity, activityFlow, responses) {
+  getReportIncludeItem (activity: Activity, activityFlow: ActivityFlow|null, responses: IResponse[]): string {
     let includeActivity = null, includeItem = null;
     if (activityFlow) {
       const [activityName, itemName] = activityFlow.reportIncludeItem.split('/');
@@ -202,9 +216,12 @@ export default class Applet {
     return includeItem.name;
   }
 
-  getSubject (activityId, activityFlowId, responses, user) {
-    const activityFlow = this.activityFlows.find(flow => flow.id === activityFlowId);
+  getSubject (activityId: string, activityFlowId: string, responses: IResponse[], user: IUser): string {
+    const activityFlow = this.activityFlows.find(flow => flow.id === activityFlowId) ?? null;
     const activity = this.activities.find(activity => activity.id === activityId);
+    if (!activity) {
+      throw new Error('unable to find activity');
+    }
     const userId = user.MRN || user.email;
     const configs = this.reportConfigs;
 
@@ -220,7 +237,6 @@ export default class Applet {
     if (itemName) {
       subject += ` [${itemName}]`
     }
-
     return subject;
   }
 }

@@ -1,18 +1,29 @@
 import markdownIt from 'markdown-it';
 
 import emoji from 'markdown-it-emoji';
-import sub from 'markdown-it-sub';
-import sup from 'markdown-it-sup';
-import deflist from 'markdown-it-deflist';
-import abbr from 'markdown-it-abbr';
 import footnote from 'markdown-it-footnote';
-import insert from 'markdown-it-ins';
-import mark from 'markdown-it-mark';
-import taskLists from 'markdown-it-task-lists';
 import container from 'markdown-it-container';
+// @ts-ignore
+import sub from 'markdown-it-sub';
+// @ts-ignore
+import sup from 'markdown-it-sup';
+// @ts-ignore
+import deflist from 'markdown-it-deflist';
+// @ts-ignore
+import abbr from 'markdown-it-abbr';
+// @ts-ignore
+import insert from 'markdown-it-ins';
+// @ts-ignore
+import mark from 'markdown-it-mark';
+// @ts-ignore
+import taskLists from 'markdown-it-task-lists';
+// @ts-ignore
 import miip from 'markdown-it-images-preview';
+// @ts-ignore
 import html5Embed from 'markdown-it-html5-embed';
+// @ts-ignore
 import markdownItImSize from 'markdown-it-imsize';
+
 
 const md = markdownIt({
   html: true,        // Enable HTML tags in source
@@ -45,7 +56,7 @@ md.use(emoji)
       }
     }).use(markdownItImSize)
 
-const convertMarkdownToHtml = (markdown, splashPage, skipPages) => {
+const convertMarkdownToHtml = (markdown: string, splashPage: string = '', skipPages: number[] = []): string => {
   const html = md.render(markdown);
   if(splashPage=='' && skipPages.length==0){
     return `<div style="page-break-before: always}">${html}</div>`;

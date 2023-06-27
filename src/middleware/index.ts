@@ -1,6 +1,7 @@
-import { login } from '../mindlogger-api.js';
+import { login } from '../mindlogger-api';
+import express from 'express';
 
-export const authenticate = async (req, res, next) => {
+export const authenticate = async (req: express.Request, res: express.Response, next: any) => {
   try {
     if (!isHealthCheck(req)) {
       await login(req.headers.token);
@@ -11,6 +12,6 @@ export const authenticate = async (req, res, next) => {
   }
 }
 
-function isHealthCheck(req) {
+function isHealthCheck(req: express.Request) {
   return req.method === 'GET' && req.url === '/';
 }

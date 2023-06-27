@@ -1,10 +1,22 @@
-import reprolib from './reprolib.js';
 import _ from 'lodash';
-import convertMarkdownToHtml from '../markdown-utils.js';
+import convertMarkdownToHtml from '../markdown-utils';
+import {IActivityItem, IActivityItemOption, IResponseItem} from "../interfaces";
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
 export default class Item {
-  constructor (data = {}) {
+  public json: any;
+  public schemaId: string;
+  public id: string;
+  public name: string;
+  public question: string;
+  public inputType: string;
+  public multipleChoice: string;
+  public scoring: boolean;
+  public options: IActivityItemOption[];
+  public minValue: number;
+  public maxValue: number;
+
+  constructor (data: IActivityItem) {
     this.json = data;
 
     this.schemaId = data.id;
@@ -22,7 +34,7 @@ export default class Item {
     // this.maxValue = _.get(data, [reprolib.responseOptions, 0, reprolib.maxValue, 0, '@value']) || '';
   }
 
-  patchOptions(options) {
+  patchOptions(options: IActivityItemOption[]): IActivityItemOption[] {
     const clonedOptions = _.cloneDeep(options);
     if (!clonedOptions || clonedOptions.length === 0) {
       return clonedOptions;
@@ -35,15 +47,15 @@ export default class Item {
     return clonedOptions;
   }
 
-  static getItem (itemPreview) {
-    const item = new Item();
-
-    Object.assign(item, itemPreview);
-    item.scoring = true;
-    item.schemaId = item.name;
-
-    return item;
-  }
+  // static getItem (itemPreview) {
+  //   const item = new Item();
+  //
+  //   Object.assign(item, itemPreview);
+  //   item.scoring = true;
+  //   item.schemaId = item.name;
+  //
+  //   return item;
+  // }
 
   // extractResponseOptions (options, inputType) {
   //   if (
@@ -67,7 +79,7 @@ export default class Item {
   //   return null;
   // }
 
-  convertResponseToArray (response) {
+  convertResponseToArray (response: IResponseItem|number|string): any[] {
     if (response === null) {
       return [null];
     }
@@ -85,7 +97,7 @@ export default class Item {
     return response;
   }
 
-  getScore (value) {
+  getScore(value: IResponseItem): number {
     if (value === null || this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
       return 0;
     }
@@ -104,7 +116,7 @@ export default class Item {
     return totalScore;
   }
 
-  matchOption(value) {
+  matchOption(value: number|string): IActivityItemOption|null {
     let option = null;
     if (typeof value === 'number') {
       option = this.options.find(option => option.value === value);
@@ -112,11 +124,12 @@ export default class Item {
     if (typeof value === 'string') {
       option = this.options.find(option => option.id === value || option.text === value);
     }
-    return option;
+    return option ? option : null;
   }
 
   //TODO: test alerts
-  getAlerts (value) {
+  //TODO: fix string[]|0
+  getAlerts (value: IResponseItem): string[]|0 {
     if (value === null || this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider') {
       return 0;
     }
@@ -129,7 +142,7 @@ export default class Item {
     }).filter(alert => alert.length > 0);
   }
 
-  getVariableValue (value) {
+  getVariableValue (value: IResponseItem): string {
     const allowedTypes = ['singleSelect', 'checkbox', 'slider', 'date', 'text', 'ageSelector'];
 
     if (value === null || !allowedTypes.includes(this.inputType)) {
@@ -174,7 +187,7 @@ export default class Item {
     return '';
   }
 
-  getMaxScore () {
+  getMaxScore(): number {
     if (this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
       return 0;
     }
@@ -186,14 +199,13 @@ export default class Item {
     }, this.multipleChoice ? 0 : -oo);
   }
 
-  getQuestionText () {
+  getQuestionText(): string {
     const imageRE = new RegExp(/[\r\n]*\!\[.*\]\((.*)=.*\)[\r\n]*/i);
-
-    const questionText = this.question.replace(imageRE, '');  // Remove the image from the question.
-    return questionText;
+    // Remove the image from the question.
+    return this.question.replace(imageRE, '');
   }
 
-  getPrinted (value) {
+  getPrinted(value: IResponseItem): string {
     if (this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider' && this.inputType !== 'text') {
       return '';
     }
@@ -223,8 +235,9 @@ export default class Item {
         optionsHtml += '</div>';
       }
     } else if (this.inputType === 'slider' ) {
-      const minTick = Math.min(...this.options.map(option => option.id));
-      const maxTick = Math.max(...this.options.map(option => option.id));
+      //TODO check ticks
+      const minTick = 0; //Math.min(...this.options.map(option => option.id));
+      const maxTick = 1; //Math.max(...this.options.map(option => option.id));
 
       const minValue = `<div class="slider-value">${this.minValue}</div>`;
       const maxValue = `<div class="slider-value">${this.maxValue}</div>`;

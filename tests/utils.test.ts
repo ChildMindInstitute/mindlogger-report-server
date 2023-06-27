@@ -1,4 +1,4 @@
-import {isFloat} from "../src/utils.js";
+import {isFloat} from "../src/utils";
 
 test('positive cases', () => {
     expect(isFloat('0')).toBeTruthy();

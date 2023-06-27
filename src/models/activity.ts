@@ -1,13 +1,31 @@
-import reprolib from './reprolib.js';
 import _ from 'lodash';
-import Item from './item.js';
-import convertMarkdownToHtml from '../markdown-utils.js';
+import Item from './item';
+import convertMarkdownToHtml from '../markdown-utils';
 import fs from 'fs';
-import Mimoza from "mimoza";
-import {isFloat} from "../utils.js";
+import mime from "mime-types";
+import {isFloat} from "../utils";
+import {
+  IActivity, IActivityItem, IActivityScoresAndReportsCondition, IActivityScoresAndReportsConditionalLogic,
+  IActivityScoresAndReportsScores,
+  IActivityScoresAndReportsSections,
+  IResponseItem,
+  IUser, KVObject, ScoreForSummary
+} from "../interfaces";
 
 export default class Activity {
-  constructor (data={}, items=[]) {
+  public json: IActivity;
+  public schemaId: string;
+  public id: string;
+  public name: string;
+  public splashImage: string;
+  public items: Item[];
+
+  public reportIncludeItem: string;
+  public allowSummary: boolean;
+  public reportScores: IActivityScoresAndReportsScores[];
+  public reportSections: IActivityScoresAndReportsSections[];
+
+  constructor (data: IActivity, items: IActivityItem[] = []) {
     this.json = data;
 
     this.schemaId = data.id;
@@ -40,47 +58,47 @@ export default class Activity {
     }
 
   }
+  //
+  // extractReports (reports) {
+  //   return reports.map((report) => {
+  //     const dataType = _.get(report, [reprolib.options.dataType, 0, '@id']);
+  //     const message = _.get(report, [reprolib.message, 0, '@value']);
+  //
+  //     const data = {
+  //       id: report[reprolib.id],
+  //       prefLabel: _.get(report, [reprolib.prefLabel, 0, '@value']),
+  //       message,
+  //       itemsPrint: report.itemsPrint,
+  //       dataType,
+  //     }
+  //
+  //     if (dataType == 'score') {
+  //       Object.assign(data, {
+  //         outputType: _.get(report, [reprolib.outputType, 0, '@value']),
+  //         jsExpression: _.get(report, [reprolib.jsExpression, 0, '@value']),
+  //         conditionals: _.get(report, [reprolib.conditionals, 0, '@list'], []).map((conditional) => {
+  //           const message = _.get(conditional, [reprolib.message, 0, '@value']);
+  //
+  //           return {
+  //             prefLabel: _.get(conditional, [reprolib.prefLabel, 0, '@value']),
+  //             id: conditional[reprolib.id],
+  //             message,
+  //             itemsPrint: conditional.itemsPrint,
+  //             flagScore: _.get(conditional, [reprolib.flagScore, 0, '@value']),
+  //             isVis: _.get(conditional, [reprolib.isVis, 0, '@value']),
+  //           }
+  //         })
+  //       })
+  //     } else {
+  //       data.isVis = _.get(report, [reprolib.isVis, 0, '@value']);
+  //     }
+  //
+  //     return data;
+  //   });
+  // }
 
-  extractReports (reports) {
-    return reports.map((report) => {
-      const dataType = _.get(report, [reprolib.options.dataType, 0, '@id']);
-      const message = _.get(report, [reprolib.message, 0, '@value']);
-
-      const data = {
-        id: report[reprolib.id],
-        prefLabel: _.get(report, [reprolib.prefLabel, 0, '@value']),
-        message,
-        itemsPrint: report.itemsPrint,
-        dataType,
-      }
-
-      if (dataType == 'score') {
-        Object.assign(data, {
-          outputType: _.get(report, [reprolib.outputType, 0, '@value']),
-          jsExpression: _.get(report, [reprolib.jsExpression, 0, '@value']),
-          conditionals: _.get(report, [reprolib.conditionals, 0, '@list'], []).map((conditional) => {
-            const message = _.get(conditional, [reprolib.message, 0, '@value']);
-
-            return {
-              prefLabel: _.get(conditional, [reprolib.prefLabel, 0, '@value']),
-              id: conditional[reprolib.id],
-              message,
-              itemsPrint: conditional.itemsPrint,
-              flagScore: _.get(conditional, [reprolib.flagScore, 0, '@value']),
-              isVis: _.get(conditional, [reprolib.isVis, 0, '@value']),
-            }
-          })
-        })
-      } else {
-        data.isVis = _.get(report, [reprolib.isVis, 0, '@value']);
-      }
-
-      return data;
-    });
-  }
-
-  evaluateScores (responses) {
-    const scores = {}, maxScores = {};
+  evaluateScores (responses: IResponseItem[]): KVObject {
+    const scores: KVObject = {}, maxScores: KVObject = {};
 
     for (let i = 0; i < responses.length; i++) {
       const response = responses[i];    
@@ -105,7 +123,7 @@ export default class Activity {
           scores[report.id] = Number(!reportMaxScore ? 0 : reportScore / reportMaxScore * 100).toFixed(2);
           break;
         case 'average':
-          scores[report.id] = Number(reportScore / report.jsExpression.split('+').length).toFixed(2);
+          scores[report.id] = 0; //TODO Number(reportScore / report.jsExpression.split('+').length).toFixed(2);
           break;
       }
 
@@ -117,7 +135,7 @@ export default class Activity {
     return scores;
   }
 
-  patchConditionalInScoreReport(conditional, report) {
+  patchConditionalInScoreReport(conditional: IActivityScoresAndReportsConditionalLogic, report: IActivityScoresAndReportsScores): IActivityScoresAndReportsConditionalLogic {
     const condClone = _.cloneDeep(conditional);
 
     for (const condition of condClone.conditions) {
@@ -128,17 +146,17 @@ export default class Activity {
     return condClone;
   }
 
-  patchConditionalInReport(conditional, items) {
-    function lookupItemName(itemId) {
+  patchConditionalInReport(conditional: IActivityScoresAndReportsConditionalLogic, items: Item[]): IActivityScoresAndReportsConditionalLogic {
+    function lookupItemName(itemId: string): string {
       for (const item of items) {
         if (item.id === itemId) {
           return item.name;
         }
       }
-      return null;
+      throw new Error(`Can't lookup the ${itemId} item`);
     }
 
-    function lookupOptionValue(itemId, optionId) {
+    function lookupOptionValue(itemId: string, optionId: string): number|null {
       for (const item of items) {
         if (item.id === itemId) {
           const option = item.options.find(o => o.id === optionId)
@@ -162,7 +180,7 @@ export default class Activity {
     return condClone;
   }
 
-  scoresToValues(scores, responses) {
+  scoresToValues(scores: KVObject, responses: IResponseItem[]): KVObject[] {
     const values = { ...scores };
     const rawValues = { ...scores };
     for (let i = 0; i < responses.length; i++) {
@@ -174,7 +192,7 @@ export default class Activity {
     return [values, rawValues];
   }
 
-  evaluateReports (responses, user, now = '') {
+  evaluateReports (responses: IResponseItem[], user: IUser, now: string = ''): string {
     const scores = this.evaluateScores(responses);
     const [values, rawValues] = this.scoresToValues(scores, responses);
 
@@ -208,8 +226,8 @@ export default class Activity {
     return `<div class="activity-report">${markdown}</div>`;
   }
 
-  getAlertsForSummary (responses) {
-    let alerts = [];
+  getAlertsForSummary (responses: IResponseItem[]) {
+    let alerts: any[] = []; //TODO - type
     for (let i = 0; i < responses.length; i++) {
       alerts = alerts.concat(this.items[i].getAlerts(responses[i]));
     }
@@ -217,7 +235,7 @@ export default class Activity {
     return alerts;
   }
 
-  getScoresForSummary (responses) {
+  getScoresForSummary (responses: IResponseItem[]): ScoreForSummary[] {
     let scores = this.evaluateScores(responses);
 
     let result = [];
@@ -242,7 +260,7 @@ export default class Activity {
     return result;
   }
 
-  getPrintedItems (items, responses) {
+  getPrintedItems (items: string[], responses: IResponseItem[]): string {
     let markdown = '';
 
     if (!items) return markdown;
@@ -258,7 +276,7 @@ export default class Activity {
     return markdown;
   }
 
-  replaceValuesInMarkdown (message, scores, user, now = '') {
+  replaceValuesInMarkdown (message: string, scores: KVObject, user: IUser, now: string = ''): string {
     let markdown = message;
 
     for (const scoreId in scores) {
@@ -276,16 +294,16 @@ export default class Activity {
     return markdown;
   }
 
-  escapeRegExp(string) {
+  escapeRegExp(string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
   }
 
-  escapeReplacement(string) {
+  escapeReplacement(string: string): string {
     return string.replace(/\$/g, '$$$$');
   }
 
-  testVisibility ({conditions, match}, scores) {
-    function checkCondition({type, payload}, scoreOrValue) {
+  testVisibility ({conditions, match}: IActivityScoresAndReportsConditionalLogic, scores: KVObject): boolean {
+    function checkCondition({type, payload}: IActivityScoresAndReportsCondition, scoreOrValue: number): boolean {
       switch (type) {
         case 'BETWEEN':
           return payload.minValue <= scoreOrValue && payload.maxValue >= scoreOrValue;
@@ -308,7 +326,7 @@ export default class Activity {
       }
     }
 
-    function checkAny(results) {
+    function checkAny(results: boolean[]): boolean {
       for (const result of results) {
         if (result) {
           return true;
@@ -317,7 +335,7 @@ export default class Activity {
       return false;
     }
 
-    function checkAll(results) {
+    function checkAll(results: boolean[]): boolean {
       for (const result of results) {
         if (!result) {
           return false;
@@ -346,9 +364,9 @@ export default class Activity {
     }
   }
 
-  static getSplashImageHTML (pageBreakBefore = true, activity) {
+  static getSplashImageHTML (pageBreakBefore: boolean = true, activity: Activity) {
     const image = activity.splashImage;
-    const mimeType = Mimoza.getMimeType(image) || "";
+    const mimeType = mime.lookup(image) || "";
 
     if (image && !mimeType.startsWith("video/")) {
       return `
@@ -363,7 +381,7 @@ export default class Activity {
     return '';
   }
 
-  static getReportFooter () {
+  static getReportFooter (): string {
     const termsText = 'I understand that the information provided by this questionnaire is not intended to replace the advice, diagnosis, or treatment offered by a medical or mental health professional, and that my anonymous responses may be used and shared for general research on children’s mental health.';
     const footerText = 'CHILD MIND INSTITUTE, INC. AND CHILD MIND MEDICAL PRACTICE, PLLC (TOGETHER, “CMI”) DOES NOT DIRECTLY OR INDIRECTLY PRACTICE MEDICINE OR DISPENSE MEDICAL ADVICE AS PART OF THIS QUESTIONNAIRE. CMI ASSUMES NO LIABILITY FOR ANY DIAGNOSIS, TREATMENT, DECISION MADE, OR ACTION TAKEN IN RELIANCE UPON INFORMATION PROVIDED BY THIS QUESTIONNAIRE, AND ASSUMES NO RESPONSIBILITY FOR YOUR USE OF THIS QUESTIONNAIRE.';
 
@@ -378,36 +396,36 @@ export default class Activity {
     `;
   }
 
-  static getReportStyles () {
+  static getReportStyles (): string {
     const pdfStyles = fs.readFileSync('src/static/pdf-styles.css');
     return `<style>${pdfStyles.toString()}</style>`
   }
 
-  static getReportPreview (reports, previewItems) {
-    const items = previewItems.map(item => Item.getItem(item));
-
-    const activity = new Activity();
-    activity.items = items;
-
-    let markdown = '', responses = [];
-
-    // evaluate isVis field and get markdown
-    for (let i = 0; i < items.length; i++) {
-      responses.push(null);
-    }
-
-    for (const report of reports) {
-      if (report.dataType == 'section') {
-        markdown += report.message + '\n';
-        markdown += activity.getPrintedItems(report.itemsPrint, responses) + '\n';
-      } else {
-        for (const conditional of report.conditionals) {
-          markdown += conditional.message + '\n';
-          markdown += activity.getPrintedItems(report.itemsPrint, responses) + '\n';
-        }
-      }
-    }
-
-    return `<div class="activity-report">${markdown}</div>`;
-  }
+  // static getReportPreview (reports, previewItems): string {
+  //   const items = previewItems.map(item => Item.getItem(item));
+  //
+  //   const activity = new Activity();
+  //   activity.items = items;
+  //
+  //   let markdown = '', responses = [];
+  //
+  //   // evaluate isVis field and get markdown
+  //   for (let i = 0; i < items.length; i++) {
+  //     responses.push(null);
+  //   }
+  //
+  //   for (const report of reports) {
+  //     if (report.dataType == 'section') {
+  //       markdown += report.message + '\n';
+  //       markdown += activity.getPrintedItems(report.itemsPrint, responses) + '\n';
+  //     } else {
+  //       for (const conditional of report.conditionals) {
+  //         markdown += conditional.message + '\n';
+  //         markdown += activity.getPrintedItems(report.itemsPrint, responses) + '\n';
+  //       }
+  //     }
+  //   }
+  //
+  //   return `<div class="activity-report">${markdown}</div>`;
+  // }
 }

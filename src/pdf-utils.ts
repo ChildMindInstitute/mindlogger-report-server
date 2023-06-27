@@ -16,9 +16,9 @@ const options = {
   }
 }
 
-export const convertHtmlToPdf = (html, filename) =>
+export const convertHtmlToPdf = (html: string, filename: string) =>
   new Promise((resolve, reject) => {
-    pdf.create(html, options).toFile(filename, (err, res) => {
+    pdf.create(html, options).toFile(filename, (err: any, res: any) => {
       if (err) {
         reject(err);
       } else {
@@ -27,24 +27,25 @@ export const convertHtmlToPdf = (html, filename) =>
     })
   })
 
-export const encryptPDF = (path, password) =>
+export const encryptPDF = (path: string, password: string) =>
   new Promise((resolve) => {
     const pdfDoc = new HummusRecipe(path, path);
 
     pdfDoc.encrypt({
-      userPassword: password,
+      password: password,
+      // TODO: check userPassword: password,
       ownerPassword: password,
       userProtectionFlag: 4
     })
     .endPDF(() => {
-      resolve();
+      resolve(null);
     })
   })
 
-export async function watermarkPDF(pdfFile, watermarkURL, startPage, skipPages) {
+export async function watermarkPDF(pdfFile: string, watermarkURL: string, startPage: number, skipPages: number[]) {
   if(watermarkURL!=''){
     const imageOption = {}
-    const imageBytes = await fetch(watermarkURL).then(res => res.arrayBuffer())
+    const imageBytes = await fetch(watermarkURL).then((res) => res.arrayBuffer())
     const dataBuffer = fs.readFileSync(pdfFile)
     
     
@@ -82,7 +83,7 @@ export async function watermarkPDF(pdfFile, watermarkURL, startPage, skipPages) 
   }
 }
 
-async function countPages(pdfFile) {
+async function countPages(pdfFile: string) {
   const pdfDoc = await PDFDocument.load(fs.readFileSync(pdfFile));
   const pages = pdfDoc.getPages();
   const numberOfPages = pages.length;
@@ -90,7 +91,7 @@ async function countPages(pdfFile) {
   return numberOfPages;
 }
 
-export async function getCurrentCount(html){
+export async function getCurrentCount(html: string): Promise<number> {
   const tmpFile = `${os.tmpdir()}/tmp.pdf`
   await convertHtmlToPdf(
     `<div class="container">${html}</div>`,

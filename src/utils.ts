@@ -1,9 +1,10 @@
+import {isString} from "lodash";
 
-export const isFloat = (inputString) => {
+export const isFloat = (inputString: any) => {
     if (Array.isArray(inputString)) {
         return false;
     }
-    const parsed = parseFloat(inputString);
+    const parsed = isString(inputString) ? parseFloat(inputString) : inputString;
     if (Number.isInteger(parsed)) {
         return true;
     }

@@ -1,8 +1,16 @@
-import reprolib from './reprolib.js';
 import _ from 'lodash';
+import Activity from "./activity";
+import {IActivity, IActivityFlow} from "../interfaces";
 
 export default class ActivityFlow {
-  constructor (data, activities) {
+  public json: IActivityFlow;
+  public id: string;
+  public schemaId: string;
+  public name: string;
+  public activities: Activity[];
+  public reportIncludeItem: string;
+
+  constructor (data: IActivityFlow, activities: Activity[]) {
     this.json = data;
 
     this.schemaId = data.id;

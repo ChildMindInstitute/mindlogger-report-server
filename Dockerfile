@@ -8,5 +8,7 @@ RUN npm ci
 
 COPY ./ /app/
 
-CMD ["node", "./src/app.js"]
+RUN npm run build
+
+CMD ["node", "./dist/src/app.js"]
 EXPOSE 3000/tcp
