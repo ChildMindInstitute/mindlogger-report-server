@@ -1,15 +1,19 @@
 import 'dotenv/config';
 import express from 'express';
-import { authenticate } from './middleware';
 import convertMarkdownToHtml from './markdown-utils';
 import cors from 'cors';
 import { convertHtmlToPdf, encryptPDF, getCurrentCount, watermarkPDF } from './pdf-utils';
-import {fetchApplet, fetchActivity} from './mindlogger-api';
 import { Applet, Activity } from './models';
 import { verifyPublicKey, decryptData } from './encryption';
 import { setAppletPassword, getAppletPassword } from './db';
 import fs from 'fs';
-import {IResponse} from "./interfaces";
+import {
+  IResponse,
+  SendPdfReportRequestPayload, SendPdfReportResponse,
+  SetPasswordRequestEncryptedPayload,
+  SetPasswordRequestPayload
+} from "./interfaces";
+import {decryptResponses} from "./encryption-dh";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -17,7 +21,7 @@ const outputsFolder = process.env.OUTPUTS_FOLDER || '/tmp';
 
 app.use(cors());
 app.use(express.json());
-app.use(authenticate);
+// app.use(authenticate);
 
 app.get('/', async (req: express.Request, res: express.Response) => {
   res.status(200).send('MindLogger Report Server is UP (typescript)');
@@ -54,29 +58,31 @@ app.get('/', async (req: express.Request, res: express.Response) => {
 // })
 
 app.post('/send-pdf-report', async (req: express.Request, res: express.Response) => {
-  const {
-    appletId,
-    activityId,
-    activityFlowId,
-  } = req.query as {appletId: string, activityId: string, activityFlowId: string|null};
-  const token = req.headers.token;
+  const {activityId, activityFlowId} = req.query as {activityId: string, activityFlowId: string|null};
+  // const token = req.headers.token;
 
   try {
+    if (!req.body.payload) {
+      throw new Error('payload is required');
+    }
+    const payload = decryptData(req.body.payload) as SendPdfReportRequestPayload;
+    const appletPassword = await getAppletPassword(payload.applet.id);
+    if (!appletPassword || !appletPassword.privateKey) {
+      throw new Error('applet is not connected');
+    }
+    const responses: IResponse[] = payload.responses.map(response => {
+      return {
+        activityId: response.activityId,
+        data: decryptResponses(response.answer, appletPassword.privateKey, payload.applet.encryption, payload.userPublicKey)
+      };
+    });
     if (!activityId) {
       throw new Error('activityId is required');
     }
-    const user = {MRN: 'test', email: 'test@gmail.com', firstName: 'first', lastName: 'last', nickName: 'nick'};
-    const responses = decryptData(req.body.responses) as IResponse[];
-    // responses[0]['activityId'] = '0656ccb3-3b25-4197-be8e-c8479599a12c' //EPDS 2 out of 2
-    const now = req.body.now;
+    const user = payload.user;
+    const now = payload.now;
 
-    // @ts-ignore
-    const appletJSON = await fetchApplet(token, appletId);
-    for (let i = 0; i < appletJSON.activities.length; i++) {
-      // @ts-ignore
-      appletJSON.activities[i] = await fetchActivity(token, appletJSON.activities[i].id);
-    }
-    const applet = new Applet(appletJSON);
+    const applet = new Applet(payload.applet);
 
     const pdfPassword = await applet.getPDFPassword();
     if (!pdfPassword) {
@@ -88,6 +94,7 @@ app.post('/send-pdf-report', async (req: express.Request, res: express.Response)
 
     html += applet.getSummary(responses);
 
+    const appletId = payload.applet.id;
     const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses, user);
     const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}.pdf`;
     html += Activity.getReportStyles();
@@ -105,9 +112,9 @@ app.post('/send-pdf-report', async (req: express.Request, res: express.Response)
       if (activity) {
         const markdown = activity.evaluateReports(response.data, user, now);
         splashPage = Activity.getSplashImageHTML(pageBreak, activity);
-        
+
         html += splashPage + '\n';
-        html += convertMarkdownToHtml(markdown, splashPage, skipPages) + '\n';
+        html += convertMarkdownToHtml(markdown, splashPage === '' && skipPages.length === 0) + '\n';
 
         const count = await getCurrentCount(html);
         if(splashPage != '') {
@@ -129,19 +136,25 @@ app.post('/send-pdf-report', async (req: express.Request, res: express.Response)
     )
 
     const watermarkURL = Applet.getAppletWatermarkURL(applet);
-    
+
     await watermarkPDF(filename, watermarkURL, watermarkStart, skipPages);
-    
+
     await encryptPDF(
       filename,
       pdfPassword
     );
 
-    const pdf = fs.createReadStream(filename);
-    pdf.on('end', function() {
-      fs.unlink(filename, () => {});
+    res.status(200).json(<SendPdfReportResponse>{
+      'pdf': fs.readFileSync(filename, { encoding: 'base64' }).toString(),
+      'email': applet.getEmailConfigs(activityId, activityFlowId, responses, user, now),
     });
-    pdf.pipe(res);
+    fs.unlink(filename, () => {});
+
+    // const pdf = fs.createReadStream(filename);
+    // pdf.on('end', function() {
+    //   fs.unlink(filename, () => {});
+    // });
+    // pdf.pipe(res);
   } catch (e) {
     console.log('error', e);
 
@@ -162,8 +175,7 @@ app.put('/verify', async (req: express.Request, res: express.Response) => {
 
 app.post('/set-password', async (req: express.Request, res: express.Response) => {
   const token = req.headers.token;
-  const password = req.body.password;
-  const appletId = req.body.appletId;
+  const {password, appletId} = req.body as SetPasswordRequestPayload;
 
   try {
     // const permissions = await getAccountPermissions(token, appletId);
@@ -176,8 +188,8 @@ app.post('/set-password', async (req: express.Request, res: express.Response) =>
     //   throw new Error('permission denied');
     // }
 
-    const pdfPassword = decryptData(password);
-    await setAppletPassword(appletId, pdfPassword.password);
+    const pdfPassword = decryptData(password) as SetPasswordRequestEncryptedPayload;
+    await setAppletPassword(appletId, pdfPassword.password, pdfPassword.privateKey);
 
     res.status(200).json({ 'message': 'success' });
   } catch (e) {

@@ -1,9 +1,9 @@
 import Activity from './activity';
 import ActivityFlow from './activity-flow';
-// import convertMarkdownToHtml from '../markdown-utils';
+import convertMarkdownToHtml from '../markdown-utils';
 import moment from "moment-timezone";
 import { getAppletPassword } from '../db';
-import {IApplet, IAppletEncryption, IResponse, IUser} from "../interfaces";
+import {Email, IApplet, IAppletEncryption, IResponse, IUser} from "../interfaces";
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
 
@@ -141,28 +141,32 @@ export default class Applet {
     return `<div class="report-summary">${output}</div>`
   }
 
-  // getEmailConfigs (activityId: string, activityFlowId: string, responses, user, now) {
-  //   let emailBody = this.reportConfigs.emailBody;
-  //   for (const response of responses) {
-  //     const activity = this.activities.find(activity => activity.id === response.activityId);
-  //     const scores = activity.evaluateScores(response.data);
-  //     const [values, rawValues] = activity.scoresToValues(scores, response.data);
-  //     const addActivityPrefix = key => `${activity.name}/${key}`;
-  //     const renameKeys = o => Object.keys(o).reduce((acc, k) => ({...acc, [addActivityPrefix(k)]: o[k] }), {});
-  //     emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), user, now);
-  //   }
-  //   return {
-  //     body: this.applyInlineStyles(convertMarkdownToHtml(emailBody)),
-  //     subject: this.getSubject(activityId, activityFlowId, responses, user),
-  //     attachment: this.getPDFFileName(activityId, activityFlowId, responses),
-  //     emailRecipients: this.reportConfigs.emailRecipients
-  //   }
-  // }
-  // applyInlineStyles (html) {
-  //   return html.replace(/<tr>/g, '<tr style="background-color: #fff; border-top: 1px solid #c6cbd1;">')
-  //           .replace(/<th>/g, `<th style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px; font-weight: 600;">`)
-  //           .replace(/<td>/g, `<td style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px;">`)
-  // }
+  getEmailConfigs (activityId: string, activityFlowId: string|null, responses: IResponse[], user: IUser, now: string): Email {
+    let emailBody = this.reportConfigs.emailBody;
+    for (const response of responses) {
+      const activity = this.activities.find(activity => activity.id === response.activityId);
+      if (!activity) {
+        throw new Error(`Can't find activity ${response.activityId}`);
+      }
+      const scores = activity.evaluateScores(response.data);
+      const [values, rawValues] = activity.scoresToValues(scores, response.data);
+      const addActivityPrefix = (key: string) => `${activity.name}/${key}`;
+      const renameKeys = (o: any) => Object.keys(o).reduce((acc, k) => ({...acc, [addActivityPrefix(k)]: o[k] }), {});
+      emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), user, now);
+    }
+    return {
+      body: this.applyInlineStyles(convertMarkdownToHtml(emailBody)),
+      subject: this.getSubject(activityId, activityFlowId, responses, user),
+      attachment: this.getPDFFileName(activityId, activityFlowId, responses, user),
+      emailRecipients: this.reportConfigs.emailRecipients
+    }
+  }
+
+  applyInlineStyles (html: string): string {
+    return html.replace(/<tr>/g, '<tr style="background-color: #fff; border-top: 1px solid #c6cbd1;">')
+            .replace(/<th>/g, `<th style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px; font-weight: 600;">`)
+            .replace(/<td>/g, `<td style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px;">`)
+  }
 
   async getPDFPassword (appletId: string = ''): Promise<string> {
     const row = await getAppletPassword(appletId || this.id);
@@ -175,7 +179,7 @@ export default class Applet {
     if (!activity) {
       throw new Error('unable to find activity');
     }
-    const userId = user.MRN || user.email;
+    const userId = user.secretId;
     const configs = this.reportConfigs;
 
     let pdfName = 'REPORT';
@@ -216,13 +220,13 @@ export default class Applet {
     return includeItem.name;
   }
 
-  getSubject (activityId: string, activityFlowId: string, responses: IResponse[], user: IUser): string {
+  getSubject (activityId: string, activityFlowId: string|null, responses: IResponse[], user: IUser): string {
     const activityFlow = this.activityFlows.find(flow => flow.id === activityFlowId) ?? null;
     const activity = this.activities.find(activity => activity.id === activityId);
     if (!activity) {
       throw new Error('unable to find activity');
     }
-    const userId = user.MRN || user.email;
+    const userId = user.secretId;
     const configs = this.reportConfigs;
 
     let subject = 'Report';

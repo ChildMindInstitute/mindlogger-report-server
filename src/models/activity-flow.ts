@@ -1,6 +1,5 @@
-import _ from 'lodash';
 import Activity from "./activity";
-import {IActivity, IActivityFlow} from "../interfaces";
+import {IActivityFlow} from "../interfaces";
 
 export default class ActivityFlow {
   public json: IActivityFlow;

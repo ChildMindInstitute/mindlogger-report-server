@@ -1,6 +1,6 @@
-import {isFloat} from "../src/utils";
+import {isFloat} from "../src/report-utils";
 
-test('positive cases', () => {
+test('isFloat positive cases', () => {
     expect(isFloat('0')).toBeTruthy();
     expect(isFloat('0.00')).toBeTruthy();
     expect(isFloat(0)).toBeTruthy();
@@ -13,7 +13,7 @@ test('positive cases', () => {
     expect(isFloat(3)).toBeTruthy();
 });
 
-test('negative cases', () => {
+test('isFloat negative cases', () => {
     expect(isFloat('')).toBeFalsy();
     expect(isFloat(undefined)).toBeFalsy();
     expect(isFloat(null)).toBeFalsy();

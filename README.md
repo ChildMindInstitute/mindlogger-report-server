@@ -54,7 +54,6 @@ docker build -t mindlogger-report-server:latest -f ./Dockerfile .
 This requires Generating keys and creating database in keys folder.
 ```
 docker run -d \
--e "BACKEND_SERVER=https://api.mindlogger.org/api/v1" \
 -v "./keys:/app/keys" \
 -p "3000:3000" \
 --name mindlogger-report-server \

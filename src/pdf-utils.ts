@@ -31,12 +31,8 @@ export const encryptPDF = (path: string, password: string) =>
   new Promise((resolve) => {
     const pdfDoc = new HummusRecipe(path, path);
 
-    pdfDoc.encrypt({
-      password: password,
-      // TODO: check userPassword: password,
-      ownerPassword: password,
-      userProtectionFlag: 4
-    })
+    // @ts-ignore
+    pdfDoc.encrypt({userPassword: password, ownerPassword: password, userProtectionFlag: 4})
     .endPDF(() => {
       resolve(null);
     })

@@ -1,20 +1,21 @@
-import _ from 'lodash';
+import {isNumber} from 'lodash';
 import convertMarkdownToHtml from '../markdown-utils';
 import {IActivityItem, IActivityItemOption, IResponseItem} from "../interfaces";
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
 export default class Item {
-  public json: any;
+  public json: IActivityItem;
   public schemaId: string;
   public id: string;
   public name: string;
   public question: string;
   public inputType: string;
-  public multipleChoice: string;
+  public multipleChoice: boolean;
   public scoring: boolean;
+  public setAlerts: boolean;
   public options: IActivityItemOption[];
-  public minValue: number;
-  public maxValue: number;
+  public minValue: string;
+  public maxValue: string;
 
   constructor (data: IActivityItem) {
     this.json = data;
@@ -22,30 +23,31 @@ export default class Item {
     this.schemaId = data.id;
     this.id = data.id;
     this.name = data.name;
-    this.question = data.question;
+    this.question = data.question?.en ?? data.question;
 
     this.inputType = data.responseType;
 
-    this.multipleChoice = data.responseType = 'multiSelect'; // TODO
+    this.multipleChoice = data.responseType === 'multiSelect';
     this.scoring = data.config?.addScores || false;
-    this.options = this.patchOptions(data.responseValues?.options); //this.extractResponseOptions(, this.inputType);
+    this.setAlerts = data.config?.setAlerts || false;
+    this.options = data.responseValues?.options ?? [];
 
-    // this.minValue = _.get(data, [reprolib.responseOptions, 0, reprolib.minValue, 0, '@value']) || '';
-    // this.maxValue = _.get(data, [reprolib.responseOptions, 0, reprolib.maxValue, 0, '@value']) || '';
+    this.minValue = isNumber(data.responseValues?.minValue) ? data.responseValues?.minValue.toString() : '';
+    this.maxValue = isNumber(data.responseValues?.maxValue) ? data.responseValues?.maxValue.toString() : '';
   }
 
-  patchOptions(options: IActivityItemOption[]): IActivityItemOption[] {
-    const clonedOptions = _.cloneDeep(options);
-    if (!clonedOptions || clonedOptions.length === 0) {
-      return clonedOptions;
-    }
-    if (clonedOptions[0].value === 1) {
-      for (const option of clonedOptions) {
-        option.value -= 1;
-      }
-    }
-    return clonedOptions;
-  }
+  // patchOptions(options: IActivityItemOption[]): IActivityItemOption[] {
+  //   const clonedOptions = _.cloneDeep(options);
+  //   if (!clonedOptions || clonedOptions.length === 0) {
+  //     return clonedOptions;
+  //   }
+  //   if (clonedOptions[0].value === 1) {
+  //     for (const option of clonedOptions) {
+  //       option.value -= 1;
+  //     }
+  //   }
+  //   return clonedOptions;
+  // }
 
   // static getItem (itemPreview) {
   //   const item = new Item();
@@ -127,18 +129,23 @@ export default class Item {
     return option ? option : null;
   }
 
-  //TODO: test alerts
-  //TODO: fix string[]|0
-  getAlerts (value: IResponseItem): string[]|0 {
-    if (value === null || this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider') {
-      return 0;
+  getAlerts (value: IResponseItem): string[] {
+    if (!this.setAlerts || value === null || this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider') {
+      return [];
     }
 
     let response = this.convertResponseToArray(value);
 
     return response.map(value => {
-      const option = this.matchOption(value);
-      return option && option.alert ? option.alert : '';
+      switch (this.inputType) {
+        case 'slider':
+          const alerts = this.json.responseValues.alerts ?? [];
+          const alert = alerts.find(a => a.value === value);
+          return alert?.alert ?? '';
+        default:
+          const option = this.matchOption(value);
+          return option && option.alert ? option.alert : '';
+      }
     }).filter(alert => alert.length > 0);
   }
 
@@ -172,6 +179,7 @@ export default class Item {
             options.push(option.text);
           }
         }
+
       }
       return options.join(', ');
     }
@@ -217,9 +225,8 @@ export default class Item {
     let optionsHtml = '', type = this.inputType;
 
     if (this.inputType === 'singleSelect' || this.inputType === 'checkbox') {
-      if (this.multipleChoice) {
-        type = 'checkbox';
-      }
+      // if (this.multipleChoice) {}
+      type = 'checkbox';
 
       for (const option of this.options) {
         const checked = response.some(value =>

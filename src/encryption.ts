@@ -1,7 +1,5 @@
-
 import crypto from 'crypto';
 import fs from 'fs';
-import {IResponse} from "./interfaces";
 
 const KEYS_FOLDER = process.env.KEYS_FOLDER || 'keys';
 

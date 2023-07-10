@@ -48,17 +48,34 @@ export interface IActivityItem {
     name: string;
     isHidden: boolean;
     allowEdit: boolean;
-    order: number;
     question: any;
     responseType: string;
-    config: any;
+    config: null|{
+        removeBackButton?: boolean;
+        skippableItem?: boolean;
+        randomizeOptions?: boolean;
+        timer?: number;
+        addScores?: boolean;
+        setAlerts?: boolean;
+        addTooltip?: boolean;
+        setPalette?: boolean;
+        addTokens?: null;
+    };
     responseValues: IActivityItemResponseValues;
     conditionalLogic: any;
 }
 
 export interface IActivityItemResponseValues {
-    paletteName: string;
-    options: IActivityItemOption[];
+    paletteName?: string;
+    options?: IActivityItemOption[];
+    minLabel?: string;
+    maxLabel?: string;
+    minValue?: number;
+    maxValue?: number;
+    minImage?: string;
+    maxImage?: string;
+    scores?: number[];
+    alerts?: {value: number, alert: string, minValue?: number|null, maxValue?: number|null}[];
 }
 
 export interface IActivityItemOption {
@@ -66,11 +83,11 @@ export interface IActivityItemOption {
     text: string;
     value: number;
     score: number;
-    image: string;
+    image: string|null;
     isHidden: boolean;
-    color: string;
-    alert: string;
-    tooltip: string;
+    color: string|null;
+    alert: string|null;
+    tooltip: string|null;
 }
 
 export interface IActivityScoresAndReports {
@@ -82,37 +99,32 @@ export interface IActivityScoresAndReports {
 
 export interface IActivityScoresAndReportsScores {
     id: string;
+    name: string;
     calculationType: string;
-    conditionalLogic: IActivityScoresAndReportsConditionalLogic[];
+    conditionalLogic: IActivityScoresAndReportsConditionalLogicExtra[];
     itemsPrint: string[];
     itemsScore: string[];
-    maxScore: number;
     message: string;
-    minScore: number;
-    name: string;
-    printItems: boolean;
-    showMessage: boolean;
 }
 
 export interface IActivityScoresAndReportsSections {
     name: string;
     message: string;
-    printItems: boolean;
-    showMessage: boolean;
     itemsPrint: string[];
     conditionalLogic: IActivityScoresAndReportsConditionalLogic;
 }
 
 export interface IActivityScoresAndReportsConditionalLogic {
-    id: string;
-    itemsPrint: string[];
     match: string;
-    message: string;
-    name: string;
-    printItems: boolean;
-    showMessage: boolean;
-    flagScore: boolean;
     conditions: IActivityScoresAndReportsCondition[];
+}
+
+export interface IActivityScoresAndReportsConditionalLogicExtra extends IActivityScoresAndReportsConditionalLogic {
+    id: string;
+    name: string;
+    flagScore: boolean;
+    message: string;
+    itemsPrint: string[];
 }
 
 export interface IActivityScoresAndReportsCondition {
@@ -123,7 +135,7 @@ export interface IActivityScoresAndReportsCondition {
 
 export interface IActivityFlow {
     id: string;
-    activityIds: string[];
+    items: {id: string, activityFlowId: string, activityId: string, order: number}[];
     name: string;
     createdAt: string;
     description: string;
@@ -134,11 +146,10 @@ export interface IActivityFlow {
 }
 
 export interface IUser {
-    MRN: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    nickName: string;
+    secretId: string;
+    nickname: string;
+    firstName: string|null;
+    lastName: string|null;
 }
 
 export interface IResponse {
@@ -158,4 +169,34 @@ export interface ScoreForSummary {
     prefLabel: string;
     value: number;
     flagScore: boolean;
+}
+
+export interface SetPasswordRequestPayload {
+    appletId: string;
+    password: string;
+}
+
+export interface SetPasswordRequestEncryptedPayload {
+    password: string;
+    privateKey: string;
+}
+
+export interface SendPdfReportRequestPayload {
+    responses: {activityId: string, answer: string}[];
+    userPublicKey: string;
+    now: string;
+    user: IUser;
+    applet: IApplet;
+ }
+
+export interface Email {
+    body: string;
+    subject: string;
+    attachment: string;
+    emailRecipients: string[];
+}
+
+export interface SendPdfReportResponse {
+    pdf: string;
+    email: Email;
 }

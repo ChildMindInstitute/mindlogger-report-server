@@ -3,14 +3,17 @@ import Item from './item';
 import convertMarkdownToHtml from '../markdown-utils';
 import fs from 'fs';
 import mime from "mime-types";
-import {isFloat} from "../utils";
 import {
-  IActivity, IActivityItem, IActivityScoresAndReportsCondition, IActivityScoresAndReportsConditionalLogic,
+  IActivity,
+  IActivityItem, IActivityScoresAndReportsCondition, IActivityScoresAndReportsConditionalLogic,
   IActivityScoresAndReportsScores,
   IActivityScoresAndReportsSections,
   IResponseItem,
-  IUser, KVObject, ScoreForSummary
+  IUser,
+  KVObject,
+  ScoreForSummary
 } from "../interfaces";
+import {isFloat} from "../report-utils";
 
 export default class Activity {
   public json: IActivity;
@@ -37,65 +40,23 @@ export default class Activity {
       return new Item(item);
     });
 
-    // this.reportIncludeItem = _.get(data, [reprolib.reportIncludeItem, 0, '@value'], '');
-    // this.reports = this.extractReports(_.get(data, [reprolib.reports, 0, '@list'], []));
-    //
-    // const allowList = _.get(data, [reprolib.allow, 0, '@list']).map(item => item['@id']);
-    // this.allowSummary = !allowList.some((item) => item.includes('disable_summary'))
-
     //TODO: activity.items.find(item => item.name == activity.reportIncludeItem);
     this.reportIncludeItem = ''; //TODO  data.scoresAndReports?.generateReport || false;
 
     this.allowSummary = data.scoresAndReports?.showScoreSummary || false;
     this.reportScores = data.scoresAndReports?.scores || [];
-    for (const report of this.reportScores) {
-      report.conditionalLogic = report.conditionalLogic.map(conditional => this.patchConditionalInScoreReport(conditional, report));
-    }
-
     this.reportSections = data.scoresAndReports?.sections || [];
-    for (const report of this.reportSections) {
-      report.conditionalLogic = this.patchConditionalInReport(report.conditionalLogic, this.items);
-    }
-
   }
-  //
-  // extractReports (reports) {
-  //   return reports.map((report) => {
-  //     const dataType = _.get(report, [reprolib.options.dataType, 0, '@id']);
-  //     const message = _.get(report, [reprolib.message, 0, '@value']);
-  //
-  //     const data = {
-  //       id: report[reprolib.id],
-  //       prefLabel: _.get(report, [reprolib.prefLabel, 0, '@value']),
-  //       message,
-  //       itemsPrint: report.itemsPrint,
-  //       dataType,
-  //     }
-  //
-  //     if (dataType == 'score') {
-  //       Object.assign(data, {
-  //         outputType: _.get(report, [reprolib.outputType, 0, '@value']),
-  //         jsExpression: _.get(report, [reprolib.jsExpression, 0, '@value']),
-  //         conditionals: _.get(report, [reprolib.conditionals, 0, '@list'], []).map((conditional) => {
-  //           const message = _.get(conditional, [reprolib.message, 0, '@value']);
-  //
-  //           return {
-  //             prefLabel: _.get(conditional, [reprolib.prefLabel, 0, '@value']),
-  //             id: conditional[reprolib.id],
-  //             message,
-  //             itemsPrint: conditional.itemsPrint,
-  //             flagScore: _.get(conditional, [reprolib.flagScore, 0, '@value']),
-  //             isVis: _.get(conditional, [reprolib.isVis, 0, '@value']),
-  //           }
-  //         })
-  //       })
-  //     } else {
-  //       data.isVis = _.get(report, [reprolib.isVis, 0, '@value']);
-  //     }
-  //
-  //     return data;
-  //   });
-  // }
+
+  private getScoresSumForReport(scores: KVObject, allowedNamesToCalculateScore: string[]): number {
+    const allowedScores: KVObject = {};
+    for (const name in scores) {
+      if (allowedNamesToCalculateScore.includes(name)) {
+        allowedScores[name] = scores[name];
+      }
+    }
+    return _.sum(_.values(allowedScores));
+  }
 
   evaluateScores (responses: IResponseItem[]): KVObject {
     const scores: KVObject = {}, maxScores: KVObject = {};
@@ -110,8 +71,8 @@ export default class Activity {
 
     // calculate scores first
     for (const report of this.reportScores) {
-      const reportMaxScore = _.sum(_.values(scores));
-      const reportScore = _.sum(_.values(maxScores));
+      const reportScore = this.getScoresSumForReport(scores, report.itemsScore);
+      const reportMaxScore = this.getScoresSumForReport(maxScores, report.itemsScore);
 
       maxScores[report.id] = reportMaxScore;
 
@@ -123,7 +84,7 @@ export default class Activity {
           scores[report.id] = Number(!reportMaxScore ? 0 : reportScore / reportMaxScore * 100).toFixed(2);
           break;
         case 'average':
-          scores[report.id] = 0; //TODO Number(reportScore / report.jsExpression.split('+').length).toFixed(2);
+          scores[report.id] = Number(reportScore / report.itemsScore.length).toFixed(2);
           break;
       }
 
@@ -133,51 +94,6 @@ export default class Activity {
     }
 
     return scores;
-  }
-
-  patchConditionalInScoreReport(conditional: IActivityScoresAndReportsConditionalLogic, report: IActivityScoresAndReportsScores): IActivityScoresAndReportsConditionalLogic {
-    const condClone = _.cloneDeep(conditional);
-
-    for (const condition of condClone.conditions) {
-      if (report.id.endsWith(condition.itemName)) {
-        condition.itemName = report.id;
-      }
-    }
-    return condClone;
-  }
-
-  patchConditionalInReport(conditional: IActivityScoresAndReportsConditionalLogic, items: Item[]): IActivityScoresAndReportsConditionalLogic {
-    function lookupItemName(itemId: string): string {
-      for (const item of items) {
-        if (item.id === itemId) {
-          return item.name;
-        }
-      }
-      throw new Error(`Can't lookup the ${itemId} item`);
-    }
-
-    function lookupOptionValue(itemId: string, optionId: string): number|null {
-      for (const item of items) {
-        if (item.id === itemId) {
-          const option = item.options.find(o => o.id === optionId)
-          return option ? option.value - 1 : null;
-        }
-      }
-      return null;
-    }
-
-    const condClone = _.cloneDeep(conditional);
-
-    for (const condition of condClone.conditions) {
-      if (['EQUAL_TO_OPTION', 'NOT_EQUAL_TO_OPTION'].includes(condition.type)) {
-        const itemId = condition.itemName;
-        condition.itemName = lookupItemName(itemId);
-        if (condition.payload) {
-          condition.payload.optionId = lookupOptionValue(itemId, condition.payload.optionId);
-        }
-      }
-    }
-    return condClone;
   }
 
   scoresToValues(scores: KVObject, responses: IResponseItem[]): KVObject[] {
@@ -197,11 +113,11 @@ export default class Activity {
     const [values, rawValues] = this.scoresToValues(scores, responses);
 
     let markdown = '';
-
+    const allItems = this.items.map(i => i.name);
     // evaluate isVis field and get markdown
     for (const report of this.reportScores) {
       markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
-      markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
+      markdown += this.replaceValuesInMarkdown(this.getPrintedItems(allItems/*report.items_print*/, responses), values, user, now) + '\n';
 
 
       for (const conditional of report.conditionalLogic) {
@@ -209,7 +125,7 @@ export default class Activity {
 
         if (isVis) {
           markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user, now)) + '\n';
-          markdown += this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user, now) + '\n';
+          markdown += this.replaceValuesInMarkdown(this.getPrintedItems(allItems/*conditional.items_print*/, responses), values, user, now) + '\n';
         }
       }
     }
@@ -219,7 +135,7 @@ export default class Activity {
 
       if (isVis) {
         markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
-        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
+        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(allItems/*report.items_print*/, responses), values, user, now) + '\n';
       }
     }
 
@@ -265,8 +181,8 @@ export default class Activity {
 
     if (!items) return markdown;
 
-    for (const itemId of items) {
-      const index = this.items.findIndex(item => item.id === itemId);
+    for (const itemName of items) {
+      const index = this.items.findIndex(item => item.name === itemName);
 
       if (index >= 0) {
         markdown += this.items[index].getPrinted(responses[index]) + '\n';
@@ -287,7 +203,7 @@ export default class Activity {
     markdown = markdown.replace(/\[\[sys\.date\]\]/ig, this.escapeReplacement(now));
 
     if ('nickName' in user) {
-      const nickName = !!user.nickName ? user.nickName : `${user.firstName} ${user.lastName}`.trim();
+      const nickName = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim();
       markdown = markdown.replace(/\[nickname\]/ig, this.escapeReplacement(nickName));
     }
 
@@ -305,14 +221,14 @@ export default class Activity {
   testVisibility ({conditions, match}: IActivityScoresAndReportsConditionalLogic, scores: KVObject): boolean {
     function checkCondition({type, payload}: IActivityScoresAndReportsCondition, scoreOrValue: number): boolean {
       switch (type) {
-        case 'BETWEEN':
+        case 'BETWEEN': //TODO
           return payload.minValue <= scoreOrValue && payload.maxValue >= scoreOrValue;
-        case 'OUTSIDE_OF':
+        case 'OUTSIDE_OF': //TODO
           return payload.minValue > scoreOrValue || payload.maxValue < scoreOrValue;
-        case 'EQUAL_TO_OPTION':
-          return scoreOrValue === payload.optionId; //actually value
-        case 'NOT_EQUAL_TO_OPTION':
-          return scoreOrValue !== payload.optionId; //actually value
+        case 'EQUAL_TO_OPTION': //TODO
+          return scoreOrValue === parseFloat(payload.optionValue);
+        case 'NOT_EQUAL_TO_OPTION': //TODO
+          return scoreOrValue !== parseFloat(payload.optionValue);
         case 'GREATER_THAN':
           return scoreOrValue > payload.value;
         case 'LESS_THAN':
@@ -374,7 +290,7 @@ export default class Activity {
           <img src="${image}" alt="Splash Activity">
         </div>
       `;
-    }else if (pageBreakBefore === true){
+    }else if (pageBreakBefore){
       return `<div style="page-break-before: always"/>`
     }
 
