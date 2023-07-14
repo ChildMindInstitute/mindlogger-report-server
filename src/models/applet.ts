@@ -197,7 +197,7 @@ export default class Applet {
     }
 
     pdfName += `_${moment.utc(this.timestamp).format('YYYY-MM-DD-HHmmss')}`;
-    return pdfName;
+    return `${pdfName}.pdf`;
   }
 
   //TODO

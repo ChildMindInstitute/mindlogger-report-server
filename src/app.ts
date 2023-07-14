@@ -96,7 +96,7 @@ app.post('/send-pdf-report', async (req: express.Request, res: express.Response)
 
     const appletId = payload.applet.id;
     const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses, user);
-    const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}.pdf`;
+    const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}`;
     html += Activity.getReportStyles();
     
     let watermarkStart = 0;

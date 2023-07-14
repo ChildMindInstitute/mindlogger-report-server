@@ -36,51 +36,6 @@ export default class Item {
     this.maxValue = isNumber(data.responseValues?.maxValue) ? data.responseValues?.maxValue.toString() : '';
   }
 
-  // patchOptions(options: IActivityItemOption[]): IActivityItemOption[] {
-  //   const clonedOptions = _.cloneDeep(options);
-  //   if (!clonedOptions || clonedOptions.length === 0) {
-  //     return clonedOptions;
-  //   }
-  //   if (clonedOptions[0].value === 1) {
-  //     for (const option of clonedOptions) {
-  //       option.value -= 1;
-  //     }
-  //   }
-  //   return clonedOptions;
-  // }
-
-  // static getItem (itemPreview) {
-  //   const item = new Item();
-  //
-  //   Object.assign(item, itemPreview);
-  //   item.scoring = true;
-  //   item.schemaId = item.name;
-  //
-  //   return item;
-  // }
-
-  // extractResponseOptions (options, inputType) {
-  //   if (
-  //     !options || !Array.isArray(options) || typeof(options[0]) != 'object'
-  //   ) {
-  //     return null;
-  //   }
-  //
-  //   if (inputType == 'singleSelect' || this.inputType !== 'checkbox' || inputType == 'slider') {
-  //     const itemListElement = options[0][reprolib.options.itemList];
-  //     if (!itemListElement) return null;
-  //
-  //     return itemListElement.map((choice) => ({
-  //       name: _.get(choice, [reprolib.options.name, 0, '@value']),
-  //       value: Number(_.get(choice, [reprolib.options.value, 0, '@value'])),
-  //       score: Number(_.get(choice, [reprolib.options.score, 0, '@value'])),
-  //       alert: _.get(choice, [reprolib.options.alert, 0, '@value']),
-  //     }));
-  //   }
-  //
-  //   return null;
-  // }
-
   convertResponseToArray (response: IResponseItem|number|string): any[] {
     if (response === null) {
       return [null];
