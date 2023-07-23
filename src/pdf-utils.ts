@@ -1,31 +1,45 @@
-import pdf from 'html-pdf';
 import HummusRecipe from 'hummus-recipe';
 import {PDFDocument} from 'pdf-lib';
+import puppeteer from 'puppeteer';
 import fs from 'fs';
 import fetch from 'node-fetch';
 import os from 'os';
+import path from 'path';
 
-const options = {
-  width: '8.5in',
-  height: '11in',
-  border: {
-    top: '0.5in',
-    bottom: '0.5in',
-    left: '0.7in',
-    right: '0.7in',
+export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<void> => {
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: ['--disable-dev-shm-usage', '--no-sandbox', '--headless', '--disable-gpu']
+  });
+
+  const page = await browser.newPage();
+  await page.setContent(html);
+
+  try {
+    createDirectoryIfNotExists(saveTo);
+    await page.pdf({
+      format: 'A4',
+      width: '8.5in',
+      height: '11in',
+      // TODO: border: {
+      //   top: '0.5in',
+      //   bottom: '0.5in',
+      //   left: '0.7in',
+      //   right: '0.7in',
+      // }
+      path: saveTo,
+    });
+  } finally {
+    await browser.close();
+  }
+};
+
+function createDirectoryIfNotExists(filePath: string) {
+  const directoryName = path.dirname(filePath);
+  if (!fs.existsSync(directoryName)) {
+    fs.mkdirSync(directoryName, { recursive: true });
   }
 }
-
-export const convertHtmlToPdf = (html: string, filename: string) =>
-  new Promise((resolve, reject) => {
-    pdf.create(html, options).toFile(filename, (err: any, res: any) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(res);
-      }
-    })
-  })
 
 export const encryptPDF = (path: string, password: string) =>
   new Promise((resolve) => {
