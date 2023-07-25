@@ -3,6 +3,8 @@ FROM node:16-alpine3.18
 WORKDIR /app
 
 RUN apk add --no-cache \
+    # healthcheck
+    curl \
     # MuhammaraJS deps
     g++ make py3-pip \
     # PUPPETEER deps
