@@ -21,12 +21,13 @@ export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<vo
       format: 'A4',
       width: '8.5in',
       height: '11in',
-      // TODO: border: {
-      //   top: '0.5in',
-      //   bottom: '0.5in',
-      //   left: '0.7in',
-      //   right: '0.7in',
-      // }
+      printBackground: true,
+      margin: {
+        top: '0.5in',
+        bottom: '0.5in',
+        left: '0.7in',
+        right: '0.7in',
+      },
       path: saveTo,
     });
   } finally {
