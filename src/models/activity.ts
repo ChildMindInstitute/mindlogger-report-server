@@ -218,7 +218,11 @@ export default class Activity {
     return string.replace(/\$/g, '$$$$');
   }
 
-  testVisibility ({conditions, match}: IActivityScoresAndReportsConditionalLogic, scores: KVObject): boolean {
+  testVisibility (conditional: IActivityScoresAndReportsConditionalLogic|null, scores: KVObject): boolean {
+    if (!conditional) {
+      return true;
+    }
+    const {conditions, match} = conditional;
     function checkCondition({type, payload}: IActivityScoresAndReportsCondition, scoreOrValue: number): boolean {
       switch (type) {
         case 'BETWEEN': //TODO
