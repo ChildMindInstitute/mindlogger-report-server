@@ -192,8 +192,8 @@ export default class Activity {
     return markdown;
   }
 
-  replaceValuesInMarkdown (message: string, scores: KVObject, user: IUser, now: string = ''): string {
-    let markdown = message;
+  replaceValuesInMarkdown (message: string|null, scores: KVObject, user: IUser, now: string = ''): string {
+    let markdown = message ?? '';
 
     for (const scoreId in scores) {
       const reg = new RegExp(`\\[\\[${this.escapeRegExp(scoreId)}\\]\\]`, "gi");

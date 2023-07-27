@@ -55,7 +55,7 @@ export default class Item {
   }
 
   getScore(value: IResponseItem): number {
-    if (value === null || this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
+    if (value === null || this.inputType !== 'singleSelect' && this.inputType !== 'multiSelect' && this.inputType !== 'slider' || !this.scoring) {
       return 0;
     }
 
@@ -85,7 +85,7 @@ export default class Item {
   }
 
   getAlerts (value: IResponseItem): string[] {
-    if (!this.setAlerts || value === null || this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider') {
+    if (!this.setAlerts || value === null || this.inputType !== 'singleSelect' && this.inputType !== 'multiSelect' && this.inputType !== 'slider') {
       return [];
     }
 
@@ -105,7 +105,7 @@ export default class Item {
   }
 
   getVariableValue (value: IResponseItem): string {
-    const allowedTypes = ['singleSelect', 'checkbox', 'slider', 'date', 'text', 'ageSelector'];
+    const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'date', 'text', 'ageSelector'];
 
     if (value === null || !allowedTypes.includes(this.inputType)) {
       return '';
@@ -151,7 +151,7 @@ export default class Item {
   }
 
   getMaxScore(): number {
-    if (this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider' || !this.scoring) {
+    if (this.inputType !== 'singleSelect' && this.inputType !== 'multiSelect' && this.inputType !== 'slider' || !this.scoring) {
       return 0;
     }
 
@@ -169,7 +169,7 @@ export default class Item {
   }
 
   getPrinted(value: IResponseItem): string {
-    if (this.inputType !== 'singleSelect' && this.inputType !== 'checkbox' && this.inputType !== 'slider' && this.inputType !== 'text') {
+    if (this.inputType !== 'singleSelect' && this.inputType !== 'multiSelect' && this.inputType !== 'slider' && this.inputType !== 'text') {
       return '';
     }
 
@@ -179,8 +179,7 @@ export default class Item {
 
     let optionsHtml = '', type = this.inputType;
 
-    if (this.inputType === 'singleSelect' || this.inputType === 'checkbox') {
-      // if (this.multipleChoice) {}
+    if (this.inputType === 'singleSelect' || this.inputType === 'multiSelect') {
       type = 'checkbox';
 
       for (const option of this.options) {

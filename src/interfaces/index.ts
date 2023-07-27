@@ -104,7 +104,7 @@ export interface IActivityScoresAndReportsScores {
     conditionalLogic: IActivityScoresAndReportsConditionalLogicExtra[];
     itemsPrint: string[];
     itemsScore: string[];
-    message: string;
+    message: string|null;
 }
 
 export interface IActivityScoresAndReportsSections {
