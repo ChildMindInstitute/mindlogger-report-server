@@ -64,9 +64,18 @@ export default class Item {
     let totalScore = 0;
 
     for (let value of response) {
-      const option = this.matchOption(value);
-      if (option && option.score) {
-        totalScore += option.score;
+      switch (this.inputType) {
+        case 'slider':
+          const scores = this.json.responseValues.scores ?? [];
+          if (value in scores) {
+            totalScore += scores[value];
+          }
+          break;
+        default:
+          const option = this.matchOption(value);
+          if (option && option.score) {
+            totalScore += option.score;
+          }
       }
     }
 
@@ -154,7 +163,10 @@ export default class Item {
     if (this.inputType !== 'singleSelect' && this.inputType !== 'multiSelect' && this.inputType !== 'slider' || !this.scoring) {
       return 0;
     }
-
+    if ('slider' === this.inputType) {
+      const scores = this.json.responseValues.scores ?? [];
+      return Math.max(...scores);
+    }
     const oo = 1e6;
 
     return this.options.reduce((previousValue, currentOption) => {
@@ -196,14 +208,10 @@ export default class Item {
         optionsHtml += '</div>';
       }
     } else if (this.inputType === 'slider' ) {
-      //TODO check ticks
-      const minTick = 0; //Math.min(...this.options.map(option => option.id));
-      const maxTick = 1; //Math.max(...this.options.map(option => option.id));
-
       const minValue = `<div class="slider-value">${this.minValue}</div>`;
       const maxValue = `<div class="slider-value">${this.maxValue}</div>`;
 
-      optionsHtml += `<div class="option">${minValue}<input type="range" min="${minTick}" max="${maxTick}" value="${response[0]}">${maxValue}</div>`;
+      optionsHtml += `<div class="option">${minValue}<input type="range" min="${this.minValue}" max="${this.maxValue}" value="${response[0]}">${maxValue}</div>`;
     } else if (this.inputType === 'text') {
       optionsHtml += response[0];
     }
