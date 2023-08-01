@@ -14,10 +14,11 @@ import {
   SetPasswordRequestPayload
 } from "./interfaces";
 import {decryptResponses} from "./encryption-dh";
+import os from 'os';
 
 const app = express();
 const port = process.env.PORT || 3000;
-const outputsFolder = process.env.OUTPUTS_FOLDER || '/tmp';
+const outputsFolder = process.env.OUTPUTS_FOLDER || os.tmpdir();
 
 app.use(cors());
 app.use(express.json());

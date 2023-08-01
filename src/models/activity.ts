@@ -201,7 +201,7 @@ export default class Activity {
 
     markdown = markdown.replace(/\[\[sys\.date\]\]/ig, this.escapeReplacement(now));
 
-    if ('nickName' in user) {
+    if ('nickname' in user) {
       const nickName = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim();
       markdown = markdown.replace(/\[nickname\]/ig, this.escapeReplacement(nickName));
     }

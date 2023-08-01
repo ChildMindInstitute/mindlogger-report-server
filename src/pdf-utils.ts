@@ -103,11 +103,16 @@ async function countPages(pdfFile: string) {
 }
 
 export async function getCurrentCount(html: string): Promise<number> {
-  const tmpFile = `${os.tmpdir()}/tmp.pdf`
+  const tmpFile = `${os.tmpdir()}/${getRandomFileName()}.pdf`
   await convertHtmlToPdf(
     `<div class="container">${html}</div>`,
     tmpFile
   );
-  const count = await countPages(tmpFile);
-  return count;
+  return await countPages(tmpFile);
+}
+
+function getRandomFileName(): string {
+  const timestamp = new Date().toISOString().replace(/[-:.]/g,"");
+  const random = ("" + Math.random()).substring(2, 8);
+  return timestamp + random;
 }

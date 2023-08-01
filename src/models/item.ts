@@ -114,7 +114,7 @@ export default class Item {
   }
 
   getVariableValue (value: IResponseItem): string {
-    const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'date', 'text', 'ageSelector'];
+    const allowedTypes = ['singleSelect', 'multiSelect', 'numberSelect', 'slider', 'date', 'text'];
 
     if (value === null || !allowedTypes.includes(this.inputType)) {
       return '';
@@ -130,7 +130,7 @@ export default class Item {
       return response[0] && `${(response[0].month + 1).toString().padStart(2, '0')}/${response[0].day.toString().padStart(2, '0')}/${response[0].year}` || '';
     }
 
-    if (Array.isArray(this.options)) {
+    if (['singleSelect', 'multiSelect'].includes(this.inputType) && Array.isArray(this.options)) {
       const options = [];
       for (const v of response) {
         if (typeof v === 'number' || typeof v === 'string') {
