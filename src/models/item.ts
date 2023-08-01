@@ -14,8 +14,6 @@ export default class Item {
   public scoring: boolean;
   public setAlerts: boolean;
   public options: IActivityItemOption[];
-  public minValue: string;
-  public maxValue: string;
 
   constructor (data: IActivityItem) {
     this.json = data;
@@ -31,9 +29,6 @@ export default class Item {
     this.scoring = data.config?.addScores || false;
     this.setAlerts = data.config?.setAlerts || false;
     this.options = data.responseValues?.options ?? [];
-
-    this.minValue = isNumber(data.responseValues?.minValue) ? data.responseValues?.minValue.toString() : '';
-    this.maxValue = isNumber(data.responseValues?.maxValue) ? data.responseValues?.maxValue.toString() : '';
   }
 
   convertResponseToArray (response: IResponseItem|number|string): any[] {
@@ -208,10 +203,15 @@ export default class Item {
         optionsHtml += '</div>';
       }
     } else if (this.inputType === 'slider' ) {
-      const minValue = `<div class="slider-value">${this.minValue}</div>`;
-      const maxValue = `<div class="slider-value">${this.maxValue}</div>`;
+      const minValue = isNumber(this.json.responseValues?.minValue) ? this.json.responseValues?.minValue.toString() : '';
+      const maxValue = isNumber(this.json.responseValues?.maxValue) ? this.json.responseValues?.maxValue.toString() : '';
+      const minLabel = this.json.responseValues?.minLabel ?? '';
+      const maxLabel = this.json.responseValues?.maxLabel ?? '';
 
-      optionsHtml += `<div class="option">${minValue}<input type="range" min="${this.minValue}" max="${this.maxValue}" value="${response[0]}">${maxValue}</div>`;
+      const minLabelHtml = `<div class="slider-value">${minLabel}</div>`;
+      const maxLabelHtml = `<div class="slider-value">${maxLabel}</div>`;
+
+      optionsHtml += `<div class="option">${minLabelHtml}<input type="range" min="${minValue}" max="${maxValue}" value="${response[0]}">${maxLabelHtml}</div>`;
     } else if (this.inputType === 'text') {
       optionsHtml += response[0];
     }
