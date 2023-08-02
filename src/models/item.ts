@@ -3,9 +3,9 @@ import convertMarkdownToHtml from '../markdown-utils';
 import {IActivityItem, IActivityItemOption, IResponseItem} from "../interfaces";
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
+
 export default class Item {
   public json: IActivityItem;
-  public schemaId: string;
   public id: string;
   public name: string;
   public question: string;
@@ -18,7 +18,6 @@ export default class Item {
   constructor (data: IActivityItem) {
     this.json = data;
 
-    this.schemaId = data.id;
     this.id = data.id;
     this.name = data.name;
     this.question = data.question?.en ?? data.question;
@@ -216,6 +215,6 @@ export default class Item {
       optionsHtml += response[0];
     }
 
-    return `<div class="item-print-container"><div class="item-print ${type}"><div class="item-name">${this.schemaId}</div><div class="question">${questionHTML}</div><div class="options">${optionsHtml}</div></div></div>`;
+    return `<div class="item-print-container"><div class="item-print ${type}"><div class="item-name">${this.name}</div><div class="question">${questionHTML}</div><div class="options">${optionsHtml}</div></div></div>`;
   }
 }

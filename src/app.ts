@@ -25,7 +25,7 @@ app.use(express.json());
 // app.use(authenticate);
 
 app.get('/', async (req: express.Request, res: express.Response) => {
-  res.status(200).send('MindLogger Report Server is UP (fixes v2)');
+  res.status(200).send('MindLogger Report Server is UP (fixes v3)');
 });
 
 // app.put('/preview-report', async (req: Request, res: Response) => {
