@@ -113,11 +113,19 @@ export default class Activity {
     const [values, rawValues] = this.scoresToValues(scores, responses);
 
     let markdown = '';
-    // evaluate isVis field and get markdown
+
+    for (const report of this.reportSections) {
+      const isVis = this.testVisibility(report.conditionalLogic, rawValues);
+
+      if (isVis) {
+        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
+        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
+      }
+    }
+
     for (const report of this.reportScores) {
       markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
       markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
-
 
       for (const conditional of report.conditionalLogic) {
         const isVis = scores[conditional.id];
@@ -126,15 +134,6 @@ export default class Activity {
           markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user, now)) + '\n';
           markdown += this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user, now) + '\n';
         }
-      }
-    }
-
-    for (const report of this.reportSections) {
-      const isVis = this.testVisibility(report.conditionalLogic, rawValues);
-
-      if (isVis) {
-        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
-        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
       }
     }
 
