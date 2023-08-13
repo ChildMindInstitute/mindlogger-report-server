@@ -222,15 +222,15 @@ export default class Activity {
       return true;
     }
     const {conditions, match} = conditional;
-    function checkCondition({type, payload}: IActivityScoresAndReportsCondition, scoreOrValue: number): boolean {
+    function checkCondition({type, payload}: IActivityScoresAndReportsCondition, scoreOrValue: number|number[]): boolean {
       switch (type) {
-        case 'BETWEEN': //TODO
+        case 'BETWEEN':
           return payload.minValue <= scoreOrValue && payload.maxValue >= scoreOrValue;
-        case 'OUTSIDE_OF': //TODO
+        case 'OUTSIDE_OF':
           return payload.minValue > scoreOrValue || payload.maxValue < scoreOrValue;
-        case 'EQUAL_TO_OPTION': //TODO
+        case 'EQUAL_TO_OPTION':
           return scoreOrValue === parseFloat(payload.optionValue);
-        case 'NOT_EQUAL_TO_OPTION': //TODO
+        case 'NOT_EQUAL_TO_OPTION':
           return scoreOrValue !== parseFloat(payload.optionValue);
         case 'GREATER_THAN':
           return scoreOrValue > payload.value;
@@ -240,6 +240,10 @@ export default class Activity {
           return scoreOrValue == payload.value;
         case 'NOT_EQUAL':
           return scoreOrValue != payload.value;
+        case 'INCLUDES_OPTION':
+          return Array.isArray(scoreOrValue) && scoreOrValue.includes(parseFloat(payload.optionValue));
+        case 'NOT_INCLUDES_OPTION':
+          return Array.isArray(scoreOrValue) && !scoreOrValue.includes(parseFloat(payload.optionValue));
         default:
           return false;
       }
