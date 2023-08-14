@@ -13,7 +13,7 @@ import {
   KVObject,
   ScoreForSummary
 } from "../interfaces";
-import {isFloat} from "../report-utils";
+import {escapeRegExp, escapeReplacement, isFloat} from "../report-utils";
 
 export default class Activity {
   public json: IActivity;
@@ -183,7 +183,8 @@ export default class Activity {
       const index = this.items.findIndex(item => item.name === itemName);
 
       if (index >= 0) {
-        markdown += this.items[index].getPrinted(responses[index]) + '\n';
+        const context = {items: this.items, responses};
+        markdown += this.items[index].getPrinted(responses[index], context) + '\n';
       }
     }
 
@@ -194,26 +195,18 @@ export default class Activity {
     let markdown = message ?? '';
 
     for (const scoreId in scores) {
-      const reg = new RegExp(`\\[\\[${this.escapeRegExp(scoreId)}\\]\\]`, "gi");
-      markdown = markdown.replace(reg, this.escapeReplacement(String(scores[scoreId])));
+      const reg = new RegExp(`\\[\\[${escapeRegExp(scoreId)}\\]\\]`, "gi");
+      markdown = markdown.replace(reg, escapeReplacement(String(scores[scoreId])));
     }
 
-    markdown = markdown.replace(/\[\[sys\.date\]\]/ig, this.escapeReplacement(now));
+    markdown = markdown.replace(/\[\[sys\.date\]\]/ig, escapeReplacement(now));
 
     if ('nickname' in user) {
       const nickName = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim();
-      markdown = markdown.replace(/\[nickname\]/ig, this.escapeReplacement(nickName));
+      markdown = markdown.replace(/\[nickname\]/ig, escapeReplacement(nickName));
     }
 
     return markdown;
-  }
-
-  escapeRegExp(string: string): string {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-  }
-
-  escapeReplacement(string: string): string {
-    return string.replace(/\$/g, '$$$$');
   }
 
   testVisibility (conditional: IActivityScoresAndReportsConditionalLogic|null, scores: KVObject): boolean {

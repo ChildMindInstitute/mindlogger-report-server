@@ -1,6 +1,7 @@
 import {isNumber} from 'lodash';
 import convertMarkdownToHtml from '../markdown-utils';
 import {IActivityItem, IActivityItemOption, IResponseItem} from "../interfaces";
+import {escapeRegExp, escapeReplacement} from "../report-utils";
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
 
@@ -174,7 +175,7 @@ export default class Item {
     return this.question.replace(imageRE, '');
   }
 
-  getPrinted(value: IResponseItem): string {
+  getPrinted(value: IResponseItem, context: {items: Item[], responses: IResponseItem[]|string[]}): string {
     if (this.inputType !== 'singleSelect' && this.inputType !== 'multiSelect' && this.inputType !== 'slider' && this.inputType !== 'text') {
       return '';
     }
@@ -196,9 +197,10 @@ export default class Item {
 
         const icon = ICON_URL + `${type}-${checked ? 'checked' : 'unchecked'}.svg`;
 
+        const optionText = this.reuseResponseOption(option.text, context.items, context.responses);
         optionsHtml += '<div class="option">';
         optionsHtml += `<img class="${type}" src="${icon}" width="15" height="15">`;
-        optionsHtml += `<label>${option.text}</label>`;
+        optionsHtml += `<label>${optionText}</label>`;
         optionsHtml += '</div>';
       }
     } else if (this.inputType === 'slider' ) {
@@ -216,5 +218,24 @@ export default class Item {
     }
 
     return `<div class="item-print-container"><div class="item-print ${type}"><div class="item-name">${this.name}</div><div class="question">${questionHTML}</div><div class="options">${optionsHtml}</div></div></div>`;
+  }
+
+  reuseResponseOption(optionText: string, items: Item[], responses:IResponseItem[]|string[]): string {
+    if (!optionText.includes('[[')) {
+      return optionText;
+    }
+    for (const item of items) {
+      if (!['text'].includes(item.inputType)) {
+        continue;
+      }
+      const idx = items.indexOf(item);
+      const response = responses[idx];
+      if (typeof response !== 'string') {
+        continue;
+      }
+      const reg = new RegExp(`\\[\\[${escapeRegExp(item.name)}\\]\\]`, "gi");
+      optionText = optionText.replace(reg, escapeReplacement(response));
+    }
+    return optionText;
   }
 }
