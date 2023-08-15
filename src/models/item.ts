@@ -84,7 +84,7 @@ export default class Item {
     }
 
     if (this.inputType === 'date') {
-      return response[0] && `${(response[0].month + 1).toString().padStart(2, '0')}/${response[0].day.toString().padStart(2, '0')}/${response[0].year}` || '';
+      return response[0] && `${(response[0].month).toString().padStart(2, '0')}/${response[0].day.toString().padStart(2, '0')}/${response[0].year}` || '';
     }
 
     if (['singleSelect', 'multiSelect'].includes(this.inputType) && Array.isArray(this.options)) {
