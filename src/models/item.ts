@@ -1,6 +1,6 @@
 import {isNumber} from 'lodash';
 import convertMarkdownToHtml from '../markdown-utils';
-import {IActivityItem, IActivityItemOption, IResponseItem} from "../interfaces";
+import {IActivityItem, IActivityItemOption, IDataMatrixRow, IResponseItem} from "../interfaces";
 import {escapeRegExp, escapeReplacement} from "../report-utils";
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
@@ -28,25 +28,7 @@ export default class Item {
     this.multipleChoice = data.responseType === 'multiSelect';
     this.scoring = data.config?.addScores || false;
     this.setAlerts = data.config?.setAlerts || false;
-    this.options = data.responseValues?.options ?? [];
-  }
-
-  convertResponseToArray (response: IResponseItem|number|string): any[] {
-    if (response === null) {
-      return [null];
-    }
-
-    if (typeof response === 'number' || typeof response === 'string') {
-      return [response];
-    } else if (typeof response === 'object' && !Array.isArray(response)) {
-      if (!Array.isArray(response.value)) {
-        return [response.value];
-      } else {
-        return response.value;
-      }
-    }
-
-    return response;
+    this.options = (data.responseValues?.options ?? []).map(o => ({...o}));
   }
 
   getScore(value: IResponseItem): number {
@@ -67,7 +49,7 @@ export default class Item {
           }
           break;
         default:
-          const option = this.matchOption(value);
+          const option = this.matchOption(value, this.options);
           if (option && option.score) {
             totalScore += option.score;
           }
@@ -77,35 +59,15 @@ export default class Item {
     return totalScore;
   }
 
-  matchOption(value: number|string): IActivityItemOption|null {
-    let option = null;
-    if (typeof value === 'number') {
-      option = this.options.find(option => option.value === value);
-    }
-    if (typeof value === 'string') {
-      option = this.options.find(option => option.id === value || option.text === value);
-    }
-    return option ? option : null;
-  }
-
   getAlerts (value: IResponseItem): string[] {
-    if (!this.setAlerts || value === null || this.inputType !== 'singleSelect' && this.inputType !== 'multiSelect' && this.inputType !== 'slider') {
+    const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'singleSelectRows', 'multiSelectRows'];
+    if (!this.setAlerts || value === null || !allowedTypes.includes(this.inputType)) {
       return [];
     }
-
-    let response = this.convertResponseToArray(value);
-
-    return response.map(value => {
-      switch (this.inputType) {
-        case 'slider':
-          const alerts = this.json.responseValues.alerts ?? [];
-          const alert = alerts.find(a => a.value === value);
-          return alert?.alert ?? '';
-        default:
-          const option = this.matchOption(value);
-          return option && option.alert ? option.alert : '';
-      }
-    }).filter(alert => alert.length > 0);
+    if (['singleSelectRows', 'multiSelectRows'].includes(this.inputType)) {
+      return this.getAlertsForSelectionPerRow(value.value)
+    }
+    return this.getAlertForSimpleTypes(value, this.options);
   }
 
   getVariableValue (value: IResponseItem): string {
@@ -220,7 +182,7 @@ export default class Item {
     return `<div class="item-print-container"><div class="item-print ${type}"><div class="item-name">${this.name}</div><div class="question">${questionHTML}</div><div class="options">${optionsHtml}</div></div></div>`;
   }
 
-  reuseResponseOption(optionText: string, items: Item[], responses:IResponseItem[]|string[]): string {
+  private reuseResponseOption(optionText: string, items: Item[], responses:IResponseItem[]|string[]): string {
     if (!optionText.includes('[[')) {
       return optionText;
     }
@@ -237,5 +199,78 @@ export default class Item {
       optionText = optionText.replace(reg, escapeReplacement(response));
     }
     return optionText;
+  }
+
+  private matchOption(value: number|string, options: IActivityItemOption[]): IActivityItemOption|null {
+    let option = null;
+    if (typeof value === 'number') {
+      option = options.find(option => option.value === value);
+    }
+    if (typeof value === 'string') {
+      option = options.find(option => option.id === value || option.text === value);
+    }
+    return option ? option : null;
+  }
+
+  private convertDataMatrixToOptions(row: IDataMatrixRow): IActivityItemOption[] {
+    const options = [];
+    for (const option of this.options) {
+      for (const _option of row.options) {
+        if (option.id === _option.optionId) {
+          options.push({...option, ..._option} as IActivityItemOption);
+        }
+      }
+    }
+    return options;
+  }
+
+  private getAlertsForSelectionPerRow(value: Array<string|null>) {
+    const alerts = [];
+    const rows = this.json.responseValues?.dataMatrix ?? [];
+    for (const [rowIdx, response] of value.entries()) {
+      if (!rows[rowIdx] || response === null) {
+        continue;
+      }
+      const options = this.convertDataMatrixToOptions(rows[rowIdx]);
+      for (const alert of this.getAlertForSimpleTypes(response, options)) {
+        alerts.push(alert);
+      }
+    }
+    return alerts;
+  }
+
+  private getAlertForSimpleTypes(responseItem: IResponseItem|number|string, options: IActivityItemOption[]): string[] {
+    const response = this.convertResponseToArray(responseItem);
+
+    return response.map(value => {
+      switch (this.inputType) {
+        case 'slider':
+          const alerts = this.json.responseValues.alerts ?? [];
+          const alert = alerts.find(a => a.value === value);
+          return alert?.alert ?? '';
+
+        default:
+          const option = this.matchOption(value, options);
+          return option && option.alert ? option.alert : '';
+      }
+    }).filter(alert => alert.length > 0);
+  }
+
+  private convertResponseToArray (response: IResponseItem|number|string): any[] {
+    if (response === null) {
+      return [null];
+    }
+
+    if (typeof response === 'number' || typeof response === 'string') {
+      return [response];
+    } else if (typeof response === 'object' && !Array.isArray(response)) {
+      if (!Array.isArray(response.value)) {
+        return [response.value];
+      } else {
+        return response.value;
+      }
+    }
+
+    return response;
   }
 }

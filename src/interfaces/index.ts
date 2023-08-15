@@ -68,6 +68,7 @@ export interface IActivityItem {
 export interface IActivityItemResponseValues {
     paletteName?: string;
     options?: IActivityItemOption[];
+    dataMatrix?: IDataMatrixRow[];
     minLabel?: string;
     maxLabel?: string;
     minValue?: number;
@@ -88,6 +89,18 @@ export interface IActivityItemOption {
     color: string|null;
     alert: string|null;
     tooltip: string|null;
+}
+
+export interface IDataMatrixRow {
+    rowId: string;
+    options: IDataMatrixOption[];
+}
+
+export interface IDataMatrixOption {
+    optionId: string;
+    value: number;
+    score: number|null;
+    alert: string|null;
 }
 
 export interface IActivityScoresAndReports {
