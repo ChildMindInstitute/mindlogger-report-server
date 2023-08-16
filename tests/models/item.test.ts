@@ -7,14 +7,29 @@ test('slider alert', () => {
     const item = new Item({
         "responseType": "slider",
         "responseValues": {
-            "alerts": [{"value": 0, "alert": "test-slider0"}]
+            "alerts": [{"value": 0, "minValue": null, "maxValue": null,  "alert": "test-slider0"}]
         },
-        "config": {"setAlerts": true},
+        "config": {"setAlerts": true, "continuousSlider": false},
         "name": "slider_item"
     } as IActivityItem);
 
     expect(item.getAlerts({value: 0})).toStrictEqual(['test-slider0']);
     expect(item.getAlerts({value: 1})).toStrictEqual([]);
+});
+
+test('continuous slider alert', () => {
+
+    const item = new Item({
+        "responseType": "slider",
+        "responseValues": {
+            "alerts": [{"value": 0, "minValue": 1, "maxValue": 5, "alert": "test-slider0"}]
+        },
+        "config": {"setAlerts": true, "continuousSlider": true},
+        "name": "slider_item"
+    } as IActivityItem);
+
+    expect(item.getAlerts({value: 3.5})).toStrictEqual(['test-slider0']);
+    expect(item.getAlerts({value: 0.5})).toStrictEqual([]);
 });
 
 test('singleSelect alert', () => {

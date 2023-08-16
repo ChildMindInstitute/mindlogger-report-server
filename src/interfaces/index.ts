@@ -57,6 +57,7 @@ export interface IActivityItem {
         timer?: number;
         addScores?: boolean;
         setAlerts?: boolean;
+        continuousSlider?: boolean;
         addTooltip?: boolean;
         setPalette?: boolean;
         addTokens?: null;

@@ -246,7 +246,12 @@ export default class Item {
       switch (this.inputType) {
         case 'slider':
           const alerts = this.json.responseValues.alerts ?? [];
-          const alert = alerts.find(a => a.value === value);
+          const alert = alerts.find(a => {
+            if (this.json.config?.continuousSlider && typeof a.minValue === 'number' && typeof a.maxValue === 'number') {
+              return a.minValue <= value && a.maxValue >= value;
+            }
+            return  a.value === value;
+          });
           return alert?.alert ?? '';
 
         default:
