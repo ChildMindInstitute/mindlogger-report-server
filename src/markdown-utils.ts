@@ -59,7 +59,7 @@ md.use(emoji)
 const convertMarkdownToHtml = (markdown: string, addPageBreak: boolean = false): string => {
   const html = md.render(markdown);
   if(addPageBreak){
-    return `<div style="page-break-before: always}">${html}</div>`;
+    return `<div style="page-break-before: always">${html}</div>`;
   }
   return html;
 }
