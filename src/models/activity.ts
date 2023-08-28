@@ -25,8 +25,7 @@ export default class Activity {
 
   public reportIncludeItem: string;
   public allowSummary: boolean;
-  public reportScores: IActivityScoresAndReportsScores[];
-  public reportSections: IActivityScoresAndReportsSections[];
+  public reports: IActivityScoresAndReportsSections[]|IActivityScoresAndReportsScores[];
 
   constructor (data: IActivity, items: IActivityItem[] = []) {
     this.json = data;
@@ -44,8 +43,7 @@ export default class Activity {
     this.reportIncludeItem = ''; //TODO  data.scoresAndReports?.generateReport || false;
 
     this.allowSummary = data.scoresAndReports?.showScoreSummary || false;
-    this.reportScores = data.scoresAndReports?.scores || [];
-    this.reportSections = data.scoresAndReports?.sections || [];
+    this.reports = data.scoresAndReports?.reports || [];
   }
 
   private getScoresSumForReport(scores: KVObject, allowedNamesToCalculateScore: string[]): number {
@@ -70,26 +68,28 @@ export default class Activity {
     }
 
     // calculate scores first
-    for (const report of this.reportScores) {
-      const reportScore = this.getScoresSumForReport(scores, report.itemsScore);
-      const reportMaxScore = this.getScoresSumForReport(maxScores, report.itemsScore);
+    for (const report of this.reports) {
+      if (report.type === 'score') {
+        const reportScore = this.getScoresSumForReport(scores, report.itemsScore);
+        const reportMaxScore = this.getScoresSumForReport(maxScores, report.itemsScore);
 
-      maxScores[report.id] = reportMaxScore;
+        maxScores[report.id] = reportMaxScore;
 
-      switch (report.calculationType) {
-        case 'sum':
-          scores[report.id] = reportScore;
-          break;
-        case 'percentage':
-          scores[report.id] = Number(!reportMaxScore ? 0 : reportScore / reportMaxScore * 100).toFixed(2);
-          break;
-        case 'average':
-          scores[report.id] = Number(reportScore / report.itemsScore.length).toFixed(2);
-          break;
-      }
+        switch (report.calculationType) {
+          case 'sum':
+            scores[report.id] = reportScore;
+            break;
+          case 'percentage':
+            scores[report.id] = Number(!reportMaxScore ? 0 : reportScore / reportMaxScore * 100).toFixed(2);
+            break;
+          case 'average':
+            scores[report.id] = Number(reportScore / report.itemsScore.length).toFixed(2);
+            break;
+        }
 
-      for (const conditional of report.conditionalLogic) {
-        scores[conditional.id] = this.testVisibility(conditional, scores)
+        for (const conditional of report.conditionalLogic) {
+          scores[conditional.id] = this.testVisibility(conditional, scores)
+        }
       }
     }
 
@@ -114,25 +114,27 @@ export default class Activity {
 
     let markdown = '';
 
-    for (const report of this.reportSections) {
-      const isVis = this.testVisibility(report.conditionalLogic, rawValues);
-
-      if (isVis) {
-        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
-        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
-      }
-    }
-
-    for (const report of this.reportScores) {
-      markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
-      markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
-
-      for (const conditional of report.conditionalLogic) {
-        const isVis = scores[conditional.id];
+    for (const report of this.reports) {
+      if (report.type === 'section') {
+        const isVis = this.testVisibility(report.conditionalLogic, rawValues);
 
         if (isVis) {
-          markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user, now)) + '\n';
-          markdown += this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user, now) + '\n';
+          markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
+          markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
+        }
+      }
+
+      if (report.type === 'score') {
+        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
+        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
+
+        for (const conditional of report.conditionalLogic) {
+          const isVis = scores[conditional.id];
+
+          if (isVis) {
+            markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user, now)) + '\n';
+            markdown += this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user, now) + '\n';
+          }
         }
       }
     }
@@ -153,22 +155,24 @@ export default class Activity {
     let scores = this.evaluateScores(responses);
 
     let result = [];
-    for (const report of this.reportScores) {
-      let flagScore = false;
+    for (const report of this.reports) {
+      if (report.type === 'score') {
+        let flagScore = false;
 
-      for (const conditional of report.conditionalLogic) {
-        const isVis = this.testVisibility(conditional, scores);
-        if (isVis && conditional.flagScore) {
-          flagScore = true;
-          break;
+        for (const conditional of report.conditionalLogic) {
+          const isVis = this.testVisibility(conditional, scores);
+          if (isVis && conditional.flagScore) {
+            flagScore = true;
+            break;
+          }
         }
-      }
 
-      result.push({
-        prefLabel: report.name,
-        value: scores[report.id],
-        flagScore
-      })
+        result.push({
+          prefLabel: report.name,
+          value: scores[report.id],
+          flagScore
+        })
+      }
     }
 
     return result;

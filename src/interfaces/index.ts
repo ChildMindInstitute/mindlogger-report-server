@@ -107,11 +107,11 @@ export interface IDataMatrixOption {
 export interface IActivityScoresAndReports {
     generateReport: boolean;
     showScoreSummary: boolean;
-    scores: IActivityScoresAndReportsScores[];
-    sections: IActivityScoresAndReportsSections[];
+    reports: IActivityScoresAndReportsScores[]|IActivityScoresAndReportsSections[];
 }
 
 export interface IActivityScoresAndReportsScores {
+    type: 'score'
     id: string;
     name: string;
     calculationType: string;
@@ -122,6 +122,7 @@ export interface IActivityScoresAndReportsScores {
 }
 
 export interface IActivityScoresAndReportsSections {
+    type: 'section';
     name: string;
     message: string;
     itemsPrint: string[];
