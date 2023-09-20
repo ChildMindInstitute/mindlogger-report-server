@@ -36,6 +36,7 @@ export interface IActivity {
     isSkippable: boolean;
     name: string;
     order: number;
+    reportIncludedItemName: string;
     responseIsEditable:boolean;
     scoresAndReports: IActivityScoresAndReports;
     showAllAtOnce: boolean;
@@ -158,6 +159,8 @@ export interface IActivityFlow {
     isHidden: boolean;
     isSingleReport: boolean;
     order: number;
+    reportIncludedActivityName: string;
+    reportIncludedItemName: string;
 }
 
 export interface IUser {

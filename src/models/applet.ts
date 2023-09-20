@@ -4,6 +4,8 @@ import convertMarkdownToHtml from '../markdown-utils';
 import moment from "moment-timezone";
 import { getAppletPassword } from '../db';
 import {Email, IApplet, IAppletEncryption, IResponse, IUser} from "../interfaces";
+import Item from "./item";
+import {isString} from "lodash";
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/';
 
@@ -191,33 +193,37 @@ export default class Applet {
     pdfName += `_${this.name}`;
     pdfName += `_${activityFlow ? activityFlow.name : activity.name}`;
 
-    const itemName = this.getReportIncludeItem(activity, activityFlow, responses);
+    let itemName = this.getReportIncludeItem(activity, activityFlow, responses);
     if (itemName) {
-      pdfName += ` [${itemName}]`
+      itemName = itemName.replace(/\W/g, '');
+      pdfName += `_[${itemName}]`
     }
 
     pdfName += `_${moment.utc(this.timestamp).format('YYYY-MM-DD-HHmmss')}`;
     return `${pdfName}.pdf`;
   }
 
-  //TODO
-  getReportIncludeItem (activity: Activity, activityFlow: ActivityFlow|null, responses: IResponse[]): string {
-    let includeActivity = null, includeItem = null;
+  getReportIncludeItem (activity: Activity, activityFlow: ActivityFlow|null, responses: IResponse[]): string|null {
+    let includeActivity: Activity|null = null, includeItem: Item|null = null;
     if (activityFlow) {
-      const [activityName, itemName] = activityFlow.reportIncludeItem.split('/');
-      includeActivity = this.activities.find(activity => activity.name == activityName);
-
+      const activityName = activityFlow.json.reportIncludedActivityName
+      const itemName = activityFlow.json.reportIncludedItemName
+      includeActivity = this.activities.find(activity => activity.name == activityName) ?? null;
       if (includeActivity) {
-        includeItem = includeActivity.items.find(item => item.name == itemName);
+        includeItem = includeActivity.items.find(item => item.name == itemName) ?? null;
       }
     } else if (activity) {
       includeActivity = activity;
-      includeItem = activity.items.find(item => item.name == activity.reportIncludeItem);
+      includeItem = activity.items.find(item => item.name == activity.json.reportIncludedItemName) ?? null;
     }
 
     if (!includeActivity || !includeItem) return '';
 
-    return includeItem.name;
+    // @ts-ignore
+    const response = responses.find(r => r.activityId === includeActivity.id);
+    const idx = includeActivity.items.indexOf(includeItem);
+    const data = response?.data[idx]
+    return isString(data) ? data : null;
   }
 
   getSubject (activityId: string, activityFlowId: string|null, responses: IResponse[], user: IUser): string {
@@ -239,7 +245,7 @@ export default class Applet {
 
     const itemName = this.getReportIncludeItem(activity, activityFlow, responses);
     if (itemName) {
-      subject += ` [${itemName}]`
+      subject += ` / [${itemName}]`
     }
     return subject;
   }
