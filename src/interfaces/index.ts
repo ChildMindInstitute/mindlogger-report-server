@@ -177,6 +177,7 @@ export interface IResponse {
 
 export interface IResponseItem {
     value: any;
+    text?: string;
 }
 
 export interface KVObject {

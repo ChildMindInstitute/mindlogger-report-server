@@ -1,4 +1,4 @@
-import {isNumber} from 'lodash';
+import {isNumber, isString} from 'lodash';
 import convertMarkdownToHtml from '../markdown-utils';
 import {IActivityItem, IActivityItemOption, IDataMatrixRow, IResponseItem} from "../interfaces";
 import {escapeRegExp, escapeReplacement} from "../report-utils";
@@ -177,6 +177,10 @@ export default class Item {
       optionsHtml += `<div class="option">${minLabelHtml}<input type="range" min="${minValue}" max="${maxValue}" value="${response[0]}">${maxLabelHtml}</div>`;
     } else if (this.inputType === 'text') {
       optionsHtml += response[0];
+    }
+    //additional input
+    if (isString(value.text)) {
+      optionsHtml += value.text;
     }
 
     return `<div class="item-print-container"><div class="item-print ${type}"><div class="item-name">${this.name}</div><div class="question">${questionHTML}</div><div class="options">${optionsHtml}</div></div></div>`;
