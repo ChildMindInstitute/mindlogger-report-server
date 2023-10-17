@@ -6,6 +6,7 @@ dist/
 
 *.log
 .idea/
+.vscode/
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*

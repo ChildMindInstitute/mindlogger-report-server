@@ -1,90 +1,93 @@
-import _ from 'lodash';
-import Item from './item';
-import convertMarkdownToHtml from '../markdown-utils';
-import fs from 'fs';
-import mime from "mime-types";
+import _ from 'lodash'
+import Item from './item'
+import convertMarkdownToHtml from '../markdown-utils'
+import fs from 'fs'
+import mime from 'mime-types'
 import {
   IActivity,
-  IActivityItem, IActivityScoresAndReportsCondition, IActivityScoresAndReportsConditionalLogic,
+  IActivityItem,
+  IActivityScoresAndReportsCondition,
+  IActivityScoresAndReportsConditionalLogic,
   IActivityScoresAndReportsScores,
   IActivityScoresAndReportsSections,
   IResponseItem,
   IUser,
   KVObject,
-  ScoreForSummary
-} from "../interfaces";
-import {escapeRegExp, escapeReplacement, isFloat} from "../report-utils";
+  ScoreForSummary,
+} from '../interfaces'
+import { escapeRegExp, escapeReplacement, isFloat } from '../report-utils'
 
 export default class Activity {
-  public json: IActivity;
-  public schemaId: string;
-  public id: string;
-  public name: string;
-  public splashImage: string;
-  public items: Item[];
+  public json: IActivity
+  public schemaId: string
+  public id: string
+  public name: string
+  public splashImage: string
+  public items: Item[]
 
-  public reportIncludeItem: string;
-  public allowSummary: boolean;
-  public reports: IActivityScoresAndReportsSections[]|IActivityScoresAndReportsScores[];
+  public reportIncludeItem: string
+  public allowSummary: boolean
+  public reports: IActivityScoresAndReportsSections[] | IActivityScoresAndReportsScores[]
 
-  constructor (data: IActivity, items: IActivityItem[] = []) {
-    this.json = data;
+  constructor(data: IActivity, items: IActivityItem[] = []) {
+    this.json = data
 
-    this.schemaId = data.id;
-    this.id = data.id;
-    this.name = data.name;
-    this.splashImage = data.splashScreen;
+    this.schemaId = data.id
+    this.id = data.id
+    this.name = data.name
+    this.splashImage = data.splashScreen
 
-    this.items = items.map(item => {
-      return new Item(item);
-    });
+    this.items = items.map((item) => {
+      return new Item(item)
+    })
 
     //TODO: activity.items.find(item => item.name == activity.reportIncludeItem);
-    this.reportIncludeItem = ''; //TODO  data.scoresAndReports?.generateReport || false;
+    this.reportIncludeItem = '' //TODO  data.scoresAndReports?.generateReport || false;
 
-    this.allowSummary = data.scoresAndReports?.showScoreSummary || false;
-    this.reports = data.scoresAndReports?.reports || [];
+    this.allowSummary = data.scoresAndReports?.showScoreSummary || false
+    this.reports = data.scoresAndReports?.reports || []
   }
 
   private getScoresSumForReport(scores: KVObject, allowedNamesToCalculateScore: string[]): number {
-    const allowedScores: KVObject = {};
+    const allowedScores: KVObject = {}
     for (const name in scores) {
       if (allowedNamesToCalculateScore.includes(name)) {
-        allowedScores[name] = scores[name];
+        allowedScores[name] = scores[name]
       }
     }
-    return _.sum(_.values(allowedScores));
+    return _.sum(_.values(allowedScores))
   }
 
-  evaluateScores (responses: IResponseItem[]): KVObject {
-    const scores: KVObject = {}, maxScores: KVObject = {};
+  evaluateScores(responses: IResponseItem[]): KVObject {
+    const scores: KVObject = {},
+      maxScores: KVObject = {}
 
     for (let i = 0; i < responses.length; i++) {
-      const response = responses[i];    
-      const item = this.items[i];
+      const response = responses[i]
+      const item = this.items[i]
 
-      scores[item.name] = item.getScore(response);
-      maxScores[item.name] = item.getMaxScore();
+      scores[item.name] = item.getScore(response)
+      maxScores[item.name] = item.getMaxScore()
     }
 
     // calculate scores first
     for (const report of this.reports) {
       if (report.type === 'score') {
-        const reportScore = this.getScoresSumForReport(scores, report.itemsScore);
-        const reportMaxScore = this.getScoresSumForReport(maxScores, report.itemsScore);
+        const reportScore = this.getScoresSumForReport(scores, report.itemsScore)
+        const reportMaxScore = this.getScoresSumForReport(maxScores, report.itemsScore)
 
-        maxScores[report.id] = reportMaxScore;
+        maxScores[report.id] = reportMaxScore
 
         switch (report.calculationType) {
           case 'sum':
-            scores[report.id] = reportScore;
-            break;
+            scores[report.id] = reportScore
+            break
           case 'percentage':
-            scores[report.id] = Number(!reportMaxScore ? 0 : reportScore / reportMaxScore * 100).toFixed(2);
-            break;
+            scores[report.id] = Number(!reportMaxScore ? 0 : (reportScore / reportMaxScore) * 100).toFixed(2)
+            break
           case 'average':
-            scores[report.id] = Number(reportScore / report.itemsScore.length).toFixed(2);
-            break;
+            scores[report.id] = Number(reportScore / report.itemsScore.length).toFixed(2)
+            break
         }
 
         for (const conditional of report.conditionalLogic) {
@@ -93,216 +96,226 @@ export default class Activity {
       }
     }
 
-    return scores;
+    return scores
   }
 
   scoresToValues(scores: KVObject, responses: IResponseItem[]): KVObject[] {
-    const values = { ...scores };
-    const rawValues = { ...scores };
+    const values = { ...scores }
+    const rawValues = { ...scores }
     for (let i = 0; i < responses.length; i++) {
-      const response = responses[i];
-      const item = this.items[i];
-      values[item.name] = item.getVariableValue(response);
-      rawValues[item.name] = response?.value;
+      const response = responses[i]
+      const item = this.items[i]
+      values[item.name] = item.getVariableValue(response)
+      rawValues[item.name] = response?.value
     }
-    return [values, rawValues];
+    return [values, rawValues]
   }
 
-  evaluateReports (responses: IResponseItem[], user: IUser, now: string = ''): string {
-    const scores = this.evaluateScores(responses);
-    const [values, rawValues] = this.scoresToValues(scores, responses);
+  evaluateReports(responses: IResponseItem[], user: IUser, now = ''): string {
+    const scores = this.evaluateScores(responses)
+    const [values, rawValues] = this.scoresToValues(scores, responses)
 
-    let markdown = '';
+    let markdown = ''
 
     for (const report of this.reports) {
       if (report.type === 'section') {
-        const isVis = this.testVisibility(report.conditionalLogic, rawValues);
+        const isVis = this.testVisibility(report.conditionalLogic, rawValues)
 
         if (isVis) {
-          markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
-          markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
+          markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n'
+          markdown +=
+            this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n'
         }
       }
 
       if (report.type === 'score') {
-        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n';
-        markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n';
+        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n'
+        markdown +=
+          this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n'
 
         for (const conditional of report.conditionalLogic) {
-          const isVis = scores[conditional.id];
+          const isVis = scores[conditional.id]
 
           if (isVis) {
-            markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user, now)) + '\n';
-            markdown += this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user, now) + '\n';
+            markdown +=
+              convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user, now)) + '\n'
+            markdown +=
+              this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user, now) +
+              '\n'
           }
         }
       }
     }
 
-    return `<div class="activity-report">${markdown}</div>`;
+    return `<div class="activity-report">${markdown}</div>`
   }
 
-  getAlertsForSummary (responses: IResponseItem[]) {
-    let alerts: any[] = []; //TODO - type
+  getAlertsForSummary(responses: IResponseItem[]) {
+    let alerts: any[] = [] //TODO - type
     for (let i = 0; i < responses.length; i++) {
-      alerts = alerts.concat(this.items[i].getAlerts(responses[i]));
+      alerts = alerts.concat(this.items[i].getAlerts(responses[i]))
     }
 
-    return alerts;
+    return alerts
   }
 
-  getScoresForSummary (responses: IResponseItem[]): ScoreForSummary[] {
-    let scores = this.evaluateScores(responses);
+  getScoresForSummary(responses: IResponseItem[]): ScoreForSummary[] {
+    const scores = this.evaluateScores(responses);
 
-    let result = [];
+    const result = [];
     for (const report of this.reports) {
       if (report.type === 'score') {
-        let flagScore = false;
+        let flagScore = false
 
         for (const conditional of report.conditionalLogic) {
-          const isVis = this.testVisibility(conditional, scores);
+          const isVis = this.testVisibility(conditional, scores)
           if (isVis && conditional.flagScore) {
-            flagScore = true;
-            break;
+            flagScore = true
+            break
           }
         }
 
         result.push({
           prefLabel: report.name,
           value: scores[report.id],
-          flagScore
+          flagScore,
         })
       }
     }
 
-    return result;
+    return result
   }
 
-  getPrintedItems (items: string[], responses: IResponseItem[]): string {
-    let markdown = '';
+  getPrintedItems(items: string[], responses: IResponseItem[]): string {
+    let markdown = ''
 
-    if (!items) return markdown;
+    if (!items) return markdown
 
     for (const itemName of items) {
-      const index = this.items.findIndex(item => item.name === itemName);
+      const index = this.items.findIndex((item) => item.name === itemName)
 
       if (index >= 0) {
-        const context = {items: this.items, responses};
-        markdown += this.items[index].getPrinted(responses[index], context) + '\n';
+        const context = { items: this.items, responses }
+        markdown += this.items[index].getPrinted(responses[index] ?? { value: null }, context) + '\n'
       }
     }
 
-    return markdown;
+    return markdown
   }
 
-  replaceValuesInMarkdown (message: string|null, scores: KVObject, user: IUser, now: string = ''): string {
-    let markdown = message ?? '';
+  replaceValuesInMarkdown(message: string | null, scores: KVObject, user: IUser, now = ''): string {
+    let markdown = message ?? ''
 
     for (const scoreId in scores) {
-      const reg = new RegExp(`\\[\\[${escapeRegExp(scoreId)}\\]\\]`, "gi");
-      markdown = markdown.replace(reg, escapeReplacement(String(scores[scoreId])));
+      const reg = new RegExp(`\\[\\[${escapeRegExp(scoreId)}\\]\\]`, 'gi')
+      markdown = markdown.replace(reg, escapeReplacement(String(scores[scoreId])))
     }
 
-    markdown = markdown.replace(/\[\[sys\.date\]\]/ig, escapeReplacement(now));
+    markdown = markdown.replace(/\[\[sys\.date\]\]/gi, escapeReplacement(now))
 
     if ('nickname' in user) {
-      const nickName = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim();
-      markdown = markdown.replace(/\[nickname\]/ig, escapeReplacement(nickName));
+      const nickName = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim()
+      markdown = markdown.replace(/\[nickname\]/gi, escapeReplacement(nickName))
     }
 
-    return markdown;
+    return markdown
   }
 
-  testVisibility (conditional: IActivityScoresAndReportsConditionalLogic|null, scores: KVObject): boolean {
+  testVisibility(conditional: IActivityScoresAndReportsConditionalLogic | null, scores: KVObject): boolean {
     if (!conditional) {
-      return true;
+      return true
     }
-    const {conditions, match} = conditional;
-    function checkCondition({type, payload}: IActivityScoresAndReportsCondition, scoreOrValue: number|number[]): boolean {
+    const { conditions, match } = conditional
+    function checkCondition(
+      { type, payload }: IActivityScoresAndReportsCondition,
+      scoreOrValue: number | number[],
+    ): boolean {
       switch (type) {
         case 'BETWEEN':
-          return payload.minValue <= scoreOrValue && payload.maxValue >= scoreOrValue;
+          return payload.minValue <= scoreOrValue && payload.maxValue >= scoreOrValue
         case 'OUTSIDE_OF':
-          return payload.minValue > scoreOrValue || payload.maxValue < scoreOrValue;
+          return payload.minValue > scoreOrValue || payload.maxValue < scoreOrValue
         case 'EQUAL_TO_OPTION':
-          return scoreOrValue === parseFloat(payload.optionValue);
+          return scoreOrValue === parseFloat(payload.optionValue)
         case 'NOT_EQUAL_TO_OPTION':
-          return scoreOrValue !== parseFloat(payload.optionValue);
+          return scoreOrValue !== parseFloat(payload.optionValue)
         case 'GREATER_THAN':
-          return scoreOrValue > payload.value;
+          return scoreOrValue > payload.value
         case 'LESS_THAN':
-          return scoreOrValue < payload.value;
+          return scoreOrValue < payload.value
         case 'EQUAL':
-          return scoreOrValue == payload.value;
+          return scoreOrValue == payload.value
         case 'NOT_EQUAL':
-          return scoreOrValue != payload.value;
+          return scoreOrValue != payload.value
         case 'INCLUDES_OPTION':
-          return Array.isArray(scoreOrValue) && scoreOrValue.includes(parseFloat(payload.optionValue));
+          return Array.isArray(scoreOrValue) && scoreOrValue.includes(parseFloat(payload.optionValue))
         case 'NOT_INCLUDES_OPTION':
-          return Array.isArray(scoreOrValue) && !scoreOrValue.includes(parseFloat(payload.optionValue));
+          return Array.isArray(scoreOrValue) && !scoreOrValue.includes(parseFloat(payload.optionValue))
         default:
-          return false;
+          return false
       }
     }
 
     function checkAny(results: boolean[]): boolean {
       for (const result of results) {
         if (result) {
-          return true;
+          return true
         }
       }
-      return false;
+      return false
     }
 
     function checkAll(results: boolean[]): boolean {
       for (const result of results) {
         if (!result) {
-          return false;
+          return false
         }
       }
-      return results.length > 0;
+      return results.length > 0
     }
 
-    const results = [];
+    const results = []
     for (const condition of conditions) {
-      const key = condition.itemName;
+      const key = condition.itemName
       if (key in scores) {
-        const score = isFloat(scores[key]) ? parseFloat(scores[key]) : scores[key];
-        results.push(checkCondition(condition, score));
+        const score = isFloat(scores[key]) ? parseFloat(scores[key]) : scores[key]
+        results.push(checkCondition(condition, score))
       } else {
-        results.push(false);
+        results.push(false)
       }
     }
     switch (match) {
       case 'all':
-        return checkAll(results);
+        return checkAll(results)
       case 'any':
-        return checkAny(results);
+        return checkAny(results)
       default:
-        return false;
+        return false
     }
   }
 
-  static getSplashImageHTML (pageBreakBefore: boolean = true, activity: Activity) {
-    const image = activity.splashImage;
-    const mimeType = mime.lookup(image) || "";
+  static getSplashImageHTML(pageBreakBefore = true, activity: Activity) {
+    const image = activity.splashImage
+    const mimeType = mime.lookup(image) || ''
 
-    if (image && !mimeType.startsWith("video/")) {
+    if (image && !mimeType.startsWith('video/')) {
       return `
         <div class="splash-image" style="${pageBreakBefore ? 'page-break-before: always;' : ''}">
           <img src="${image}" alt="Splash Activity">
         </div>
-      `;
-    }else if (pageBreakBefore){
+      `
+    } else if (pageBreakBefore) {
       return `<div style="page-break-before: always"/>`
     }
 
-    return '';
+    return ''
   }
 
-  static getReportFooter (): string {
-    const termsText = 'I understand that the information provided by this questionnaire is not intended to replace the advice, diagnosis, or treatment offered by a medical or mental health professional, and that my anonymous responses may be used and shared for general research on children’s mental health.';
-    const footerText = 'CHILD MIND INSTITUTE, INC. AND CHILD MIND MEDICAL PRACTICE, PLLC (TOGETHER, “CMI”) DOES NOT DIRECTLY OR INDIRECTLY PRACTICE MEDICINE OR DISPENSE MEDICAL ADVICE AS PART OF THIS QUESTIONNAIRE. CMI ASSUMES NO LIABILITY FOR ANY DIAGNOSIS, TREATMENT, DECISION MADE, OR ACTION TAKEN IN RELIANCE UPON INFORMATION PROVIDED BY THIS QUESTIONNAIRE, AND ASSUMES NO RESPONSIBILITY FOR YOUR USE OF THIS QUESTIONNAIRE.';
+  static getReportFooter(): string {
+    const termsText =
+      'I understand that the information provided by this questionnaire is not intended to replace the advice, diagnosis, or treatment offered by a medical or mental health professional, and that my anonymous responses may be used and shared for general research on children’s mental health.'
+    const footerText =
+      'CHILD MIND INSTITUTE, INC. AND CHILD MIND MEDICAL PRACTICE, PLLC (TOGETHER, “CMI”) DOES NOT DIRECTLY OR INDIRECTLY PRACTICE MEDICINE OR DISPENSE MEDICAL ADVICE AS PART OF THIS QUESTIONNAIRE. CMI ASSUMES NO LIABILITY FOR ANY DIAGNOSIS, TREATMENT, DECISION MADE, OR ACTION TAKEN IN RELIANCE UPON INFORMATION PROVIDED BY THIS QUESTIONNAIRE, AND ASSUMES NO RESPONSIBILITY FOR YOUR USE OF THIS QUESTIONNAIRE.'
 
     return `
       <div class="divider-line"></div>
@@ -312,11 +325,11 @@ export default class Activity {
       <p class="text-footer text-body-1">
         ${footerText}
       </p>
-    `;
+    `
   }
 
-  static getReportStyles (): string {
-    const pdfStyles = fs.readFileSync('src/static/pdf-styles.css');
+  static getReportStyles(): string {
+    const pdfStyles = fs.readFileSync('src/static/pdf-styles.css')
     return `<style>${pdfStyles.toString()}</style>`
   }
 
