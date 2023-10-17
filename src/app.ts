@@ -128,12 +128,15 @@ app.post('/send-pdf-report', async (req: express.Request, res: express.Response)
 
 app.put('/verify', async (req: express.Request, res: express.Response) => {
   const publicKey = req.body.publicKey
-  if (verifyPublicKey(publicKey)) {
-    res.status(200).json({
+
+  const isPublicKeyValid = verifyPublicKey(publicKey)
+
+  if (isPublicKeyValid) {
+    return res.status(200).json({
       message: 'ok',
     })
   } else {
-    res.status(403).json({ message: 'invalid public key' })
+    return res.status(403).json({ message: 'invalid public key' })
   }
 })
 

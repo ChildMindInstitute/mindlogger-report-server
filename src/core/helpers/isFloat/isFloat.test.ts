@@ -1,4 +1,4 @@
-import { isFloat } from '../src/core/helpers/isFloat'
+import { isFloat } from './index'
 
 test('isFloat positive cases', () => {
   expect(isFloat('0')).toBeTruthy()

@@ -17,7 +17,7 @@ const getPrivateKey = () => {
   return privateKey
 }
 
-export const verifyPublicKey = (key: any) => {
+export const verifyPublicKey = (key: string): boolean => {
   try {
     const publicKey = crypto.createPublicKey({ key, format: 'pem', type: 'pkcs1', encoding: 'utf-8' })
     const privateKey = getPrivateKey()
