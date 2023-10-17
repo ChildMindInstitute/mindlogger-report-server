@@ -3,19 +3,15 @@ import express from 'express'
 import cors from 'cors'
 import { convertHtmlToPdf, encryptPDF, getCurrentCount, watermarkPDF } from './pdf-utils'
 import { Applet, Activity } from './models'
-import { verifyPublicKey, decryptData } from './encryption'
-import { setAppletPassword, getAppletPassword } from './db'
+import { decryptData } from './encryption'
+import { getAppletPassword } from './db'
 import fs from 'fs'
-import {
-  IResponse,
-  SendPdfReportRequestPayload,
-  SendPdfReportResponse,
-  SetPasswordRequestEncryptedPayload,
-  SetPasswordRequestPayload,
-} from './core/interfaces'
+import { IResponse, SendPdfReportRequestPayload, SendPdfReportResponse } from './core/interfaces'
 import { decryptResponses } from './encryption-dh'
 import os from 'os'
 import { convertMarkdownToHtml } from './core/helpers'
+import { serverController } from './modules/server/server.controller'
+import { appletController } from './modules/applet/applet.controller'
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -126,32 +122,8 @@ app.post('/send-pdf-report', async (req: express.Request, res: express.Response)
   }
 })
 
-app.put('/verify', async (req: express.Request, res: express.Response) => {
-  const publicKey = req.body.publicKey
+app.put('/verify', serverController.verifyServerPublicKey)
 
-  const isPublicKeyValid = verifyPublicKey(publicKey)
-
-  if (isPublicKeyValid) {
-    return res.status(200).json({
-      message: 'ok',
-    })
-  } else {
-    return res.status(403).json({ message: 'invalid public key' })
-  }
-})
-
-app.post('/set-password', async (req: express.Request, res: express.Response) => {
-  const { password, appletId } = req.body as SetPasswordRequestPayload
-
-  try {
-    const pdfPassword = decryptData(password) as SetPasswordRequestEncryptedPayload
-    await setAppletPassword(appletId, pdfPassword.password, pdfPassword.privateKey)
-
-    res.status(200).json({ message: 'success' })
-  } catch (e) {
-    console.error('error', e)
-    res.status(403).json({ message: 'invalid password' })
-  }
-})
+app.post('/set-password', appletController.setPassword)
 
 app.listen(port, () => console.info(`MindLogger Report Server listening on port ${port}!`))
