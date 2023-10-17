@@ -151,4 +151,4 @@ app.post('/set-password', async (req: express.Request, res: express.Response) =>
   }
 })
 
-app.listen(port)
+app.listen(port, () => console.info(`MindLogger Report Server listening on port ${port}!`))
