@@ -1,6 +1,5 @@
 import 'dotenv/config'
 import express from 'express'
-import convertMarkdownToHtml from './markdown-utils'
 import cors from 'cors'
 import { convertHtmlToPdf, encryptPDF, getCurrentCount, watermarkPDF } from './pdf-utils'
 import { Applet, Activity } from './models'
@@ -13,9 +12,10 @@ import {
   SendPdfReportResponse,
   SetPasswordRequestEncryptedPayload,
   SetPasswordRequestPayload,
-} from './interfaces'
+} from './core/interfaces'
 import { decryptResponses } from './encryption-dh'
 import os from 'os'
+import { convertMarkdownToHtml } from './core/helpers'
 
 const app = express()
 const port = process.env.PORT || 3000

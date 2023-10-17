@@ -1,7 +1,6 @@
 import { isNumber, isString } from 'lodash'
-import convertMarkdownToHtml from '../markdown-utils'
-import { IActivityItem, IActivityItemOption, IDataMatrixRow, IResponseItem } from '../interfaces'
-import { escapeRegExp, escapeReplacement } from '../report-utils'
+import { IActivityItem, IActivityItemOption, IDataMatrixRow, IResponseItem } from '../core/interfaces'
+import { convertMarkdownToHtml, escapeRegExp, escapeReplacement } from '../core/helpers'
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/'
 
@@ -40,7 +39,7 @@ export default class Item {
       return 0
     }
 
-    const response = this.convertResponseToArray(value);
+    const response = this.convertResponseToArray(value)
 
     let totalScore = 0
 
@@ -101,10 +100,9 @@ export default class Item {
       const options = []
       for (const v of response) {
         if (typeof v === 'number' || typeof v === 'string') {
-          const option = this.options.find(option =>
-            typeof v === 'number' && option.value === v ||
-            typeof v === 'string' && option.text === v
-          );
+          const option = this.options.find(
+            (option) => (typeof v === 'number' && option.value === v) || (typeof v === 'string' && option.text === v),
+          )
 
           if (option) {
             options.push(option.text)
@@ -164,9 +162,9 @@ export default class Item {
       return ''
     }
 
-    const response = this.convertResponseToArray(value);
+    const response = this.convertResponseToArray(value)
 
-    const questionHTML = convertMarkdownToHtml(this.getQuestionText());
+    const questionHTML = convertMarkdownToHtml(this.getQuestionText())
 
     let optionsHtml = '',
       type = this.inputType

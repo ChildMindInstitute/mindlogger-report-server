@@ -1,5 +1,5 @@
 import Activity from './activity'
-import { IActivityFlow } from '../interfaces'
+import { IActivityFlow } from '../core/interfaces'
 
 export default class ActivityFlow {
   public json: IActivityFlow

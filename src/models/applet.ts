@@ -1,11 +1,11 @@
 import Activity from './activity'
 import ActivityFlow from './activity-flow'
-import convertMarkdownToHtml from '../markdown-utils'
 import moment from 'moment-timezone'
 import { getAppletPassword } from '../db'
-import { Email, IApplet, IAppletEncryption, IResponse, IUser } from '../interfaces'
+import { Email, IApplet, IAppletEncryption, IResponse, IUser } from '../core/interfaces'
 import Item from './item'
 import { isString } from 'lodash'
+import { convertMarkdownToHtml } from '../core/helpers'
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/'
 
@@ -140,7 +140,7 @@ export default class Applet {
       <div class="summary-title">Report Summary</div>
       ${alertsHTML ? `<div class="alerts-list">${alertsHTML}</div>` : ''}
       ${scoresHTML}
-    `;
+    `
 
     return `<div class="report-summary">${output}</div>`
   }

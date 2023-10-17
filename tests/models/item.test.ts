@@ -1,5 +1,5 @@
 import Item from "../../src/models/item";
-import {IActivityItem} from "../../src/interfaces";
+import {IActivityItem} from "../../src/core/interfaces";
 
 
 test('slider alert', () => {

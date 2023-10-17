@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import Item from './item'
-import convertMarkdownToHtml from '../markdown-utils'
 import fs from 'fs'
 import mime from 'mime-types'
 import {
@@ -14,8 +13,8 @@ import {
   IUser,
   KVObject,
   ScoreForSummary,
-} from '../interfaces'
-import { escapeRegExp, escapeReplacement, isFloat } from '../report-utils'
+} from '../core/interfaces'
+import { convertMarkdownToHtml, escapeRegExp, escapeReplacement, isFloat } from '../core/helpers'
 
 export default class Activity {
   public json: IActivity
@@ -160,9 +159,9 @@ export default class Activity {
   }
 
   getScoresForSummary(responses: IResponseItem[]): ScoreForSummary[] {
-    const scores = this.evaluateScores(responses);
+    const scores = this.evaluateScores(responses)
 
-    const result = [];
+    const result = []
     for (const report of this.reports) {
       if (report.type === 'score') {
         let flagScore = false

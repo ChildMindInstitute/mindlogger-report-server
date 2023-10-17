@@ -1,22 +1,22 @@
-import {isFloat} from "../src/report-utils";
+import { isFloat } from '../src/core/helpers/isFloat'
 
 test('isFloat positive cases', () => {
-    expect(isFloat('0')).toBeTruthy();
-    expect(isFloat('0.00')).toBeTruthy();
-    expect(isFloat(0)).toBeTruthy();
-    expect(isFloat(0.00)).toBeTruthy();
-    expect(isFloat('3.1')).toBeTruthy();
-    expect(isFloat('3.10')).toBeTruthy();
-    expect(isFloat(3.1)).toBeTruthy();
-    expect(isFloat(3.10)).toBeTruthy();
-    expect(isFloat(3.00)).toBeTruthy();
-    expect(isFloat(3)).toBeTruthy();
-});
+  expect(isFloat('0')).toBeTruthy()
+  expect(isFloat('0.00')).toBeTruthy()
+  expect(isFloat(0)).toBeTruthy()
+  expect(isFloat(0.0)).toBeTruthy()
+  expect(isFloat('3.1')).toBeTruthy()
+  expect(isFloat('3.10')).toBeTruthy()
+  expect(isFloat(3.1)).toBeTruthy()
+  expect(isFloat(3.1)).toBeTruthy()
+  expect(isFloat(3.0)).toBeTruthy()
+  expect(isFloat(3)).toBeTruthy()
+})
 
 test('isFloat negative cases', () => {
-    expect(isFloat('')).toBeFalsy();
-    expect(isFloat(undefined)).toBeFalsy();
-    expect(isFloat(null)).toBeFalsy();
-    expect(isFloat('a')).toBeFalsy();
-    expect(isFloat(new Object(''))).toBeFalsy();
-});
+  expect(isFloat('')).toBeFalsy()
+  expect(isFloat(undefined)).toBeFalsy()
+  expect(isFloat(null)).toBeFalsy()
+  expect(isFloat('a')).toBeFalsy()
+  expect(isFloat(new Object(''))).toBeFalsy()
+})

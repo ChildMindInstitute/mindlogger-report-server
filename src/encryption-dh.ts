@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { IAppletEncryption, IResponseItem } from './interfaces'
+import { IAppletEncryption, IResponseItem } from './core/interfaces'
 
 export function decryptResponses(
   responses: string,
