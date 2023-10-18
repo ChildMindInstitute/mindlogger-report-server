@@ -4,7 +4,7 @@ import fs from 'fs'
 import { Response } from 'express'
 
 import { decryptData } from '../../encryption'
-import { ActivityItemReponse, SendPdfReportResponse } from '../../core/interfaces'
+import { ActivityItemResponse, SendPdfReportResponse } from '../../core/interfaces'
 import { getAppletKeys } from '../../db'
 import { convertMarkdownToHtml } from '../../core/helpers'
 import { decryptResponses } from '../../encryption-dh'
@@ -34,7 +34,7 @@ class ReportController {
         throw new Error('applet is not connected')
       }
 
-      const responses: ActivityItemReponse[] = payload.responses.map((response) => {
+      const responses: ActivityItemResponse[] = payload.responses.map((response) => {
         const decryptedReponses = decryptResponses(
           response.answer,
           appletKeys.privateKey,
@@ -67,7 +67,6 @@ class ReportController {
 
       const appletId = payload.applet.id
       const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses, user)
-      console.log(outputsFolder)
       const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}`
       html += ActivityEntity.getReportStyles()
 

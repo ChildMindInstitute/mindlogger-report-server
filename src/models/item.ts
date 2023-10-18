@@ -1,5 +1,5 @@
 import { isNumber, isString } from 'lodash'
-import { IActivityItem, IActivityItemOption, IDataMatrixRow, ItemReponse } from '../core/interfaces'
+import { IActivityItem, IActivityItemOption, IDataMatrixRow, ItemResponse } from '../core/interfaces'
 import { convertMarkdownToHtml, escapeRegExp, escapeReplacement } from '../core/helpers'
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/'
@@ -30,7 +30,7 @@ export class ItemEntity {
     this.options = (data.responseValues?.options ?? []).map((o) => ({ ...o }))
   }
 
-  getScore(value: ItemReponse): number {
+  getScore(value: ItemResponse): number {
     if (
       value === null ||
       (this.inputType !== 'singleSelect' && this.inputType !== 'multiSelect' && this.inputType !== 'slider') ||
@@ -62,7 +62,7 @@ export class ItemEntity {
     return totalScore
   }
 
-  getAlerts(value: ItemReponse): string[] {
+  getAlerts(value: ItemResponse): string[] {
     const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'singleSelectRows', 'multiSelectRows']
     if (!this.setAlerts || value === null || !allowedTypes.includes(this.inputType)) {
       return []
@@ -73,7 +73,7 @@ export class ItemEntity {
     return this.getAlertForSimpleTypes(value, this.options)
   }
 
-  getVariableValue(value: ItemReponse): string {
+  getVariableValue(value: ItemResponse): string {
     const allowedTypes = ['singleSelect', 'multiSelect', 'numberSelect', 'slider', 'date', 'text']
 
     if (value === null || !allowedTypes.includes(this.inputType)) {
@@ -152,7 +152,7 @@ export class ItemEntity {
     return this.question.replace(imageRE, '')
   }
 
-  getPrinted(value: ItemReponse, context: { items: ItemEntity[]; responses: ItemReponse[] | string[] }): string {
+  getPrinted(value: ItemResponse, context: { items: ItemEntity[]; responses: ItemResponse[] | string[] }): string {
     if (
       this.inputType !== 'singleSelect' &&
       this.inputType !== 'multiSelect' &&
@@ -208,7 +208,7 @@ export class ItemEntity {
     return `<div class="item-print-container"><div class="item-print ${type}"><div class="item-name">${this.name}</div><div class="question">${questionHTML}</div><div class="options">${optionsHtml}</div></div></div>`
   }
 
-  private reuseResponseOption(optionText: string, items: ItemEntity[], responses: ItemReponse[] | string[]): string {
+  private reuseResponseOption(optionText: string, items: ItemEntity[], responses: ItemResponse[] | string[]): string {
     if (!optionText.includes('[[')) {
       return optionText
     }
@@ -266,7 +266,7 @@ export class ItemEntity {
   }
 
   private getAlertForSimpleTypes(
-    responseItem: ItemReponse | number | string,
+    responseItem: ItemResponse | number | string,
     options: IActivityItemOption[],
   ): string[] {
     const response = this.convertResponseToArray(responseItem)
@@ -296,7 +296,7 @@ export class ItemEntity {
       .filter((alert) => alert.length > 0)
   }
 
-  private convertResponseToArray(response: ItemReponse | number | string): any[] {
+  private convertResponseToArray(response: ItemResponse | number | string): any[] {
     if (response === null) {
       return [null]
     }

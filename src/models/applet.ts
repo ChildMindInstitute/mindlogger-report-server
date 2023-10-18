@@ -2,7 +2,7 @@ import { ActivityEntity } from './activity'
 import ActivityFlow from './activity-flow'
 import moment from 'moment-timezone'
 import { getAppletKeys } from '../db'
-import { Email, Applet, IAppletEncryption, ActivityItemReponse, User } from '../core/interfaces'
+import { Email, Applet, IAppletEncryption, ActivityItemResponse, User } from '../core/interfaces'
 import { ItemEntity } from './item'
 import { isString } from 'lodash'
 import { convertMarkdownToHtml } from '../core/helpers'
@@ -83,7 +83,7 @@ export class AppletEntity {
     return applet.watermark
   }
 
-  getSummary(responses: ActivityItemReponse[]): string {
+  getSummary(responses: ActivityItemResponse[]): string {
     let alerts: any[] = [] //TODO - type
     let alertsHTML = '',
       scoresHTML = ''
@@ -148,7 +148,7 @@ export class AppletEntity {
   getEmailConfigs(
     activityId: string,
     activityFlowId: string | null,
-    responses: ActivityItemReponse[],
+    responses: ActivityItemResponse[],
     user: User,
     now: string,
   ): Email {
@@ -187,7 +187,7 @@ export class AppletEntity {
   getPDFFileName(
     activityId: string,
     activityFlowId: string | null,
-    responses: ActivityItemReponse[],
+    responses: ActivityItemResponse[],
     user: User,
   ): string {
     const activityFlow = this.activityFlows.find((flow) => flow.id === activityFlowId) ?? null
@@ -220,7 +220,7 @@ export class AppletEntity {
   getReportIncludeItem(
     activity: ActivityEntity,
     activityFlow: ActivityFlow | null,
-    responses: ActivityItemReponse[],
+    responses: ActivityItemResponse[],
   ): string | null {
     let includeActivity: ActivityEntity | null = null
     let includeItem: ItemEntity | null = null
@@ -246,7 +246,7 @@ export class AppletEntity {
     return isString(data) ? data : null
   }
 
-  getSubject(activityId: string, activityFlowId: string | null, responses: ActivityItemReponse[], user: User): string {
+  getSubject(activityId: string, activityFlowId: string | null, responses: ActivityItemResponse[], user: User): string {
     const activityFlow = this.activityFlows.find((flow) => flow.id === activityFlowId) ?? null
     const activity = this.activities.find((activity) => activity.id === activityId)
     if (!activity) {

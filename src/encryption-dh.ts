@@ -1,19 +1,19 @@
 import crypto from 'crypto'
-import { IAppletEncryption, ItemReponse } from './core/interfaces'
+import { IAppletEncryption, ItemResponse } from './core/interfaces'
 
 export function decryptResponses(
   responses: string,
   appletPrivateKey: string,
   encryption: IAppletEncryption,
   userPublicKey: string,
-): ItemReponse[] {
+): ItemResponse[] {
   const AESKey = getAESKey(
     appletPrivateKey,
     JSON.parse(userPublicKey) as number[],
     JSON.parse(encryption.prime) as number[],
     JSON.parse(encryption.base) as number[],
   )
-  return JSON.parse(decryptData(responses, AESKey)) as ItemReponse[]
+  return JSON.parse(decryptData(responses, AESKey)) as ItemResponse[]
 }
 
 function decryptData(text: string, key: Buffer): string {

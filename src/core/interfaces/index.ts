@@ -170,12 +170,12 @@ export interface User {
   lastName: string | null
 }
 
-export type ActivityItemReponse = {
+export type ActivityItemResponse = {
   activityId: string
-  data: ItemReponse[]
+  data: ItemResponse[]
 }
 
-export type ItemReponse = {
+export type ItemResponse = {
   value: any
   text?: string
 }

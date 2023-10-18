@@ -9,7 +9,7 @@ import {
   IActivityScoresAndReportsConditionalLogic,
   IActivityScoresAndReportsScores,
   IActivityScoresAndReportsSections,
-  ItemReponse,
+  ItemResponse,
   User,
   KVObject,
   ScoreForSummary,
@@ -57,7 +57,7 @@ export class ActivityEntity {
     return _.sum(_.values(allowedScores))
   }
 
-  evaluateScores(responses: ItemReponse[]): KVObject {
+  evaluateScores(responses: ItemResponse[]): KVObject {
     const scores: KVObject = {},
       maxScores: KVObject = {}
 
@@ -98,7 +98,7 @@ export class ActivityEntity {
     return scores
   }
 
-  scoresToValues(scores: KVObject, responses: ItemReponse[]): KVObject[] {
+  scoresToValues(scores: KVObject, responses: ItemResponse[]): KVObject[] {
     const values = { ...scores }
     const rawValues = { ...scores }
     for (let i = 0; i < responses.length; i++) {
@@ -110,7 +110,7 @@ export class ActivityEntity {
     return [values, rawValues]
   }
 
-  evaluateReports(responses: ItemReponse[], user: User, now = ''): string {
+  evaluateReports(responses: ItemResponse[], user: User, now = ''): string {
     const scores = this.evaluateScores(responses)
     const [values, rawValues] = this.scoresToValues(scores, responses)
 
@@ -149,7 +149,7 @@ export class ActivityEntity {
     return `<div class="activity-report">${markdown}</div>`
   }
 
-  getAlertsForSummary(responses: ItemReponse[]) {
+  getAlertsForSummary(responses: ItemResponse[]) {
     let alerts: any[] = [] //TODO - type
     for (let i = 0; i < responses.length; i++) {
       alerts = alerts.concat(this.items[i].getAlerts(responses[i]))
@@ -158,7 +158,7 @@ export class ActivityEntity {
     return alerts
   }
 
-  getScoresForSummary(responses: ItemReponse[]): ScoreForSummary[] {
+  getScoresForSummary(responses: ItemResponse[]): ScoreForSummary[] {
     const scores = this.evaluateScores(responses)
 
     const result = []
@@ -185,7 +185,7 @@ export class ActivityEntity {
     return result
   }
 
-  getPrintedItems(items: string[], responses: ItemReponse[]): string {
+  getPrintedItems(items: string[], responses: ItemResponse[]): string {
     let markdown = ''
 
     if (!items) return markdown
