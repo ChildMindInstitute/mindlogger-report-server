@@ -172,10 +172,10 @@ export interface User {
 
 export type ActivityResponse = {
   activityId: string
-  data: ItemResponse[]
+  data: ResponseItem[]
 }
 
-export type ItemResponse = {
+export type ResponseItem = {
   value: any
   text?: string
 }

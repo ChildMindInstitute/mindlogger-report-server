@@ -184,12 +184,7 @@ export class AppletEntity {
     return row ? row.key : ''
   }
 
-  getPDFFileName(
-    activityId: string,
-    activityFlowId: string | null,
-    responses: ActivityResponse[],
-    user: User,
-  ): string {
+  getPDFFileName(activityId: string, activityFlowId: string | null, responses: ActivityResponse[], user: User): string {
     const activityFlow = this.activityFlows.find((flow) => flow.id === activityFlowId) ?? null
     const activity = this.activities.find((activity) => activity.id === activityId)
     if (!activity) {
