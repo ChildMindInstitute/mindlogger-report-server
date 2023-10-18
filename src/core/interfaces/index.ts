@@ -170,7 +170,7 @@ export interface User {
   lastName: string | null
 }
 
-export type ActivityItemResponse = {
+export type ActivityResponse = {
   activityId: string
   data: ItemResponse[]
 }

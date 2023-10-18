@@ -4,7 +4,7 @@ import fs from 'fs'
 import { Response } from 'express'
 
 import { decryptData } from '../../encryption'
-import { ActivityItemResponse, SendPdfReportResponse } from '../../core/interfaces'
+import { ActivityResponse, SendPdfReportResponse } from '../../core/interfaces'
 import { getAppletKeys } from '../../db'
 import { convertMarkdownToHtml } from '../../core/helpers'
 import { decryptResponses } from '../../encryption-dh'
@@ -34,7 +34,7 @@ class ReportController {
         throw new Error('applet is not connected')
       }
 
-      const responses: ActivityItemResponse[] = payload.responses.map((response) => {
+      const responses: ActivityResponse[] = payload.responses.map((response) => {
         const decryptedReponses = decryptResponses(
           response.answer,
           appletKeys.privateKey,
