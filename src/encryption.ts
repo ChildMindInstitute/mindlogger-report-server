@@ -1,4 +1,5 @@
 // @ts-nocheck
+import 'dotenv/config'
 import crypto from 'crypto'
 import fs from 'fs'
 
@@ -29,7 +30,7 @@ export const verifyPublicKey = (key: string): boolean => {
   return false
 }
 
-export const decryptData = (response: string | string[]): any => {
+export const decryptData = <T>(response: string | string[]): T => {
   const privateKey = getPrivateKey()
   let data = ''
   if (Array.isArray(response)) {

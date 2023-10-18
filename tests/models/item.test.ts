@@ -1,8 +1,8 @@
-import Item from '../../src/models/item'
+import { ItemEntity } from '../../src/models'
 import { IActivityItem } from '../../src/core/interfaces'
 
 test('slider alert', () => {
-  const item = new Item({
+  const item = new ItemEntity({
     responseType: 'slider',
     responseValues: {
       alerts: [{ value: 0, minValue: null, maxValue: null, alert: 'test-slider0' }],
@@ -16,7 +16,7 @@ test('slider alert', () => {
 })
 
 test('continuous slider alert', () => {
-  const item = new Item({
+  const item = new ItemEntity({
     responseType: 'slider',
     responseValues: {
       alerts: [{ value: 0, minValue: 1, maxValue: 5, alert: 'test-slider0' }],
@@ -30,7 +30,7 @@ test('continuous slider alert', () => {
 })
 
 test('singleSelect alert', () => {
-  const item = new Item({
+  const item = new ItemEntity({
     responseType: 'singleSelect',
     responseValues: {
       options: [
@@ -58,7 +58,7 @@ test('singleSelect alert', () => {
 })
 
 test('text no alert', () => {
-  const item = new Item({
+  const item = new ItemEntity({
     responseType: 'text',
     config: { setAlerts: false },
     name: 'text_item',
@@ -68,7 +68,7 @@ test('text no alert', () => {
 })
 
 test('singleSelectRows alert', () => {
-  const item = new Item({
+  const item = new ItemEntity({
     responseType: 'singleSelectRows',
     responseValues: {
       options: [
@@ -132,7 +132,7 @@ test('singleSelectRows alert', () => {
 })
 
 test('multiSelectRows alert', () => {
-  const item = new Item({
+  const item = new ItemEntity({
     responseType: 'multiSelectRows',
     responseValues: {
       options: [

@@ -1,7 +1,7 @@
-import Activity from '../../src/models/activity'
+import { ActivityEntity } from '../../src/models'
 import { IActivity, IActivityScoresAndReportsConditionalLogic as ConditionalLogic } from '../../src/core/interfaces'
 
-const activity = new Activity({} as IActivity, [])
+const activity = new ActivityEntity({} as IActivity, [])
 
 test('score report conditions', () => {
   const conditional: ConditionalLogic = {

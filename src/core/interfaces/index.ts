@@ -1,4 +1,4 @@
-export interface IApplet {
+export interface Applet {
   id: string
   displayName: string
   description: string
@@ -163,19 +163,19 @@ export interface IActivityFlow {
   reportIncludedItemName: string
 }
 
-export interface IUser {
+export interface User {
   secretId: string
   nickname: string
   firstName: string | null
   lastName: string | null
 }
 
-export interface IResponse {
+export type ActivityItemReponse = {
   activityId: string
-  data: IResponseItem[]
+  data: ItemReponse[]
 }
 
-export interface IResponseItem {
+export type ItemReponse = {
   value: any
   text?: string
 }
@@ -198,14 +198,6 @@ export interface SetPasswordRequestPayload {
 export interface SetPasswordRequestEncryptedPayload {
   password: string
   privateKey: string
-}
-
-export interface SendPdfReportRequestPayload {
-  responses: { activityId: string; answer: string }[]
-  userPublicKey: string
-  now: string
-  user: IUser
-  applet: IApplet
 }
 
 export interface Email {

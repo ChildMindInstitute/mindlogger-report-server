@@ -1,4 +1,4 @@
-import Activity from './activity'
+import { ActivityEntity } from './activity'
 import { IActivityFlow } from '../core/interfaces'
 
 export default class ActivityFlow {
@@ -6,10 +6,10 @@ export default class ActivityFlow {
   public id: string
   public schemaId: string
   public name: string
-  public activities: Activity[]
+  public activities: ActivityEntity[]
   public reportIncludeItem: string
 
-  constructor(data: IActivityFlow, activities: Activity[]) {
+  constructor(data: IActivityFlow, activities: ActivityEntity[]) {
     this.json = data
 
     this.schemaId = data.id
