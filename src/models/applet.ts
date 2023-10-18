@@ -1,16 +1,16 @@
-import Activity from './activity'
+import { ActivityEntity } from './activity'
 import ActivityFlow from './activity-flow'
-import convertMarkdownToHtml from '../markdown-utils'
 import moment from 'moment-timezone'
-import { getAppletPassword } from '../db'
-import { Email, IApplet, IAppletEncryption, IResponse, IUser } from '../interfaces'
-import Item from './item'
+import { getAppletKeys } from '../db'
+import { Email, Applet, IAppletEncryption, ActivityResponse, User } from '../core/interfaces'
+import { ItemEntity } from './item'
 import { isString } from 'lodash'
+import { convertMarkdownToHtml } from '../core/helpers'
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/'
 
-export default class Applet {
-  public json: IApplet
+export class AppletEntity {
+  public json: Applet
   public timestamp: number
   public schemaId: string
   public id: string
@@ -20,10 +20,10 @@ export default class Applet {
   public watermark: string
   public encryption: IAppletEncryption
   public reportConfigs: any
-  public activities: Activity[]
+  public activities: ActivityEntity[]
   public activityFlows: ActivityFlow[]
 
-  constructor(data: IApplet) {
+  constructor(data: Applet) {
     this.json = data
 
     this.timestamp = Date.now()
@@ -36,7 +36,7 @@ export default class Applet {
 
     // parse activities
     this.activities = data.activities.map((item) => {
-      return new Activity(item, item.items)
+      return new ActivityEntity(item, item.items)
     })
 
     // parse activity flows
@@ -48,7 +48,7 @@ export default class Applet {
     this.encryption = data?.encryption || null
   }
 
-  extractReportConfigs(data: IApplet) {
+  extractReportConfigs(data: Applet) {
     return {
       serverIp: data.reportServerIp,
       publicEncryptionKey: data.reportPublicKey,
@@ -75,7 +75,7 @@ export default class Applet {
 
     return imageHTML
   }
-  static getAppletWatermarkURL(applet: Applet): string {
+  static getAppletWatermarkURL(applet: AppletEntity): string {
     if (!applet.watermark) {
       return ''
     }
@@ -83,7 +83,7 @@ export default class Applet {
     return applet.watermark
   }
 
-  getSummary(responses: IResponse[]): string {
+  getSummary(responses: ActivityResponse[]): string {
     let alerts: any[] = [] //TODO - type
     let alertsHTML = '',
       scoresHTML = ''
@@ -140,7 +140,7 @@ export default class Applet {
       <div class="summary-title">Report Summary</div>
       ${alertsHTML ? `<div class="alerts-list">${alertsHTML}</div>` : ''}
       ${scoresHTML}
-    `;
+    `
 
     return `<div class="report-summary">${output}</div>`
   }
@@ -148,8 +148,8 @@ export default class Applet {
   getEmailConfigs(
     activityId: string,
     activityFlowId: string | null,
-    responses: IResponse[],
-    user: IUser,
+    responses: ActivityResponse[],
+    user: User,
     now: string,
   ): Email {
     let emailBody = this.reportConfigs.emailBody
@@ -180,11 +180,11 @@ export default class Applet {
   }
 
   async getPDFPassword(appletId = ''): Promise<string> {
-    const row = await getAppletPassword(appletId || this.id)
+    const row = await getAppletKeys(appletId || this.id)
     return row ? row.key : ''
   }
 
-  getPDFFileName(activityId: string, activityFlowId: string | null, responses: IResponse[], user: IUser): string {
+  getPDFFileName(activityId: string, activityFlowId: string | null, responses: ActivityResponse[], user: User): string {
     const activityFlow = this.activityFlows.find((flow) => flow.id === activityFlowId) ?? null
     const activity = this.activities.find((activity) => activity.id === activityId)
     if (!activity) {
@@ -212,9 +212,14 @@ export default class Applet {
     return `${pdfName}.pdf`
   }
 
-  getReportIncludeItem(activity: Activity, activityFlow: ActivityFlow | null, responses: IResponse[]): string | null {
-    let includeActivity: Activity | null = null,
-      includeItem: Item | null = null
+  getReportIncludeItem(
+    activity: ActivityEntity,
+    activityFlow: ActivityFlow | null,
+    responses: ActivityResponse[],
+  ): string | null {
+    let includeActivity: ActivityEntity | null = null
+    let includeItem: ItemEntity | null = null
+
     if (activityFlow) {
       const activityName = activityFlow.json.reportIncludedActivityName
       const itemName = activityFlow.json.reportIncludedItemName
@@ -236,7 +241,7 @@ export default class Applet {
     return isString(data) ? data : null
   }
 
-  getSubject(activityId: string, activityFlowId: string | null, responses: IResponse[], user: IUser): string {
+  getSubject(activityId: string, activityFlowId: string | null, responses: ActivityResponse[], user: User): string {
     const activityFlow = this.activityFlows.find((flow) => flow.id === activityFlowId) ?? null
     const activity = this.activities.find((activity) => activity.id === activityId)
     if (!activity) {

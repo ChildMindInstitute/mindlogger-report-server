@@ -1,4 +1,5 @@
 // @ts-nocheck
+import 'dotenv/config'
 import crypto from 'crypto'
 import fs from 'fs'
 
@@ -17,7 +18,7 @@ const getPrivateKey = () => {
   return privateKey
 }
 
-export const verifyPublicKey = (key: any) => {
+export const verifyPublicKey = (key: string): boolean => {
   try {
     const publicKey = crypto.createPublicKey({ key, format: 'pem', type: 'pkcs1', encoding: 'utf-8' })
     const privateKey = getPrivateKey()
@@ -29,7 +30,7 @@ export const verifyPublicKey = (key: any) => {
   return false
 }
 
-export const decryptData = (response: string | string[]): any => {
+export const decryptData = <T>(response: string | string[]): T => {
   const privateKey = getPrivateKey()
   let data = ''
   if (Array.isArray(response)) {

@@ -4,7 +4,7 @@ import puppeteer from 'puppeteer'
 import fs from 'fs'
 import fetch from 'node-fetch'
 import os from 'os'
-import path from 'path'
+import { createDirectoryIfNotExists, getRandomFileName } from './core/helpers'
 
 export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<void> => {
   const browser = await puppeteer.launch({
@@ -32,13 +32,6 @@ export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<vo
     })
   } finally {
     await browser.close()
-  }
-}
-
-function createDirectoryIfNotExists(filePath: string) {
-  const directoryName = path.dirname(filePath)
-  if (!fs.existsSync(directoryName)) {
-    fs.mkdirSync(directoryName, { recursive: true })
   }
 }
 
@@ -92,7 +85,7 @@ export async function watermarkPDF(pdfFile: string, watermarkURL: string, startP
   }
 }
 
-async function countPages(pdfFile: string) {
+async function countPages(pdfFile: string): Promise<number> {
   const pdfDoc = await PDFDocument.load(fs.readFileSync(pdfFile))
   const pages = pdfDoc.getPages()
   const numberOfPages = pages.length
@@ -104,10 +97,4 @@ export async function getCurrentCount(html: string): Promise<number> {
   const tmpFile = `${os.tmpdir()}/${getRandomFileName()}.pdf`
   await convertHtmlToPdf(`<div class="container">${html}</div>`, tmpFile)
   return await countPages(tmpFile)
-}
-
-function getRandomFileName(): string {
-  const timestamp = new Date().toISOString().replace(/[-:.]/g, '')
-  const random = ('' + Math.random()).substring(2, 8)
-  return timestamp + random
 }

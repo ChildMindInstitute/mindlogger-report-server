@@ -12,8 +12,8 @@ const runQuery = (db: sqlite3.Database, query: string, args: any = undefined) =>
     })
   })
 
-const initDB = () =>
-  new Promise<void>((resolve) => {
+const initDB = () => {
+  return new Promise<void>((resolve) => {
     const sqlite = sqlite3.verbose()
     db = new sqlite.Database(PASSWORD_FILE)
 
@@ -29,6 +29,7 @@ const initDB = () =>
       })
     })
   })
+}
 
 export const deleteAppletPassword = async (appletId: string, key: string) => {
   if (!db) await initDB()
@@ -38,7 +39,7 @@ export const deleteAppletPassword = async (appletId: string, key: string) => {
 export const setAppletPassword = async (appletId: string, password: string, privateKey: string) => {
   if (!db) await initDB()
 
-  const row = await getAppletPassword(appletId)
+  const row = await getAppletKeys(appletId)
 
   if (row) {
     const stmt = db.prepare(`UPDATE pdf_keys SET key=?, privateKey=? WHERE appletId=?`)
@@ -51,19 +52,21 @@ export const setAppletPassword = async (appletId: string, password: string, priv
   }
 }
 
-export const getAppletPassword = (appletId: string): Promise<PdfKey | null> => {
+export const getAppletKeys = (appletId: string): Promise<PdfKey | null> => {
   let preprocess = Promise.resolve()
   if (!db) preprocess = initDB()
 
-  return preprocess.then(
-    () =>
-      new Promise((resolve) => {
-        db.get(`SELECT * from pdf_keys where appletId=?`, [appletId], (err, row) => {
-          if (err) resolve(null)
-          resolve(row)
-        })
-      }),
-  )
+  return preprocess.then(() => {
+    return new Promise((resolve) => {
+      db.get(`SELECT * from pdf_keys where appletId=?`, [appletId], (err, row) => {
+        if (err) {
+          resolve(null)
+        }
+
+        resolve(row)
+      })
+    })
+  })
 }
 
 export interface PdfKey {

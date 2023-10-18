@@ -1,6 +1,5 @@
 import _ from 'lodash'
-import Item from './item'
-import convertMarkdownToHtml from '../markdown-utils'
+import { ItemEntity } from './item'
 import fs from 'fs'
 import mime from 'mime-types'
 import {
@@ -10,20 +9,20 @@ import {
   IActivityScoresAndReportsConditionalLogic,
   IActivityScoresAndReportsScores,
   IActivityScoresAndReportsSections,
-  IResponseItem,
-  IUser,
+  ResponseItem,
+  User,
   KVObject,
   ScoreForSummary,
-} from '../interfaces'
-import { escapeRegExp, escapeReplacement, isFloat } from '../report-utils'
+} from '../core/interfaces'
+import { convertMarkdownToHtml, escapeRegExp, escapeReplacement, isFloat } from '../core/helpers'
 
-export default class Activity {
+export class ActivityEntity {
   public json: IActivity
   public schemaId: string
   public id: string
   public name: string
   public splashImage: string
-  public items: Item[]
+  public items: ItemEntity[]
 
   public reportIncludeItem: string
   public allowSummary: boolean
@@ -38,7 +37,7 @@ export default class Activity {
     this.splashImage = data.splashScreen
 
     this.items = items.map((item) => {
-      return new Item(item)
+      return new ItemEntity(item)
     })
 
     //TODO: activity.items.find(item => item.name == activity.reportIncludeItem);
@@ -58,7 +57,7 @@ export default class Activity {
     return _.sum(_.values(allowedScores))
   }
 
-  evaluateScores(responses: IResponseItem[]): KVObject {
+  evaluateScores(responses: ResponseItem[]): KVObject {
     const scores: KVObject = {},
       maxScores: KVObject = {}
 
@@ -99,7 +98,7 @@ export default class Activity {
     return scores
   }
 
-  scoresToValues(scores: KVObject, responses: IResponseItem[]): KVObject[] {
+  scoresToValues(scores: KVObject, responses: ResponseItem[]): KVObject[] {
     const values = { ...scores }
     const rawValues = { ...scores }
     for (let i = 0; i < responses.length; i++) {
@@ -111,7 +110,7 @@ export default class Activity {
     return [values, rawValues]
   }
 
-  evaluateReports(responses: IResponseItem[], user: IUser, now = ''): string {
+  evaluateReports(responses: ResponseItem[], user: User, now = ''): string {
     const scores = this.evaluateScores(responses)
     const [values, rawValues] = this.scoresToValues(scores, responses)
 
@@ -150,7 +149,7 @@ export default class Activity {
     return `<div class="activity-report">${markdown}</div>`
   }
 
-  getAlertsForSummary(responses: IResponseItem[]) {
+  getAlertsForSummary(responses: ResponseItem[]) {
     let alerts: any[] = [] //TODO - type
     for (let i = 0; i < responses.length; i++) {
       alerts = alerts.concat(this.items[i].getAlerts(responses[i]))
@@ -159,10 +158,10 @@ export default class Activity {
     return alerts
   }
 
-  getScoresForSummary(responses: IResponseItem[]): ScoreForSummary[] {
-    const scores = this.evaluateScores(responses);
+  getScoresForSummary(responses: ResponseItem[]): ScoreForSummary[] {
+    const scores = this.evaluateScores(responses)
 
-    const result = [];
+    const result = []
     for (const report of this.reports) {
       if (report.type === 'score') {
         let flagScore = false
@@ -186,7 +185,7 @@ export default class Activity {
     return result
   }
 
-  getPrintedItems(items: string[], responses: IResponseItem[]): string {
+  getPrintedItems(items: string[], responses: ResponseItem[]): string {
     let markdown = ''
 
     if (!items) return markdown
@@ -203,7 +202,7 @@ export default class Activity {
     return markdown
   }
 
-  replaceValuesInMarkdown(message: string | null, scores: KVObject, user: IUser, now = ''): string {
+  replaceValuesInMarkdown(message: string | null, scores: KVObject, user: User, now = ''): string {
     let markdown = message ?? ''
 
     for (const scoreId in scores) {
@@ -294,7 +293,7 @@ export default class Activity {
     }
   }
 
-  static getSplashImageHTML(pageBreakBefore = true, activity: Activity) {
+  static getSplashImageHTML(pageBreakBefore = true, activity: ActivityEntity) {
     const image = activity.splashImage
     const mimeType = mime.lookup(image) || ''
 
