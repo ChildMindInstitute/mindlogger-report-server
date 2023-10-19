@@ -256,7 +256,13 @@ export class AppletEntity {
       subject += ` by ${userId}`
     }
 
-    subject += `: ${this.name} / ${activityFlow ? activityFlow.name : activity.name}`
+    subject += `: ${this.name}` // Applet name
+
+    if (activityFlow) {
+      subject += ` / ${activityFlow.name} / ${activity.name}` // Activity flow name + activity name
+    } else {
+      subject += ` / ${activity.name}` // Activity name
+    }
 
     const itemName = this.getReportIncludeItem(activity, activityFlow, responses)
     if (itemName) {
