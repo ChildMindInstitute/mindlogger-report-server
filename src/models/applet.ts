@@ -217,28 +217,32 @@ export class AppletEntity {
     activityFlow: ActivityFlow | null,
     responses: ActivityResponse[],
   ): string | null {
-    let includeActivity: ActivityEntity | null = null
-    let includeItem: ItemEntity | null = null
+    let includeActivity: ActivityEntity | undefined
+    let includeItem: ItemEntity | undefined
 
     if (activityFlow) {
       const activityName = activityFlow.json.reportIncludedActivityName
       const itemName = activityFlow.json.reportIncludedItemName
-      includeActivity = this.activities.find((activity) => activity.name == activityName) ?? null
-      if (includeActivity) {
-        includeItem = includeActivity.items.find((item) => item.name == itemName) ?? null
-      }
+      includeActivity = this.activities.find((activity) => activity.name == activityName)
+      includeItem = includeActivity?.items.find((item) => item.name == itemName)
     } else if (activity) {
       includeActivity = activity
-      includeItem = activity.items.find((item) => item.name == activity.json.reportIncludedItemName) ?? null
+      includeItem = activity.items.find((item) => item.name == activity.json.reportIncludedItemName)
     }
 
-    if (!includeActivity || !includeItem) return ''
+    if (!includeActivity || !includeItem) return null
 
-    // @ts-ignore
-    const response = responses.find((r) => r.activityId === includeActivity.id)
-    const idx = includeActivity.items.indexOf(includeItem)
-    const data = response?.data[idx]
-    return isString(data) ? data : null
+    const isTextItem = includeItem.inputType === 'text'
+
+    if (isTextItem) {
+      const response = responses.find((r) => r.activityId === includeActivity?.id)
+      const idx = includeActivity.items.indexOf(includeItem)
+      const data = response?.data[idx] as string | undefined
+
+      return data ?? null
+    }
+
+    return includeItem.name
   }
 
   getSubject(activityId: string, activityFlowId: string | null, responses: ActivityResponse[], user: User): string {
