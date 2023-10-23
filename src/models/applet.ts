@@ -4,7 +4,6 @@ import moment from 'moment-timezone'
 import { getAppletKeys } from '../db'
 import { Email, Applet, IAppletEncryption, ActivityResponse, User } from '../core/interfaces'
 import { ItemEntity } from './item'
-import { isString } from 'lodash'
 import { convertMarkdownToHtml } from '../core/helpers'
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/'
@@ -162,7 +161,7 @@ export class AppletEntity {
       const [values, rawValues] = activity.scoresToValues(scores, response.data)
       const addActivityPrefix = (key: string) => `${activity.name}/${key}`
       const renameKeys = (o: any) => Object.keys(o).reduce((acc, k) => ({ ...acc, [addActivityPrefix(k)]: o[k] }), {})
-      emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), user, now)
+      emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), user)
     }
     return {
       body: this.applyInlineStyles(convertMarkdownToHtml(emailBody)),

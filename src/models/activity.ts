@@ -14,7 +14,8 @@ import {
   KVObject,
   ScoreForSummary,
 } from '../core/interfaces'
-import { convertMarkdownToHtml, escapeRegExp, escapeReplacement, isFloat } from '../core/helpers'
+import { convertMarkdownToHtml, isFloat } from '../core/helpers'
+import { MarkdownVariableReplacer } from '../core/helpers/MarkdownVariableReplacer'
 
 export class ActivityEntity {
   public json: IActivity
@@ -110,7 +111,7 @@ export class ActivityEntity {
     return [values, rawValues]
   }
 
-  evaluateReports(responses: ResponseItem[], user: User, now = ''): string {
+  evaluateReports(responses: ResponseItem[], user: User): string {
     const scores = this.evaluateScores(responses)
     const [values, rawValues] = this.scoresToValues(scores, responses)
 
@@ -118,35 +119,59 @@ export class ActivityEntity {
 
     for (const report of this.reports) {
       if (report.type === 'section') {
-        const isVis = this.testVisibility(report.conditionalLogic, rawValues)
-
-        if (isVis) {
-          markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n'
-          markdown +=
-            this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n'
-        }
+        markdown += this.generateReportSection(markdown, report, responses, rawValues, values, user)
       }
 
       if (report.type === 'score') {
-        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user, now)) + '\n'
-        markdown +=
-          this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user, now) + '\n'
-
-        for (const conditional of report.conditionalLogic) {
-          const isVis = scores[conditional.id]
-
-          if (isVis) {
-            markdown +=
-              convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user, now)) + '\n'
-            markdown +=
-              this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user, now) +
-              '\n'
-          }
-        }
+        markdown += this.generateReportScore(markdown, report, responses, values, user, scores)
       }
     }
 
     return `<div class="activity-report">${markdown}</div>`
+  }
+
+  generateReportSection(
+    markdown: string,
+    report: IActivityScoresAndReportsSections,
+    responses: ResponseItem[],
+    rawValues: KVObject,
+    values: KVObject,
+    user: User,
+  ): string {
+    const isVis = this.testVisibility(report.conditionalLogic, rawValues)
+
+    if (!isVis) {
+      return markdown
+    }
+
+    markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user)) + '\n'
+    markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user) + '\n'
+
+    return markdown
+  }
+
+  generateReportScore(
+    markdown: string,
+    report: IActivityScoresAndReportsScores,
+    responses: ResponseItem[],
+    values: KVObject,
+    user: User,
+    scores: KVObject,
+  ): string {
+    markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user)) + '\n'
+    markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user) + '\n'
+
+    for (const conditional of report.conditionalLogic) {
+      const isVis = scores[conditional.id]
+
+      if (isVis) {
+        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user)) + '\n'
+        markdown +=
+          this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user) + '\n'
+      }
+    }
+
+    return markdown
   }
 
   getAlertsForSummary(responses: ResponseItem[]) {
@@ -202,22 +227,15 @@ export class ActivityEntity {
     return markdown
   }
 
-  replaceValuesInMarkdown(message: string | null, scores: KVObject, user: User, now = ''): string {
-    let markdown = message ?? ''
+  replaceValuesInMarkdown(message: string | null, scores: KVObject, user: User): string {
+    const markdown = message ?? ''
 
-    for (const scoreId in scores) {
-      const reg = new RegExp(`\\[\\[${escapeRegExp(scoreId)}\\]\\]`, 'gi')
-      markdown = markdown.replace(reg, escapeReplacement(String(scores[scoreId])))
-    }
+    const nickname = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim()
 
-    markdown = markdown.replace(/\[\[sys\.date\]\]/gi, escapeReplacement(now))
+    const completedEntityTime = new Date() // TODO: replace it with the actual time of completion
 
-    if ('nickname' in user) {
-      const nickName = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim()
-      markdown = markdown.replace(/\[nickname\]/gi, escapeReplacement(nickName))
-    }
-
-    return markdown
+    const replacer = new MarkdownVariableReplacer(this.items, scores, completedEntityTime, nickname)
+    return replacer.process(markdown)
   }
 
   testVisibility(conditional: IActivityScoresAndReportsConditionalLogic | null, scores: KVObject): boolean {

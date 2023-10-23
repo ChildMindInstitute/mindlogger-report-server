@@ -81,7 +81,7 @@ class ReportController {
         const activity = applet.activities.find((activity) => activity.id === response.activityId)
 
         if (activity) {
-          const markdown = activity.evaluateReports(response.data, user, now)
+          const markdown = activity.evaluateReports(response.data, user)
           splashPage = ActivityEntity.getSplashImageHTML(pageBreak, activity)
 
           html += splashPage + '\n'
