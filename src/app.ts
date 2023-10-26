@@ -12,7 +12,9 @@ app.use(cors())
 app.use(express.json({ limit: '50mb' }))
 
 app.get('/', async (req: express.Request, res: express.Response) => {
-  res.status(200).send('MindLogger Report Server is UP (fixes v3)')
+  const buildVersion = process.env.BUILD_VERSION
+
+  res.status(200).send(`MindLogger Report Server is UP (fixes v3) ${buildVersion ? `[Build: ${buildVersion}]` : ''}`)
 })
 
 app.post('/send-pdf-report', reportController.sendPdfReport)
