@@ -199,7 +199,12 @@ export class AppletEntity {
     }
 
     pdfName += `_${this.name}`
-    pdfName += `_${activityFlow ? activityFlow.name : activity.name}`
+
+    if (activityFlow) {
+      pdfName += `_${activityFlow.name}_${activity.name}`
+    } else {
+      pdfName += `_${activity.name}`
+    }
 
     let itemName = this.getReportIncludeItem(activity, activityFlow, responses)
     if (itemName) {
