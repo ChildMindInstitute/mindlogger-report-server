@@ -59,8 +59,8 @@ export class ActivityEntity {
   }
 
   evaluateScores(responses: ResponseItem[]): KVObject {
-    const scores: KVObject = {},
-      maxScores: KVObject = {}
+    const scores: KVObject = {}
+    const maxScores: KVObject = {}
 
     for (let i = 0; i < responses.length; i++) {
       const response = responses[i]
@@ -119,11 +119,11 @@ export class ActivityEntity {
 
     for (const report of this.reports) {
       if (report.type === 'section') {
-        markdown += this.generateReportSection(markdown, report, responses, rawValues, values, user)
+        markdown = this.generateReportSection(markdown, report, responses, rawValues, values, user)
       }
 
       if (report.type === 'score') {
-        markdown += this.generateReportScore(markdown, report, responses, values, user, scores)
+        markdown = this.generateReportScore(markdown, report, responses, values, user, scores)
       }
     }
 
@@ -144,8 +144,16 @@ export class ActivityEntity {
       return markdown
     }
 
-    markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user)) + '\n'
-    markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user) + '\n'
+    const reportMessage = this.replaceValuesInMarkdown(report.message, values, user)
+    if (reportMessage) {
+      markdown += convertMarkdownToHtml(reportMessage)
+    }
+
+    const printedItems = this.getPrintedItems(report.itemsPrint, responses)
+
+    if (printedItems) {
+      markdown += this.replaceValuesInMarkdown(printedItems, values, user) + '\n'
+    }
 
     return markdown
   }
@@ -158,16 +166,31 @@ export class ActivityEntity {
     user: User,
     scores: KVObject,
   ): string {
-    markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user)) + '\n'
-    markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user) + '\n'
+    const reportMessage = this.replaceValuesInMarkdown(report.message, values, user)
+
+    if (reportMessage) {
+      markdown += convertMarkdownToHtml(reportMessage)
+    }
+
+    const printedItems = this.getPrintedItems(report.itemsPrint, responses)
+    if (printedItems) {
+      markdown += this.replaceValuesInMarkdown(printedItems, values, user) + '\n'
+    }
 
     for (const conditional of report.conditionalLogic) {
       const isVis = scores[conditional.id]
 
       if (isVis) {
-        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user)) + '\n'
-        markdown +=
-          this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user) + '\n'
+        const reportMessage = this.replaceValuesInMarkdown(conditional.message, values, user)
+
+        if (reportMessage) {
+          markdown += convertMarkdownToHtml(reportMessage)
+        }
+
+        const printedItems = this.getPrintedItems(report.itemsPrint, responses)
+        if (printedItems) {
+          markdown += this.replaceValuesInMarkdown(printedItems, values, user) + '\n'
+        }
       }
     }
 
@@ -210,10 +233,10 @@ export class ActivityEntity {
     return result
   }
 
-  getPrintedItems(items: string[], responses: ResponseItem[]): string {
-    let markdown = ''
+  getPrintedItems(items: string[], responses: ResponseItem[]): string | null {
+    if (!items.length) return null
 
-    if (!items) return markdown
+    let markdown = ''
 
     for (const itemName of items) {
       const index = this.items.findIndex((item) => item.name === itemName)
@@ -227,15 +250,17 @@ export class ActivityEntity {
     return markdown
   }
 
-  replaceValuesInMarkdown(message: string | null, scores: KVObject, user: User): string {
-    const markdown = message ?? ''
+  replaceValuesInMarkdown(message: string | null, scores: KVObject, user: User): string | null {
+    if (!message) {
+      return null
+    }
 
     const nickname = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim()
 
     const completedEntityTime = new Date() // TODO: replace it with the actual time of completion
 
     const replacer = new MarkdownVariableReplacer(this.items, scores, completedEntityTime, nickname)
-    return replacer.process(markdown)
+    return replacer.process(message)
   }
 
   testVisibility(conditional: IActivityScoresAndReportsConditionalLogic | null, scores: KVObject): boolean {
@@ -268,6 +293,8 @@ export class ActivityEntity {
           return Array.isArray(scoreOrValue) && scoreOrValue.includes(parseFloat(payload.optionValue))
         case 'NOT_INCLUDES_OPTION':
           return Array.isArray(scoreOrValue) && !scoreOrValue.includes(parseFloat(payload.optionValue))
+        case 'EQUAL_TO_SCORE':
+          return payload.value === scoreOrValue
         default:
           return false
       }
@@ -349,32 +376,4 @@ export class ActivityEntity {
     const pdfStyles = fs.readFileSync('src/static/pdf-styles.css')
     return `<style>${pdfStyles.toString()}</style>`
   }
-
-  // static getReportPreview (reports, previewItems): string {
-  //   const items = previewItems.map(item => Item.getItem(item));
-  //
-  //   const activity = new Activity();
-  //   activity.items = items;
-  //
-  //   let markdown = '', responses = [];
-  //
-  //   // evaluate isVis field and get markdown
-  //   for (let i = 0; i < items.length; i++) {
-  //     responses.push(null);
-  //   }
-  //
-  //   for (const report of reports) {
-  //     if (report.dataType == 'section') {
-  //       markdown += report.message + '\n';
-  //       markdown += activity.getPrintedItems(report.itemsPrint, responses) + '\n';
-  //     } else {
-  //       for (const conditional of report.conditionals) {
-  //         markdown += conditional.message + '\n';
-  //         markdown += activity.getPrintedItems(report.itemsPrint, responses) + '\n';
-  //       }
-  //     }
-  //   }
-  //
-  //   return `<div class="activity-report">${markdown}</div>`;
-  // }
 }
