@@ -1,9 +1,8 @@
-import _, { cond } from 'lodash'
+import _ from 'lodash'
 import { ItemEntity } from './item'
 import {
   IActivity,
   IActivityItem,
-  IActivityScoresAndReportsCondition,
   IActivityScoresAndReportsConditionalLogic,
   IActivityScoresAndReportsScores,
   IActivityScoresAndReportsSections,
