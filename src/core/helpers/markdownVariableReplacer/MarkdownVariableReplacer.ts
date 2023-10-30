@@ -1,6 +1,6 @@
 import { format, intervalToDuration, isSameDay, addDays } from 'date-fns'
-import { ItemEntity } from '../../models'
-import { KVObject } from '../interfaces'
+import { ItemEntity } from '../../../models'
+import { KVObject } from '../../interfaces'
 
 export class MarkdownVariableReplacer {
   private readonly activityItems: ItemEntity[]

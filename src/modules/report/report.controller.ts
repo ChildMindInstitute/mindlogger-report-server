@@ -8,9 +8,10 @@ import { ActivityResponse, SendPdfReportResponse } from '../../core/interfaces'
 import { getAppletKeys } from '../../db'
 import { convertMarkdownToHtml } from '../../core/helpers'
 import { decryptResponses } from '../../encryption-dh'
-import { ActivityEntity, AppletEntity } from '../../models'
+import { AppletEntity } from '../../models'
 import { getCurrentCount, convertHtmlToPdf, watermarkPDF, encryptPDF } from '../../pdf-utils'
 import { SendPdfReportRequest, SendPdfReportRequestPayload } from './types'
+import { getReportFooter, getReportStyles, getSplashImageHTML } from './helpers'
 
 class ReportController {
   public async sendPdfReport(req: SendPdfReportRequest, res: Response): Promise<unknown> {
@@ -68,7 +69,7 @@ class ReportController {
       const appletId = payload.applet.id
       const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses, user)
       const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}`
-      html += ActivityEntity.getReportStyles()
+      html += getReportStyles()
 
       let watermarkStart = 0
       let pageCount = 0
@@ -82,7 +83,7 @@ class ReportController {
 
         if (activity) {
           const markdown = activity.evaluateReports(response.data, user)
-          splashPage = ActivityEntity.getSplashImageHTML(pageBreak, activity)
+          splashPage = getSplashImageHTML(pageBreak, activity)
 
           html += splashPage + '\n'
           html += convertMarkdownToHtml(markdown, splashPage === '' && skipPages.length === 0) + '\n'
@@ -99,7 +100,7 @@ class ReportController {
         }
       }
 
-      html += ActivityEntity.getReportFooter() + '\n'
+      html += getReportFooter() + '\n'
 
       await convertHtmlToPdf(`<div class="container">${html}</div>`, filename)
 

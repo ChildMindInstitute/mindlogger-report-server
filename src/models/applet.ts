@@ -5,6 +5,7 @@ import { getAppletKeys } from '../db'
 import { Email, Applet, IAppletEncryption, ActivityResponse, User } from '../core/interfaces'
 import { ItemEntity } from './item'
 import { convertMarkdownToHtml } from '../core/helpers'
+import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer'
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/'
 
@@ -152,17 +153,33 @@ export class AppletEntity {
     now: string,
   ): Email {
     let emailBody = this.reportConfigs.emailBody
+
     for (const response of responses) {
       const activity = this.activities.find((activity) => activity.id === response.activityId)
       if (!activity) {
         throw new Error(`Can't find activity ${response.activityId}`)
       }
+
       const scores = activity.evaluateScores(response.data)
+
       const [values, rawValues] = activity.scoresToValues(scores, response.data)
+
       const addActivityPrefix = (key: string) => `${activity.name}/${key}`
+
       const renameKeys = (o: any) => Object.keys(o).reduce((acc, k) => ({ ...acc, [addActivityPrefix(k)]: o[k] }), {})
-      emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), user)
+
+      const renamedScores = renameKeys(values)
+
+      const processedEmailBody = replaceVariablesInMarkdown({
+        markdown: emailBody,
+        scores: renamedScores,
+        user,
+        items: activity.items,
+      })
+
+      emailBody = processedEmailBody
     }
+
     return {
       body: this.applyInlineStyles(convertMarkdownToHtml(emailBody)),
       subject: this.getSubject(activityId, activityFlowId, responses, user),
