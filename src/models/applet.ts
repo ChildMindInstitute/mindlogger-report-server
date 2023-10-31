@@ -85,8 +85,8 @@ export class AppletEntity {
 
   getSummary(responses: ActivityResponse[]): string {
     let alerts: any[] = [] //TODO - type
-    let alertsHTML = '',
-      scoresHTML = ''
+    let alertsHTML = ''
+    let scoresHTML = ''
 
     for (const response of responses) {
       const activity = this.activities.find((activity) => activity.id === response.activityId)

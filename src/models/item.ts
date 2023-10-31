@@ -3,6 +3,7 @@ import {
   convertMarkdownToHtml,
   escapeRegExp,
   escapeReplacement,
+  fillArrayFromTo,
   isArray,
   isNumber,
   isObject,
@@ -53,9 +54,18 @@ export class ItemEntity {
     for (const value of response) {
       switch (this.inputType) {
         case 'slider':
+          const minValue = this.json.responseValues.minValue
+          const maxValue = this.json.responseValues.maxValue
+
+          if (!minValue || !maxValue) {
+            break
+          }
+
+          const values = fillArrayFromTo({ from: minValue, to: maxValue })
           const scores = this.json.responseValues.scores ?? []
-          if (value in scores) {
-            totalScore += scores[value]
+          if (values.includes(value)) {
+            const valueIndex = values.indexOf(value)
+            totalScore += scores[valueIndex]
           }
           break
         default:
