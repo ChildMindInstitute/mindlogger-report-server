@@ -210,11 +210,12 @@ export class AppletEntity {
 
     const userId = user.secretId
     const configs = this.reportConfigs
+    const truncateLength = 55
 
     let pdfName = 'REPORT'
 
     if (configs.includeUserId) {
-      pdfName += `_${truncateString(userId, 32)}`
+      pdfName += `_${truncateString(userId, truncateLength)}`
     }
 
     pdfName += `_${this.name}`
@@ -276,11 +277,12 @@ export class AppletEntity {
     }
     const userId = user.secretId
     const configs = this.reportConfigs
+    const truncateLength = 55
 
     let subject = 'Report'
 
     if (configs.includeUserId) {
-      subject += ` by ${truncateString(userId, 32)}`
+      subject += ` by ${truncateString(userId, truncateLength)}`
     }
 
     subject += `: ${this.name}` // Applet name
