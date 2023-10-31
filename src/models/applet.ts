@@ -4,7 +4,7 @@ import moment from 'moment-timezone'
 import { getAppletKeys } from '../db'
 import { Email, Applet, IAppletEncryption, ActivityResponse, User } from '../core/interfaces'
 import { ItemEntity } from './item'
-import { convertMarkdownToHtml } from '../core/helpers'
+import { convertMarkdownToHtml, truncateString } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer'
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/'
@@ -203,16 +203,18 @@ export class AppletEntity {
   getPDFFileName(activityId: string, activityFlowId: string | null, responses: ActivityResponse[], user: User): string {
     const activityFlow = this.activityFlows.find((flow) => flow.id === activityFlowId) ?? null
     const activity = this.activities.find((activity) => activity.id === activityId)
+
     if (!activity) {
       throw new Error('unable to find activity')
     }
+
     const userId = user.secretId
     const configs = this.reportConfigs
 
     let pdfName = 'REPORT'
 
     if (configs.includeUserId) {
-      pdfName += `_${userId}`
+      pdfName += `_${truncateString(userId, 32)}`
     }
 
     pdfName += `_${this.name}`
@@ -278,7 +280,7 @@ export class AppletEntity {
     let subject = 'Report'
 
     if (configs.includeUserId) {
-      subject += ` by ${userId}`
+      subject += ` by ${truncateString(userId, 32)}`
     }
 
     subject += `: ${this.name}` // Applet name
