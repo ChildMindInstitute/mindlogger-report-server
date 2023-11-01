@@ -268,7 +268,7 @@ export class ActivityEntity {
   }
 
   getPrintedItems(items: string[], responses: ResponseItem[]): string | null {
-    if (!items.length) return null
+    if (!items?.length) return null
 
     let markdown = ''
 
