@@ -2,7 +2,7 @@ import { ActivityEntity } from './activity'
 import ActivityFlow from './activity-flow'
 import moment from 'moment-timezone'
 import { getAppletKeys } from '../db'
-import { Email, Applet, IAppletEncryption, ActivityResponse, User } from '../core/interfaces'
+import { Email, Applet, IAppletEncryption, ActivityResponse, User, ScoreForSummary } from '../core/interfaces'
 import { ItemEntity } from './item'
 import { convertMarkdownToHtml, truncateString } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer'
@@ -96,25 +96,7 @@ export class AppletEntity {
 
         const scores = activity.getScoresForSummary(response.data)
         if (scores.length) {
-          scoresHTML += `
-            <div class="score-messages">
-              <div class="activity-title">${activity.name}</div>
-              <div>
-                ${scores
-                  .map(
-                    (score) => `
-                    <div class="score-message ${score.flagScore ? 'flag' : ''}">
-                      <img class="score-flag" src="${ICON_URL + 'score-flag.png'}" width="15" height="15"
-                        style="${score.flagScore ? '' : 'display: none;'}">
-                      <span style="${score.flagScore ? 'font-weight: bold' : ''}">${score.prefLabel}</span>
-                      <div class="score-value">${score.value}</div>
-                    </div>
-                  `,
-                  )
-                  .join('\r\n')}
-              </div>
-            </div>
-          `
+          scoresHTML += this.buildScoreSummaryHTML(scores, activity.name)
         }
       }
     }
@@ -298,5 +280,29 @@ export class AppletEntity {
       subject += ` / [${itemName}]`
     }
     return subject
+  }
+
+  private buildScoreSummaryHTML(scores: ScoreForSummary[], activityName: string): string {
+    return `
+      <div class="score-messages">
+        <div class="activity-title">${activityName}</div>
+        <div>
+          ${scores
+            .map((score) => {
+              return `
+                <div class="score-message ${score.flagScore ? 'flag' : ''}">
+                  <img class="score-flag" src="${ICON_URL + 'score-flag.png'}" width="15" height="15"
+                    style="${score.flagScore ? '' : 'display: none;'}">
+                    <div class="score-label" style="${score.flagScore ? 'font-weight: bold' : ''}">
+                      ${score.prefLabel}
+                    </div>
+                    <div class="score-value">${score.value}</div>
+                </div>
+              `
+            })
+            .join('\r\n')}
+        </div>
+      </div>
+    `
   }
 }
