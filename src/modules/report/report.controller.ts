@@ -3,6 +3,8 @@ import os from 'os'
 import fs from 'fs'
 import { Response } from 'express'
 
+import { v4 } from 'uuid'
+
 import { decryptData } from '../../encryption'
 import { ActivityResponse, SendPdfReportResponse } from '../../core/interfaces'
 import { getAppletKeys } from '../../db'
@@ -68,7 +70,7 @@ class ReportController {
 
       const appletId = payload.applet.id
       const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses, user)
-      const filename = `${outputsFolder}/${appletId}/${activityId}/${pdfName}`
+      const filename = `${outputsFolder}/${appletId}/${activityId}/${v4()}/${pdfName}`
       html += getReportStyles()
 
       let watermarkStart = 0
