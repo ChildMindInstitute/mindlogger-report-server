@@ -1,11 +1,8 @@
 import _ from 'lodash'
 import { ItemEntity } from './item'
-import fs from 'fs'
-import mime from 'mime-types'
 import {
   IActivity,
   IActivityItem,
-  IActivityScoresAndReportsCondition,
   IActivityScoresAndReportsConditionalLogic,
   IActivityScoresAndReportsScores,
   IActivityScoresAndReportsSections,
@@ -15,7 +12,8 @@ import {
   ScoreForSummary,
 } from '../core/interfaces'
 import { convertMarkdownToHtml, isFloat } from '../core/helpers'
-import { MarkdownVariableReplacer } from '../core/helpers/MarkdownVariableReplacer'
+import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer/'
+import { checkAllRules, checkAnyRules, checkConditionByPattern } from '../modules/report/helpers/conditionalLogic'
 
 export class ActivityEntity {
   public json: IActivity
@@ -59,8 +57,8 @@ export class ActivityEntity {
   }
 
   evaluateScores(responses: ResponseItem[]): KVObject {
-    const scores: KVObject = {},
-      maxScores: KVObject = {}
+    const scores: KVObject = {}
+    const maxScores: KVObject = {}
 
     for (let i = 0; i < responses.length; i++) {
       const response = responses[i]
@@ -119,11 +117,11 @@ export class ActivityEntity {
 
     for (const report of this.reports) {
       if (report.type === 'section') {
-        markdown += this.generateReportSection(markdown, report, responses, rawValues, values, user)
+        markdown = this.generateReportSection(markdown, report, responses, rawValues, values, user)
       }
 
       if (report.type === 'score') {
-        markdown += this.generateReportScore(markdown, report, responses, values, user, scores)
+        markdown = this.generateReportScore(markdown, report, responses, values, user, scores)
       }
     }
 
@@ -144,8 +142,28 @@ export class ActivityEntity {
       return markdown
     }
 
-    markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user)) + '\n'
-    markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user) + '\n'
+    const reportMessage = replaceVariablesInMarkdown({
+      markdown: report.message,
+      user,
+      scores: values,
+      items: this.items,
+    })
+    if (reportMessage) {
+      markdown += convertMarkdownToHtml(reportMessage)
+    }
+
+    const printedItems = this.getPrintedItems(report.itemsPrint, responses)
+
+    if (printedItems) {
+      const processedPrintedItems = replaceVariablesInMarkdown({
+        markdown: printedItems,
+        scores: values,
+        user,
+        items: this.items,
+      })
+
+      markdown += processedPrintedItems + '\n'
+    }
 
     return markdown
   }
@@ -158,16 +176,55 @@ export class ActivityEntity {
     user: User,
     scores: KVObject,
   ): string {
-    markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(report.message, values, user)) + '\n'
-    markdown += this.replaceValuesInMarkdown(this.getPrintedItems(report.itemsPrint, responses), values, user) + '\n'
+    const reportMessage = replaceVariablesInMarkdown({
+      markdown: report.message,
+      scores: values,
+      user,
+      items: this.items,
+    })
+
+    if (reportMessage) {
+      markdown += convertMarkdownToHtml(reportMessage)
+    }
+
+    const printedItems = this.getPrintedItems(report.itemsPrint, responses)
+    if (printedItems) {
+      const processedPrintedItems = replaceVariablesInMarkdown({
+        markdown: printedItems,
+        scores: values,
+        user,
+        items: this.items,
+      })
+
+      markdown += processedPrintedItems + '\n'
+    }
 
     for (const conditional of report.conditionalLogic) {
       const isVis = scores[conditional.id]
 
       if (isVis) {
-        markdown += convertMarkdownToHtml(this.replaceValuesInMarkdown(conditional.message, values, user)) + '\n'
-        markdown +=
-          this.replaceValuesInMarkdown(this.getPrintedItems(conditional.itemsPrint, responses), values, user) + '\n'
+        const reportMessage = replaceVariablesInMarkdown({
+          markdown: conditional.message,
+          scores: values,
+          user,
+          items: this.items,
+        })
+
+        if (reportMessage) {
+          markdown += convertMarkdownToHtml(reportMessage)
+        }
+
+        const printedItems = this.getPrintedItems(conditional.itemsPrint, responses)
+        if (printedItems) {
+          const processedPrintedItems = replaceVariablesInMarkdown({
+            markdown: printedItems,
+            scores: values,
+            user,
+            items: this.items,
+          })
+
+          markdown += processedPrintedItems + '\n'
+        }
       }
     }
 
@@ -210,10 +267,10 @@ export class ActivityEntity {
     return result
   }
 
-  getPrintedItems(items: string[], responses: ResponseItem[]): string {
-    let markdown = ''
+  getPrintedItems(items: string[], responses: ResponseItem[]): string | null {
+    if (!items?.length) return null
 
-    if (!items) return markdown
+    let markdown = ''
 
     for (const itemName of items) {
       const index = this.items.findIndex((item) => item.name === itemName)
@@ -227,154 +284,38 @@ export class ActivityEntity {
     return markdown
   }
 
-  replaceValuesInMarkdown(message: string | null, scores: KVObject, user: User): string {
-    const markdown = message ?? ''
-
-    const nickname = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim()
-
-    const completedEntityTime = new Date() // TODO: replace it with the actual time of completion
-
-    const replacer = new MarkdownVariableReplacer(this.items, scores, completedEntityTime, nickname)
-    return replacer.process(markdown)
-  }
-
   testVisibility(conditional: IActivityScoresAndReportsConditionalLogic | null, scores: KVObject): boolean {
     if (!conditional) {
       return true
     }
     const { conditions, match } = conditional
-    function checkCondition(
-      { type, payload }: IActivityScoresAndReportsCondition,
-      scoreOrValue: number | number[],
-    ): boolean {
-      switch (type) {
-        case 'BETWEEN':
-          return payload.minValue <= scoreOrValue && payload.maxValue >= scoreOrValue
-        case 'OUTSIDE_OF':
-          return payload.minValue > scoreOrValue || payload.maxValue < scoreOrValue
-        case 'EQUAL_TO_OPTION':
-          return scoreOrValue === parseFloat(payload.optionValue)
-        case 'NOT_EQUAL_TO_OPTION':
-          return scoreOrValue !== parseFloat(payload.optionValue)
-        case 'GREATER_THAN':
-          return scoreOrValue > payload.value
-        case 'LESS_THAN':
-          return scoreOrValue < payload.value
-        case 'EQUAL':
-          return scoreOrValue == payload.value
-        case 'NOT_EQUAL':
-          return scoreOrValue != payload.value
-        case 'INCLUDES_OPTION':
-          return Array.isArray(scoreOrValue) && scoreOrValue.includes(parseFloat(payload.optionValue))
-        case 'NOT_INCLUDES_OPTION':
-          return Array.isArray(scoreOrValue) && !scoreOrValue.includes(parseFloat(payload.optionValue))
-        default:
-          return false
-      }
-    }
-
-    function checkAny(results: boolean[]): boolean {
-      for (const result of results) {
-        if (result) {
-          return true
-        }
-      }
-      return false
-    }
-
-    function checkAll(results: boolean[]): boolean {
-      for (const result of results) {
-        if (!result) {
-          return false
-        }
-      }
-      return results.length > 0
-    }
 
     const results = []
     for (const condition of conditions) {
       const key = condition.itemName
+
       if (key in scores) {
         const score = isFloat(scores[key]) ? parseFloat(scores[key]) : scores[key]
-        results.push(checkCondition(condition, score))
+
+        const checkResult = checkConditionByPattern({
+          type: condition.type,
+          payload: condition.payload,
+          scoreOrValue: score,
+        })
+
+        results.push(checkResult)
       } else {
         results.push(false)
       }
     }
+
     switch (match) {
       case 'all':
-        return checkAll(results)
+        return checkAllRules({ results })
       case 'any':
-        return checkAny(results)
+        return checkAnyRules({ results })
       default:
         return false
     }
   }
-
-  static getSplashImageHTML(pageBreakBefore = true, activity: ActivityEntity) {
-    const image = activity.splashImage
-    const mimeType = mime.lookup(image) || ''
-
-    if (image && !mimeType.startsWith('video/')) {
-      return `
-        <div class="splash-image" style="${pageBreakBefore ? 'page-break-before: always;' : ''}">
-          <img src="${image}" alt="Splash Activity">
-        </div>
-      `
-    } else if (pageBreakBefore) {
-      return `<div style="page-break-before: always"/>`
-    }
-
-    return ''
-  }
-
-  static getReportFooter(): string {
-    const termsText =
-      'I understand that the information provided by this questionnaire is not intended to replace the advice, diagnosis, or treatment offered by a medical or mental health professional, and that my anonymous responses may be used and shared for general research on children’s mental health.'
-    const footerText =
-      'CHILD MIND INSTITUTE, INC. AND CHILD MIND MEDICAL PRACTICE, PLLC (TOGETHER, “CMI”) DOES NOT DIRECTLY OR INDIRECTLY PRACTICE MEDICINE OR DISPENSE MEDICAL ADVICE AS PART OF THIS QUESTIONNAIRE. CMI ASSUMES NO LIABILITY FOR ANY DIAGNOSIS, TREATMENT, DECISION MADE, OR ACTION TAKEN IN RELIANCE UPON INFORMATION PROVIDED BY THIS QUESTIONNAIRE, AND ASSUMES NO RESPONSIBILITY FOR YOUR USE OF THIS QUESTIONNAIRE.'
-
-    return `
-      <div class="divider-line"></div>
-      <p class="text-footer text-body mb-5">
-        ${termsText}
-      </p>
-      <p class="text-footer text-body-1">
-        ${footerText}
-      </p>
-    `
-  }
-
-  static getReportStyles(): string {
-    const pdfStyles = fs.readFileSync('src/static/pdf-styles.css')
-    return `<style>${pdfStyles.toString()}</style>`
-  }
-
-  // static getReportPreview (reports, previewItems): string {
-  //   const items = previewItems.map(item => Item.getItem(item));
-  //
-  //   const activity = new Activity();
-  //   activity.items = items;
-  //
-  //   let markdown = '', responses = [];
-  //
-  //   // evaluate isVis field and get markdown
-  //   for (let i = 0; i < items.length; i++) {
-  //     responses.push(null);
-  //   }
-  //
-  //   for (const report of reports) {
-  //     if (report.dataType == 'section') {
-  //       markdown += report.message + '\n';
-  //       markdown += activity.getPrintedItems(report.itemsPrint, responses) + '\n';
-  //     } else {
-  //       for (const conditional of report.conditionals) {
-  //         markdown += conditional.message + '\n';
-  //         markdown += activity.getPrintedItems(report.itemsPrint, responses) + '\n';
-  //       }
-  //     }
-  //   }
-  //
-  //   return `<div class="activity-report">${markdown}</div>`;
-  // }
 }

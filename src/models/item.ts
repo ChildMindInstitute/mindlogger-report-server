@@ -1,6 +1,14 @@
-import { isNumber, isString } from 'lodash'
 import { IActivityItem, IActivityItemOption, IDataMatrixRow, ResponseItem } from '../core/interfaces'
-import { convertMarkdownToHtml, escapeRegExp, escapeReplacement } from '../core/helpers'
+import {
+  convertMarkdownToHtml,
+  escapeRegExp,
+  escapeReplacement,
+  fillArrayFromTo,
+  isArray,
+  isNumber,
+  isObject,
+  isString,
+} from '../core/helpers'
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/'
 
@@ -31,11 +39,11 @@ export class ItemEntity {
   }
 
   getScore(value: ResponseItem): number {
-    if (
-      value === null ||
-      (this.inputType !== 'singleSelect' && this.inputType !== 'multiSelect' && this.inputType !== 'slider') ||
-      !this.scoring
-    ) {
+    const allowedItemTypes = ['singleSelect', 'multiSelect', 'slider']
+
+    const isItemAllowed = allowedItemTypes.includes(this.inputType)
+
+    if (value === null || !isItemAllowed || !this.scoring) {
       return 0
     }
 
@@ -46,9 +54,18 @@ export class ItemEntity {
     for (const value of response) {
       switch (this.inputType) {
         case 'slider':
+          const minValue = this.json.responseValues.minValue
+          const maxValue = this.json.responseValues.maxValue
+
+          if (!minValue || !maxValue) {
+            break
+          }
+
+          const values = fillArrayFromTo({ from: minValue, to: maxValue })
           const scores = this.json.responseValues.scores ?? []
-          if (value in scores) {
-            totalScore += scores[value]
+          if (values.includes(value)) {
+            const valueIndex = values.indexOf(value)
+            totalScore += scores[valueIndex]
           }
           break
         default:
@@ -153,12 +170,9 @@ export class ItemEntity {
   }
 
   getPrinted(value: ResponseItem, context: { items: ItemEntity[]; responses: ResponseItem[] | string[] }): string {
-    if (
-      this.inputType !== 'singleSelect' &&
-      this.inputType !== 'multiSelect' &&
-      this.inputType !== 'slider' &&
-      this.inputType !== 'text'
-    ) {
+    const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'text']
+
+    if (!allowedTypes.includes(this.inputType)) {
       return ''
     }
 
@@ -166,8 +180,8 @@ export class ItemEntity {
 
     const questionHTML = convertMarkdownToHtml(this.getQuestionText())
 
-    let optionsHtml = '',
-      type = this.inputType
+    let optionsHtml = ''
+    let type = this.inputType
 
     if (this.inputType === 'singleSelect' || this.inputType === 'multiSelect') {
       type = 'checkbox'
@@ -188,8 +202,8 @@ export class ItemEntity {
         optionsHtml += '</div>'
       }
     } else if (this.inputType === 'slider') {
-      const minValue = isNumber(this.json.responseValues?.minValue) ? this.json.responseValues?.minValue.toString() : ''
-      const maxValue = isNumber(this.json.responseValues?.maxValue) ? this.json.responseValues?.maxValue.toString() : ''
+      const minValue = isNumber(this.json.responseValues?.minValue) ? this.json.responseValues.minValue!.toString() : ''
+      const maxValue = isNumber(this.json.responseValues?.maxValue) ? this.json.responseValues.maxValue!.toString() : ''
       const minLabel = this.json.responseValues?.minLabel ?? ''
       const maxLabel = this.json.responseValues?.maxLabel ?? ''
 
@@ -301,16 +315,20 @@ export class ItemEntity {
       return [null]
     }
 
-    if (typeof response === 'number' || typeof response === 'string') {
+    if (isNumber(response) || isString(response)) {
       return [response]
-    } else if (typeof response === 'object' && !Array.isArray(response)) {
-      if (!Array.isArray(response.value)) {
-        return [response.value]
-      } else {
-        return response.value
-      }
     }
 
-    return response
+    if (isObject(response) && !isArray(response)) {
+      const { value } = response as ResponseItem
+
+      if (!isArray(value)) {
+        return [value]
+      }
+
+      return value
+    }
+
+    return [response]
   }
 }

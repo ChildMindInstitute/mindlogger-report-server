@@ -49,7 +49,7 @@ md.use(emoji)
   .use(markdownItImSize)
 
 export const convertMarkdownToHtml = (markdown: string, addPageBreak = false): string => {
-  const html = md.render(markdown)
+  const html = md.render(markdown) // Render method add \n to end of string
 
   if (addPageBreak) {
     return `<div style="page-break-before: always">${html}</div>`

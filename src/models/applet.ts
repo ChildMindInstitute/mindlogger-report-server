@@ -2,9 +2,10 @@ import { ActivityEntity } from './activity'
 import ActivityFlow from './activity-flow'
 import moment from 'moment-timezone'
 import { getAppletKeys } from '../db'
-import { Email, Applet, IAppletEncryption, ActivityResponse, User } from '../core/interfaces'
+import { Email, Applet, IAppletEncryption, ActivityResponse, User, ScoreForSummary } from '../core/interfaces'
 import { ItemEntity } from './item'
-import { convertMarkdownToHtml } from '../core/helpers'
+import { convertMarkdownToHtml, truncateString } from '../core/helpers'
+import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer'
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/'
 
@@ -84,8 +85,8 @@ export class AppletEntity {
 
   getSummary(responses: ActivityResponse[]): string {
     let alerts: any[] = [] //TODO - type
-    let alertsHTML = '',
-      scoresHTML = ''
+    let alertsHTML = ''
+    let scoresHTML = ''
 
     for (const response of responses) {
       const activity = this.activities.find((activity) => activity.id === response.activityId)
@@ -95,25 +96,7 @@ export class AppletEntity {
 
         const scores = activity.getScoresForSummary(response.data)
         if (scores.length) {
-          scoresHTML += `
-            <div class="score-messages">
-              <div class="activity-title">${activity.name}</div>
-              <div>
-                ${scores
-                  .map(
-                    (score) => `
-                    <div class="score-message ${score.flagScore ? 'flag' : ''}">
-                      <img class="score-flag" src="${ICON_URL + 'score-flag.png'}" width="15" height="15"
-                        style="${score.flagScore ? '' : 'display: none;'}">
-                      <span style="${score.flagScore ? 'font-weight: bold' : ''}">${score.prefLabel}</span>
-                      <div class="score-value">${score.value}</div>
-                    </div>
-                  `,
-                  )
-                  .join('\r\n')}
-              </div>
-            </div>
-          `
+          scoresHTML += this.buildScoreSummaryHTML(scores, activity.name)
         }
       }
     }
@@ -152,17 +135,33 @@ export class AppletEntity {
     now: string,
   ): Email {
     let emailBody = this.reportConfigs.emailBody
+
     for (const response of responses) {
       const activity = this.activities.find((activity) => activity.id === response.activityId)
       if (!activity) {
         throw new Error(`Can't find activity ${response.activityId}`)
       }
+
       const scores = activity.evaluateScores(response.data)
+
       const [values, rawValues] = activity.scoresToValues(scores, response.data)
+
       const addActivityPrefix = (key: string) => `${activity.name}/${key}`
+
       const renameKeys = (o: any) => Object.keys(o).reduce((acc, k) => ({ ...acc, [addActivityPrefix(k)]: o[k] }), {})
-      emailBody = activity.replaceValuesInMarkdown(emailBody, renameKeys(values), user)
+
+      const renamedScores = renameKeys(values)
+
+      const processedEmailBody = replaceVariablesInMarkdown({
+        markdown: emailBody,
+        scores: renamedScores,
+        user,
+        items: activity.items,
+      })
+
+      emailBody = processedEmailBody
     }
+
     return {
       body: this.applyInlineStyles(convertMarkdownToHtml(emailBody)),
       subject: this.getSubject(activityId, activityFlowId, responses, user),
@@ -186,16 +185,19 @@ export class AppletEntity {
   getPDFFileName(activityId: string, activityFlowId: string | null, responses: ActivityResponse[], user: User): string {
     const activityFlow = this.activityFlows.find((flow) => flow.id === activityFlowId) ?? null
     const activity = this.activities.find((activity) => activity.id === activityId)
+
     if (!activity) {
       throw new Error('unable to find activity')
     }
+
     const userId = user.secretId
     const configs = this.reportConfigs
+    const truncateLength = 55
 
     let pdfName = 'REPORT'
 
     if (configs.includeUserId) {
-      pdfName += `_${userId}`
+      pdfName += `_${truncateString(userId, truncateLength)}`
     }
 
     pdfName += `_${this.name}`
@@ -257,11 +259,12 @@ export class AppletEntity {
     }
     const userId = user.secretId
     const configs = this.reportConfigs
+    const truncateLength = 55
 
     let subject = 'Report'
 
     if (configs.includeUserId) {
-      subject += ` by ${userId}`
+      subject += ` by ${truncateString(userId, truncateLength)}`
     }
 
     subject += `: ${this.name}` // Applet name
@@ -277,5 +280,29 @@ export class AppletEntity {
       subject += ` / [${itemName}]`
     }
     return subject
+  }
+
+  private buildScoreSummaryHTML(scores: ScoreForSummary[], activityName: string): string {
+    return `
+      <div class="score-messages">
+        <div class="activity-title">${activityName}</div>
+        <div>
+          ${scores
+            .map((score) => {
+              return `
+                <div class="score-message ${score.flagScore ? 'flag' : ''}">
+                  <img class="score-flag" src="${ICON_URL + 'score-flag.png'}" width="15" height="15"
+                    style="${score.flagScore ? '' : 'display: none;'}">
+                    <div class="score-label" style="${score.flagScore ? 'font-weight: bold' : ''}">
+                      ${score.prefLabel}
+                    </div>
+                    <div class="score-value">${score.value}</div>
+                </div>
+              `
+            })
+            .join('\r\n')}
+        </div>
+      </div>
+    `
   }
 }
