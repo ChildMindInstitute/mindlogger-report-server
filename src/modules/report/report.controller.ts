@@ -17,6 +17,8 @@ import { getReportFooter, getReportStyles, getSplashImageHTML } from './helpers'
 
 class ReportController {
   public async sendPdfReport(req: SendPdfReportRequest, res: Response): Promise<unknown> {
+    const t0 = performance.now()
+
     const { activityId, activityFlowId } = req.query
 
     const outputsFolder = process.env.OUTPUTS_FOLDER || os.tmpdir()
@@ -111,6 +113,11 @@ class ReportController {
       await watermarkPDF(filename, watermarkURL, watermarkStart, skipPages)
 
       await encryptPDF(filename, pdfPassword)
+
+      const t1 = performance.now()
+
+      console.info(`PDF generation took ${t1 - t0} milliseconds.`)
+      console.info(`PDF file string length: ${fs.readFileSync(filename, { encoding: 'base64' }).toString().length}`)
 
       res.status(200).json(<SendPdfReportResponse>{
         pdf: fs.readFileSync(filename, { encoding: 'base64' }).toString(),

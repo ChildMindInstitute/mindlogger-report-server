@@ -84,7 +84,7 @@ export class AppletEntity {
   }
 
   getSummary(responses: ActivityResponse[]): string {
-    let alerts: any[] = [] //TODO - type
+    let alerts: string[] = []
     let alertsHTML = ''
     let scoresHTML = ''
 

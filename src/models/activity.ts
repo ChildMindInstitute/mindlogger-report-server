@@ -231,8 +231,8 @@ export class ActivityEntity {
     return markdown
   }
 
-  getAlertsForSummary(responses: ResponseItem[]) {
-    let alerts: any[] = [] //TODO - type
+  getAlertsForSummary(responses: ResponseItem[]): string[] {
+    let alerts: string[] = []
     for (let i = 0; i < responses.length; i++) {
       alerts = alerts.concat(this.items[i].getAlerts(responses[i]))
     }
