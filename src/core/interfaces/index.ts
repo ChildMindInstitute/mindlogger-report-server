@@ -209,11 +209,6 @@ export interface ScoreForSummary {
   flagScore: boolean
 }
 
-export interface SetPasswordRequestPayload {
-  appletId: string
-  password: string
-}
-
 export interface SetPasswordRequestEncryptedPayload {
   password: string
   privateKey: string
