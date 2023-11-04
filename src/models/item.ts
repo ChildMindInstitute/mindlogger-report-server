@@ -80,13 +80,18 @@ export class ItemEntity {
   }
 
   getAlerts(value: ResponseItem): string[] {
-    const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'singleSelectRows', 'multiSelectRows']
+    const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'singleSelectRows', 'multiSelectRows', 'sliderRows']
     if (!this.setAlerts || value === null || !allowedTypes.includes(this.inputType)) {
       return []
     }
     if (['singleSelectRows', 'multiSelectRows'].includes(this.inputType)) {
       return this.getAlertsForSelectionPerRow(value.value)
     }
+
+    if (this.inputType === 'sliderRows') {
+      return this.getAlertsForSliderRow(value.value)
+    }
+
     return this.getAlertForSimpleTypes(value, this.options)
   }
 
@@ -249,7 +254,7 @@ export class ItemEntity {
     if (typeof value === 'string') {
       option = options.find((option) => option.id === value || option.text === value)
     }
-    return option ? option : null
+    return option ?? null
   }
 
   private convertDataMatrixToOptions(row: IDataMatrixRow): IActivityItemOption[] {
@@ -264,50 +269,87 @@ export class ItemEntity {
     return options
   }
 
-  private getAlertsForSelectionPerRow(value: Array<string | null>) {
-    const alerts = []
+  private getAlertsForSelectionPerRow(value: Array<string | null>): string[] {
+    const alerts: string[] = []
     const rows = this.json.responseValues?.dataMatrix ?? []
+
     for (const [rowIdx, response] of value.entries()) {
       if (!rows[rowIdx] || response === null) {
         continue
       }
       const options = this.convertDataMatrixToOptions(rows[rowIdx])
-      for (const alert of this.getAlertForSimpleTypes(response, options)) {
-        alerts.push(alert)
-      }
+
+      const responseArray = this.convertResponseToArray(response).flat(1)
+
+      const alertList = responseArray
+        .map((value) => {
+          const option = this.matchOption(value, options)
+          return option && option.alert ? option.alert : ''
+        })
+        .filter((alert) => alert.length > 0)
+
+      alertList.forEach((alert) => alerts.push(alert))
     }
+
     return alerts
   }
 
-  private getAlertForSimpleTypes(
-    responseItem: ResponseItem | number | string,
-    options: IActivityItemOption[],
-  ): string[] {
-    const response = this.convertResponseToArray(responseItem)
+  private getAlertsForSliderRow(value: Array<number | null>): string[] {
+    const alerts: string[] = []
+    const rows = this.json.responseValues.rows
 
-    return response
-      .map((value) => {
-        switch (this.inputType) {
-          case 'slider':
-            const alerts = this.json.responseValues.alerts ?? []
-            const alert = alerts.find((a) => {
-              if (
-                this.json.config?.continuousSlider &&
-                typeof a.minValue === 'number' &&
-                typeof a.maxValue === 'number'
-              ) {
-                return a.minValue <= value && a.maxValue >= value
-              }
-              return a.value === value
-            })
-            return alert?.alert ?? ''
+    if (!rows) {
+      return []
+    }
 
-          default:
+    for (const [rowIdx, response] of value.entries()) {
+      const currentRow = rows[rowIdx]
+
+      if (!currentRow || response === null) {
+        continue
+      }
+
+      const alertList = currentRow.alerts.filter((a) => {
+        if (this.json.config?.continuousSlider && typeof a.minValue === 'number' && typeof a.maxValue === 'number') {
+          return a.minValue <= response && a.maxValue >= response
+        }
+        return a.value === response
+      })
+
+      alertList.forEach((alert) => alerts.push(alert.alert))
+    }
+
+    return alerts
+  }
+
+  private getAlertForSimpleTypes(responseItem: ResponseItem, options: IActivityItemOption[]): string[] {
+    switch (this.inputType) {
+      case 'slider':
+        const value = responseItem.value
+
+        const alerts = this.json.responseValues.alerts ?? []
+        const alert = alerts.find((a) => {
+          if (this.json.config?.continuousSlider && typeof a.minValue === 'number' && typeof a.maxValue === 'number') {
+            return a.minValue <= value && a.maxValue >= value
+          }
+          return a.value === value
+        })
+        return [alert?.alert ?? '']
+
+      case 'singleSelect':
+      case 'multiSelect':
+        const response = this.convertResponseToArray(responseItem)
+
+        return response
+          .map((value) => {
             const option = this.matchOption(value, options)
             return option && option.alert ? option.alert : ''
-        }
-      })
-      .filter((alert) => alert.length > 0)
+          })
+          .filter((alert) => alert.length > 0)
+
+      default:
+        return []
+    }
   }
 
   private convertResponseToArray(response: ResponseItem | number | string): any[] {

@@ -71,6 +71,7 @@ export interface IActivityItemResponseValues {
   paletteName?: string
   options?: IActivityItemOption[]
   dataMatrix?: IDataMatrixRow[]
+  rows?: IDataMatrixSliderRow[]
   minLabel?: string
   maxLabel?: string
   minValue?: number
@@ -79,6 +80,24 @@ export interface IActivityItemResponseValues {
   maxImage?: string
   scores?: number[]
   alerts?: { value: number; alert: string; minValue?: number | null; maxValue?: number | null }[]
+}
+
+export type IDataMatrixSliderRow = {
+  id: string
+  label: string
+  maxImage: string | null
+  maxLabel: string | null
+  maxValue: number
+  minImage: string | null
+  minLabel: string | null
+  minValue: number
+  scores: number[] | null
+  alerts: Array<{
+    value: number
+    alert: string
+    minValue?: number | null
+    maxValue?: number | null
+  }>
 }
 
 export interface IActivityItemOption {
