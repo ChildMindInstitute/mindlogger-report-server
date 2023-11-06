@@ -118,13 +118,9 @@ export class MarkdownVariableReplacer {
   }
 
   private getReplaceValue = (variableName: string): string => {
-    const foundValue = this.answers[variableName]
-    const answerNotFound = !foundValue
-
-    if (answerNotFound) {
+    if (!(variableName in this.answers)) {
       return ''
     }
-
-    return foundValue.toString()
+    return this.answers[variableName].toString()
   }
 }
