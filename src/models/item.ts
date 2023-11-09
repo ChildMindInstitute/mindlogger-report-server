@@ -57,7 +57,10 @@ export class ItemEntity {
           const minValue = this.json.responseValues.minValue
           const maxValue = this.json.responseValues.maxValue
 
-          if (minValue === undefined || maxValue === undefined) {
+          const isMinValueExist = minValue !== undefined && minValue !== null
+          const isMaxValueExist = maxValue !== undefined && maxValue !== null
+
+          if (!isMinValueExist || !isMaxValueExist) {
             break
           }
 
