@@ -189,7 +189,7 @@ export class ItemEntity {
     let type = this.inputType
 
     if (this.inputType === 'singleSelect' || this.inputType === 'multiSelect') {
-      type = 'checkbox'
+      type = this.inputType === 'multiSelect' ? 'checkbox' : 'radio'
 
       for (const option of this.options) {
         const checked = response.some(
