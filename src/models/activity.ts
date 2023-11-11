@@ -11,7 +11,7 @@ import {
   KVObject,
   ScoreForSummary,
 } from '../core/interfaces'
-import { convertMarkdownToHtml, isFloat } from '../core/helpers'
+import { convertMarkdownToHtml, isFloat, toFixed } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer/'
 import { checkAllRules, checkAnyRules, checkConditionByPattern } from '../modules/report/helpers/conditionalLogic'
 
@@ -81,10 +81,10 @@ export class ActivityEntity {
             scores[report.id] = reportScore
             break
           case 'percentage':
-            scores[report.id] = Number(!reportMaxScore ? 0 : (reportScore / reportMaxScore) * 100).toFixed(2)
+            scores[report.id] = toFixed(Number(!reportMaxScore ? 0 : (reportScore / reportMaxScore) * 100))
             break
           case 'average':
-            scores[report.id] = Number(reportScore / report.itemsScore.length).toFixed(2)
+            scores[report.id] = toFixed(Number(reportScore / report.itemsScore.length))
             break
         }
 
