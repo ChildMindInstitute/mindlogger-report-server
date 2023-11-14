@@ -1,14 +1,15 @@
 import { IActivityItem, IActivityItemOption, IDataMatrixRow, ResponseItem } from '../core/interfaces'
 import {
+  Calculator,
   convertMarkdownToHtml,
   escapeRegExp,
   escapeReplacement,
-  fillArrayFromTo,
   isArray,
   isNumber,
   isObject,
   isString,
 } from '../core/helpers'
+import { ScoresCalculator } from '../core/helpers/ScoresCalculator'
 
 const ICON_URL = 'https://raw.githubusercontent.com/ChildMindInstitute/mindlogger-report-server/main/src/static/icons/'
 
@@ -39,44 +40,30 @@ export class ItemEntity {
   }
 
   getScore(value: ResponseItem): number {
-    const allowedItemTypes = ['singleSelect', 'multiSelect', 'slider']
-
-    const isItemAllowed = allowedItemTypes.includes(this.inputType)
-
-    if (value === null || !isItemAllowed || !this.scoring) {
+    if (value === null || !this.scoring) {
       return 0
     }
 
-    const response = this.convertResponseToArray(value)
-
     let totalScore = 0
 
-    for (const value of response) {
-      switch (this.inputType) {
-        case 'slider':
-          const minValue = this.json.responseValues.minValue
-          const maxValue = this.json.responseValues.maxValue
+    switch (this.inputType) {
+      case 'multiSelect':
+        const multiSelectScore = ScoresCalculator.collectScoreForMultiSelect(this, value.value as number[])
+        totalScore += multiSelectScore ?? 0
+        break
 
-          const isMinValueExist = minValue !== undefined && minValue !== null
-          const isMaxValueExist = maxValue !== undefined && maxValue !== null
+      case 'singleSelect':
+        const singleSelecScore = ScoresCalculator.collectScoreForSingleSelect(this, value.value as number)
+        totalScore += singleSelecScore ?? 0
+        break
 
-          if (!isMinValueExist || !isMaxValueExist) {
-            break
-          }
+      case 'slider':
+        const sliderScore = ScoresCalculator.collectScoreForSlider(this, value.value as number)
+        totalScore += sliderScore ?? 0
+        break
 
-          const values = fillArrayFromTo({ from: minValue, to: maxValue })
-          const scores = this.json.responseValues.scores ?? []
-          if (values.includes(value)) {
-            const valueIndex = values.indexOf(value)
-            totalScore += scores[valueIndex]
-          }
-          break
-        default:
-          const option = this.matchOption(value, this.options)
-          if (option && option.score) {
-            totalScore += option.score
-          }
-      }
+      default:
+        break
     }
 
     return totalScore
@@ -149,26 +136,34 @@ export class ItemEntity {
   }
 
   getMaxScore(): number {
-    if (
-      (this.inputType !== 'singleSelect' && this.inputType !== 'multiSelect' && this.inputType !== 'slider') ||
-      !this.scoring
-    ) {
+    if (!this.scoring) {
       return 0
     }
-    if ('slider' === this.inputType) {
-      const scores = this.json.responseValues.scores ?? []
-      return Math.max(...scores)
-    }
-    const oo = 1e6
 
-    return this.options.reduce(
-      (previousValue, currentOption) => {
-        return this.multipleChoice
-          ? Math.max(currentOption.score + previousValue, previousValue)
-          : Math.max(currentOption.score, previousValue)
-      },
-      this.multipleChoice ? 0 : -oo,
-    )
+    switch (this.inputType) {
+      case 'singleSelect':
+        const allSingleScores = this.options
+          .map((x) => x.score)
+          .filter((x) => x != null)
+          .map((x) => x)
+
+        return Math.max(...allSingleScores)
+
+      case 'multiSelect':
+        const allMultiScores = this.options
+          .map((x) => x.score)
+          .filter((x) => x != null)
+          .map((x) => x)
+
+        return Calculator.sum(allMultiScores)
+
+      case 'slider':
+        const scores = this.json.responseValues.scores ?? []
+        return Math.max(...scores)
+
+      default:
+        return 0
+    }
   }
 
   getQuestionText(): string {

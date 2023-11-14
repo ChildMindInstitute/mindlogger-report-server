@@ -74,8 +74,8 @@ export interface IActivityItemResponseValues {
   rows?: IDataMatrixSliderRow[]
   minLabel?: string
   maxLabel?: string
-  minValue?: number
-  maxValue?: number
+  minValue: number
+  maxValue: number
   minImage?: string
   maxImage?: string
   scores?: number[]
