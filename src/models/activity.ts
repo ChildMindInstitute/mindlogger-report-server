@@ -11,9 +11,10 @@ import {
   KVObject,
   ScoreForSummary,
 } from '../core/interfaces'
-import { convertMarkdownToHtml, isFloat, toFixed } from '../core/helpers'
+import { Calculator, convertMarkdownToHtml, isFloat, toFixed } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer/'
 import { checkAllRules, checkAnyRules, checkConditionByPattern } from '../modules/report/helpers/conditionalLogic'
+import { ScoresCalculator } from '../core/helpers/ScoresCalculator'
 
 export class ActivityEntity {
   public json: IActivity
@@ -57,11 +58,13 @@ export class ActivityEntity {
   }
 
   evaluateScores(responses: ResponseItem[]): KVObject {
+    const answers = responses.filter((x) => x !== null)
+
     const scores: KVObject = {}
     const maxScores: KVObject = {}
 
-    for (let i = 0; i < responses.length; i++) {
-      const response = responses[i]
+    for (let i = 0; i < answers.length; i++) {
+      const response = answers[i]
       const item = this.items[i]
 
       scores[item.name] = item.getScore(response)
@@ -81,10 +84,19 @@ export class ActivityEntity {
             scores[report.id] = reportScore
             break
           case 'percentage':
-            scores[report.id] = toFixed(Number(!reportMaxScore ? 0 : (reportScore / reportMaxScore) * 100))
+            if (reportMaxScore === 0) {
+              scores[report.id] = 0
+              break
+            }
+            const percentageScore = (100 * reportScore) / reportMaxScore
+
+            scores[report.id] = toFixed(percentageScore)
             break
           case 'average':
-            scores[report.id] = toFixed(Number(reportScore / report.itemsScore.length))
+            const score = ScoresCalculator.collectActualScores(this.items, report.itemsScore, responses)
+            const filteredScores: number[] = score.filter((x) => x !== null).map((x) => x!)
+
+            scores[report.id] = toFixed(Calculator.avg(filteredScores))
             break
         }
 
