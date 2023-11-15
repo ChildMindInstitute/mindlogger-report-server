@@ -1,8 +1,6 @@
 import mime from 'mime-types'
-import { ActivityEntity } from '../../../models'
 
-export function getSplashImageHTML(pageBreakBefore = true, activity: ActivityEntity): string {
-  const image = activity.splashImage
+export function getSplashImageHTML(pageBreakBefore = true, image: string): string {
   const mimeType = mime.lookup(image) || ''
 
   if (image && !mimeType.startsWith('video/')) {

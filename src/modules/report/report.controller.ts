@@ -87,7 +87,7 @@ class ReportController {
 
         if (activity) {
           const markdown = activity.evaluateReports(response.data, user)
-          splashPage = getSplashImageHTML(pageBreak, activity)
+          splashPage = getSplashImageHTML(pageBreak, activity.splashImage)
 
           html += splashPage + '\n'
           html += convertMarkdownToHtml(markdown, splashPage === '' && skipPages.length === 0) + '\n'
