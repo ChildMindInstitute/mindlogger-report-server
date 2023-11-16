@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { ItemEntity } from './item'
 import {
   IActivity,
