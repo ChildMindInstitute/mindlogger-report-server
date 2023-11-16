@@ -11,7 +11,7 @@ import {
   KVObject,
   ScoreForSummary,
 } from '../core/interfaces'
-import { Calculator, convertMarkdownToHtml, isFloat, toFixed } from '../core/helpers'
+import { Calculator, convertMarkdownToHtml, getScoresSummary, isFloat, toFixed } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer/'
 import { checkAllRules, checkAnyRules, checkConditionByPattern } from '../modules/report/helpers/conditionalLogic'
 import { ScoresCalculator } from '../core/helpers/ScoresCalculator'
@@ -47,16 +47,6 @@ export class ActivityEntity {
     this.reports = data.scoresAndReports?.reports || []
   }
 
-  private getScoresSumForReport(scores: KVObject, allowedNamesToCalculateScore: string[]): number {
-    const allowedScores: KVObject = {}
-    for (const name in scores) {
-      if (allowedNamesToCalculateScore.includes(name)) {
-        allowedScores[name] = scores[name]
-      }
-    }
-    return _.sum(_.values(allowedScores))
-  }
-
   evaluateScores(responses: ResponseItem[]): KVObject {
     const answers = responses.filter((x) => x !== null)
 
@@ -74,8 +64,8 @@ export class ActivityEntity {
     // calculate scores first
     for (const report of this.reports) {
       if (report.type === 'score') {
-        const reportScore = this.getScoresSumForReport(scores, report.itemsScore)
-        const reportMaxScore = this.getScoresSumForReport(maxScores, report.itemsScore)
+        const reportScore = getScoresSummary(scores, report.itemsScore)
+        const reportMaxScore = getScoresSummary(maxScores, report.itemsScore)
 
         maxScores[report.id] = reportMaxScore
 

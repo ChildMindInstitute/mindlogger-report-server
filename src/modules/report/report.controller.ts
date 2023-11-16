@@ -116,7 +116,7 @@ class ReportController {
         email: applet.getEmailConfigs(activityId, activityFlowId, responses, payload.user, payload.now),
       })
       fs.unlink(filename, () => {
-        console.info(`deleted ${filename}`)
+        console.info(`Deleted ${filename}`)
       })
     } catch (e) {
       console.error('error', e)
