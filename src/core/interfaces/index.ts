@@ -1,5 +1,5 @@
 export interface Applet {
-  id: string
+  id: string // Need it
   displayName: string
   description: string
   image: string
@@ -9,7 +9,7 @@ export interface Applet {
   activities: IActivity[]
   activityFlows: IActivityFlow[]
 
-  encryption: IAppletEncryption
+  encryption: IAppletEncryption // Need it
 
   reportServerIp: string
   reportPublicKey: string

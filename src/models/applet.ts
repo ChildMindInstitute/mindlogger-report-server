@@ -59,22 +59,6 @@ export class AppletEntity {
     }
   }
 
-  static getAppletWatermarkHTML(applet: Applet): string {
-    if (!applet.watermark) {
-      return ''
-    }
-
-    const imageHTML = `
-      <div class="applet-image">
-        <img
-          src="${applet.watermark}"
-          alt=''
-        />
-      </div>
-    `
-
-    return imageHTML
-  }
   static getAppletWatermarkURL(applet: AppletEntity): string {
     if (!applet.watermark) {
       return ''
@@ -175,11 +159,6 @@ export class AppletEntity {
       .replace(/<tr>/g, '<tr style="background-color: #fff; border-top: 1px solid #c6cbd1;">')
       .replace(/<th>/g, `<th style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px; font-weight: 600;">`)
       .replace(/<td>/g, `<td style="padding: 6px 13px; border: 1px solid #dfe2e5; font-size: 14px;">`)
-  }
-
-  async getPDFPassword(appletId = ''): Promise<string> {
-    const row = await getAppletKeys(appletId || this.id)
-    return row ? row.key : ''
   }
 
   getPDFFileName(activityId: string, activityFlowId: string | null, responses: ActivityResponse[], user: User): string {
