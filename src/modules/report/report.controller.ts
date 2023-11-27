@@ -57,25 +57,22 @@ class ReportController {
         `Activity responses descrypting took ${decryptActivityResponsesT1 - decryptActivityResponsesT0} milliseconds.`,
       )
 
-      const user = payload.user
-      const now = payload.now
-
       const applet = new AppletEntity(payload.applet)
 
       const pdfPassword = await getPDFPassword(applet.id)
 
       if (!pdfPassword) {
-        throw new Error('invalid password')
+        throw new Error('[ReportController:sendPdfReport] Invalid pdf password')
       }
 
       let html = ''
       let pageBreak = false
       let splashPage = undefined
 
-      html += applet.getSummary(responses)
+      html += getSummary({ responses, activities: applet.activities })
 
       const appletId = payload.applet.id
-      const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses, user)
+      const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses, payload.user)
       const filename = `${outputsFolder}/${appletId}/${activityId}/${v4()}/${pdfName}`
       html += getReportStyles()
 
@@ -90,8 +87,8 @@ class ReportController {
         const activity = applet.activities.find((activity) => activity.id === response.activityId)
 
         if (activity) {
-          const markdown = activity.evaluateReports(response.data, user)
-          splashPage = getSplashImageHTML(pageBreak, activity)
+          const markdown = activity.evaluateReports(response.data, payload.user)
+          splashPage = getSplashImageHTML(pageBreak, activity.splashImage)
 
           html += splashPage + '\n'
           html += convertMarkdownToHtml(markdown, splashPage === '' && skipPages.length === 0) + '\n'
@@ -125,9 +122,11 @@ class ReportController {
 
       res.status(200).json(<SendPdfReportResponse>{
         pdf: fs.readFileSync(filename, { encoding: 'base64' }).toString(),
-        email: applet.getEmailConfigs(activityId, activityFlowId, responses, user, now),
+        email: applet.getEmailConfigs(activityId, activityFlowId, responses, payload.user, payload.now),
       })
-      fs.unlink(filename, () => {})
+      fs.unlink(filename, () => {
+        console.info(`Deleted ${filename}`)
+      })
     } catch (e) {
       console.error('error', e)
 

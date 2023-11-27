@@ -1,0 +1,9 @@
+{
+  "ext": "ts",
+  "includes": "src/**/*.ts",
+  "excludes": [
+    "node_modules",
+    "dist"
+  ],
+  "exec": "npm run start"
+}
