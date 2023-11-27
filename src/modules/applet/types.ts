@@ -4,5 +4,5 @@ export type SetPasswordRequest = Request<any, any, SetPasswordRequestPayload, an
 
 export interface SetPasswordRequestPayload {
   appletId: string
-  password: string
+  password: string // Encrypted object { password: string, privateKey: number[]  }
 }
