@@ -12,8 +12,8 @@ import {
 } from '../core/interfaces'
 import { Calculator, convertMarkdownToHtml, getScoresSummary, isFloat, toFixed } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer/'
-import { checkAllRules, checkAnyRules, checkConditionByPattern } from '../modules/report/helpers/conditionalLogic'
 import { ScoresCalculator } from '../core/helpers/ScoresCalculator'
+import { ConditionalLogicService } from '../modules/report/helpers/conditionalLogic'
 
 export class ActivityEntity {
   public json: IActivity
@@ -298,7 +298,7 @@ export class ActivityEntity {
       if (key in scores) {
         const score = isFloat(scores[key]) ? parseFloat(scores[key]) : scores[key]
 
-        const checkResult = checkConditionByPattern({
+        const checkResult = ConditionalLogicService.checkConditionByPattern({
           type: condition.type,
           payload: condition.payload,
           scoreOrValue: score,
@@ -312,9 +312,9 @@ export class ActivityEntity {
 
     switch (match) {
       case 'all':
-        return checkAllRules({ results })
+        return ConditionalLogicService.checkAllRules(results)
       case 'any':
-        return checkAnyRules({ results })
+        return ConditionalLogicService.checkAnyRules(results)
       default:
         return false
     }

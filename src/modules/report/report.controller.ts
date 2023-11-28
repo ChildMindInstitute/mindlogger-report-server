@@ -14,6 +14,7 @@ import { getCurrentCount, convertHtmlToPdf, watermarkPDF, encryptPDF, getPDFPass
 import { SendPdfReportRequest, SendPdfReportRequestPayload } from './types'
 import { getReportFooter, getReportStyles, getSplashImageHTML } from './helpers'
 import { decryptActivityResponses } from './helpers/decryptResponses'
+import { getSummary } from './services/getSummary'
 
 class ReportController {
   public async sendPdfReport(req: SendPdfReportRequest, res: Response): Promise<unknown> {
