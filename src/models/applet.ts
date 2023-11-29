@@ -56,22 +56,6 @@ export class AppletEntity {
     }
   }
 
-  static getAppletWatermarkHTML(applet: Applet): string {
-    if (!applet.watermark) {
-      return ''
-    }
-
-    const imageHTML = `
-      <div class="applet-image">
-        <img
-          src="${applet.watermark}"
-          alt=''
-        />
-      </div>
-    `
-
-    return imageHTML
-  }
   static getAppletWatermarkURL(applet: AppletEntity): string {
     if (!applet.watermark) {
       return ''

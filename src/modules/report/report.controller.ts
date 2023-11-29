@@ -10,16 +10,16 @@ import { ActivityResponse, SendPdfReportResponse } from '../../core/interfaces'
 import { getAppletKeys } from '../../db'
 import { convertMarkdownToHtml } from '../../core/helpers'
 import { AppletEntity } from '../../models'
-import { getCurrentCount, convertHtmlToPdf, watermarkPDF, encryptPDF } from '../../pdf-utils'
+import { getCurrentCount, convertHtmlToPdf, watermarkPDF, encryptPDF, getPDFPassword } from '../../pdf-utils'
 import { SendPdfReportRequest, SendPdfReportRequestPayload } from './types'
 import { getReportFooter, getReportStyles, getSplashImageHTML } from './helpers'
-import { getPDFPassword } from './services/getPDFPassword'
-import { decryptAnswers } from './services/descyptReponses'
+import { decryptActivityResponses } from './helpers/decryptResponses'
 import { getSummary } from './services/getSummary'
 
 class ReportController {
   public async sendPdfReport(req: SendPdfReportRequest, res: Response): Promise<unknown> {
     const t0 = performance.now()
+    console.info('Generating PDF started')
 
     const { activityId, activityFlowId } = req.query
 
@@ -34,19 +34,29 @@ class ReportController {
         throw new Error('activityId is required')
       }
 
+      console.info(`Payload length: ${req.body.payload.length}`)
+      const decryptPayloadT0 = performance.now()
       const payload = decryptData<SendPdfReportRequestPayload>(req.body.payload)
+      const decryptPayloadT1 = performance.now()
+      console.info(`Payload decrypting took ${decryptPayloadT1 - decryptPayloadT0} milliseconds.`)
+
       const appletKeys = await getAppletKeys(payload.applet.id)
 
       if (!appletKeys || !appletKeys.privateKey) {
         throw new Error('applet is not connected')
       }
 
-      const responses: ActivityResponse[] = decryptAnswers({
+      const decryptActivityResponsesT0 = performance.now()
+      const responses: ActivityResponse[] = decryptActivityResponses({
         responses: payload.responses,
         appletPrivateKey: appletKeys.privateKey,
         appletEncryption: payload.applet.encryption,
         userPublicKey: payload.userPublicKey,
       })
+      const decryptActivityResponsesT1 = performance.now()
+      console.info(
+        `Activity responses descrypting took ${decryptActivityResponsesT1 - decryptActivityResponsesT0} milliseconds.`,
+      )
 
       const applet = new AppletEntity(payload.applet)
 
