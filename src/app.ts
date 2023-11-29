@@ -23,4 +23,6 @@ app.put('/verify', serverController.verifyServerPublicKey)
 
 app.post('/set-password', appletController.setPassword)
 
-app.listen(port, () => console.info(`MindLogger Report Server listening on port ${port}!`))
+app.listen(port, () => {
+  console.info(`MindLogger Report Server listening on port ${port}!`)
+})
