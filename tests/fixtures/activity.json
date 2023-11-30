@@ -1,0 +1,302 @@
+{
+  "name": "EPDS",
+  "description": "2 out of 2",
+  "splashScreen": "",
+  "image": "",
+  "showAllAtOnce": false,
+  "isSkippable": false,
+  "isReviewable": false,
+  "responseIsEditable": true,
+  "isHidden": false,
+  "scoresAndReports": {
+    "generateReport": true,
+    "showScoreSummary": true,
+    "scores": [
+      {
+        "name": "postpartumdepression",
+        "id": "averageScore_postpartumdepression",
+        "calculationType": "average",
+        "minScore": 1,
+        "maxScore": 3,
+        "itemsScore": [
+          "5e90d62b-65b8-4567-b259-2214d74a50e0"
+        ],
+        "showMessage": true,
+        "message": "Scores on the EDPS range from 0 to 30, with any score at or above 10 indicating possible depression. ",
+        "printItems": true,
+        "itemsPrint": [
+          "5e90d62b-65b8-4567-b259-2214d74a50e0",
+          "acc8d88b-f205-4baa-9a29-551a404a36dd"
+        ],
+        "conditionalLogic": [
+          {
+            "name": "high",
+            "id": "sumScore_postpartumdepression_high",
+            "flagScore": true,
+            "showMessage": true,
+            "message": "**++The mother’s score on the EPDS is [[sumScore_postpartumdepression]]. This score indicates the likely presence of postpartum depression.++**\n\nIf not currently being addressed, high scores on this scale may signal the need for further clinical evaluation and attention depending on the level of difficulties encountered in the home, work, or social environments. ",
+            "printItems": true,
+            "itemsPrint": [
+              "5e90d62b-65b8-4567-b259-2214d74a50e0",
+              "acc8d88b-f205-4baa-9a29-551a404a36dd"
+            ],
+            "match": "all",
+            "conditions": [
+              {
+                "itemName": "averageScore_postpartumdepression",
+                "type": "BETWEEN",
+                "payload": {
+                  "minValue": 5,
+                  "maxValue": 12
+                }
+              }
+            ]
+          },
+          {
+            "name": "low",
+            "id": "sumScore_postpartumdepression_low",
+            "flagScore": true,
+            "showMessage": true,
+            "message": "**The mother’s score on the EPDS is [[sumScore_postpartumdepression]].** This score indicates that postpartum depression is not present in the mother.\n\nIf you remain concerned about their symptoms, functioning, or well-being, please advise and assist them to seek additional consultation and guidance, even though their score is in the low-risk range.",
+            "printItems": true,
+            "itemsPrint": [
+              "5e90d62b-65b8-4567-b259-2214d74a50e0",
+              "acc8d88b-f205-4baa-9a29-551a404a36dd"
+            ],
+            "match": "all",
+            "conditions": [
+              {
+                "itemName": "averageScore_postpartumdepression",
+                "type": "BETWEEN",
+                "payload": {
+                  "minValue": 0,
+                  "maxValue": 4
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "sections": [
+      {
+        "name": "EDPS",
+        "showMessage": true,
+        "message": "## Edinburgh Postnatal Depression Scale (EDPS)\n\nA common complication of childbearing is postpartum depression, which refers to the onset of depression or depression-like symptoms following childbirth. The EDPS identifies mothers at risk for \"perinatal\" depression. \n\nThe EDPS recommends the following resources:\n-  National Women's Health Information Center <www.4women.gov>\n- Postpartum\nSupport International <www.chss.iup.edu/postpartum>\n- Depression after Delivery\n<www.depressionafterdelivery.com>",
+        "printItems": true,
+        "itemsPrint": [
+          "5e90d62b-65b8-4567-b259-2214d74a50e0",
+          "acc8d88b-f205-4baa-9a29-551a404a36dd"
+        ],
+        "conditionalLogic": {
+          "name": "section-condition",
+          "id": "180bbf86-b427-423b-bd1c-6fa590404cfe",
+          "showMessage": false,
+          "message": null,
+          "printItems": false,
+          "itemsPrint": [],
+          "match": "any",
+          "conditions": [
+            {
+              "itemName": "Q1",
+              "type": "EQUAL_TO_OPTION",
+              "payload": {
+                "optionId": 1
+              }
+            },
+            {
+              "itemName": "sumScore_postpartumdepression",
+              "type": "OUTSIDE_OF",
+              "payload": {
+                "minValue": 5,
+                "maxValue": 10
+              }
+            },
+            {
+              "itemName": "sumScore_postpartumdepression_high",
+              "type": "EQUAL",
+              "payload": {
+                "value": 0
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "subscaleSetting": {
+    "calculateTotalScore": null,
+    "subscales": [],
+    "totalScoresTableData": []
+  },
+  "id": "0656ccb3-3b25-4197-be8e-c8479599a12c",
+  "order": 2,
+  "items": [
+    {
+      "question": "MotherDOB",
+      "responseType": "multiSelect",
+      "responseValues": null,
+      "config": {
+        "removeBackButton": false,
+        "skippableItem": false,
+        "additionalResponseOption": {
+          "textInputOption": false,
+          "textInputRequired": false
+        },
+        "timer": 0
+      },
+      "name": "MotherDOB",
+      "isHidden": false,
+      "conditionalLogic": null,
+      "allowEdit": true,
+      "id": "b88706e5-368e-425e-a478-fab14db05927"
+    },
+    {
+      "question": "Q1",
+      "responseType": "multiSelect",
+      "responseValues": {
+        "paletteName": null,
+        "options": [
+          {
+            "id": "f96456d7-f731-4a33-b5af-ca73236fb65b",
+            "text": "As much as I always could",
+            "image": null,
+            "score": 0,
+            "tooltip": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "value": 1
+          },
+          {
+            "id": "fcf084e8-e256-4ba5-9e4a-03fddc22e173",
+            "text": "Not quite so much now",
+            "image": null,
+            "score": 1,
+            "tooltip": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "value": 2
+          },
+          {
+            "id": "5467b47a-dc65-4a95-b1df-c183b45048fb",
+            "text": "Definitely not so much now",
+            "image": null,
+            "score": 2,
+            "tooltip": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "value": 3
+          },
+          {
+            "id": "b2cf2a68-56f8-4da3-b7df-d03ed8409993",
+            "text": "Not at all",
+            "image": null,
+            "score": 3,
+            "tooltip": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "value": 4
+          }
+        ]
+      },
+      "config": {
+        "removeBackButton": false,
+        "skippableItem": false,
+        "randomizeOptions": false,
+        "timer": 0,
+        "addScores": true,
+        "setAlerts": false,
+        "addTooltip": false,
+        "setPalette": false,
+        "addTokens": null,
+        "additionalResponseOption": {
+          "textInputOption": false,
+          "textInputRequired": false
+        }
+      },
+      "name": "Q1",
+      "isHidden": false,
+      "conditionalLogic": null,
+      "allowEdit": true,
+      "id": "5e90d62b-65b8-4567-b259-2214d74a50e0"
+    },
+    {
+      "question": "Q2",
+      "responseType": "multiSelect",
+      "responseValues": {
+        "paletteName": null,
+        "options": [
+          {
+            "id": "f96456d7-f731-4a33-b5af-ca73236fb65b",
+            "text": "As much as I always could",
+            "image": null,
+            "score": 0,
+            "tooltip": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "value": 1
+          },
+          {
+            "id": "fcf084e8-e256-4ba5-9e4a-03fddc22e173",
+            "text": "Not quite so much now",
+            "image": null,
+            "score": 1,
+            "tooltip": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "value": 2
+          },
+          {
+            "id": "5467b47a-dc65-4a95-b1df-c183b45048fb",
+            "text": "Definitely not so much now",
+            "image": null,
+            "score": 2,
+            "tooltip": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "value": 3
+          },
+          {
+            "id": "b2cf2a68-56f8-4da3-b7df-d03ed8409993",
+            "text": "Not at all",
+            "image": null,
+            "score": 3,
+            "tooltip": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "value": 4
+          }
+        ]
+      },
+      "config": {
+        "removeBackButton": false,
+        "skippableItem": false,
+        "randomizeOptions": false,
+        "timer": 0,
+        "addScores": true,
+        "setAlerts": false,
+        "addTooltip": false,
+        "setPalette": false,
+        "addTokens": null,
+        "additionalResponseOption": {
+          "textInputOption": false,
+          "textInputRequired": false
+        }
+      },
+      "name": "Q2",
+      "isHidden": false,
+      "conditionalLogic": null,
+      "allowEdit": true,
+      "id": "acc8d88b-f205-4baa-9a29-551a404a36dd"
+    }
+  ],
+  "createdAt": "2023-06-28T17:56:46.577449"
+}

@@ -42,3 +42,20 @@ The server public key will be in keys/public
 npm run start
 ```
 open http://localhost:3000
+
+## Docker instruction
+
+### Build the image first
+```
+docker build -t mindlogger-report-server:latest -f ./Dockerfile .
+```
+
+### Run the image
+This requires Generating keys and creating database in keys folder.
+```
+docker run -d \
+-v "./keys:/app/keys" \
+-p "3000:3000" \
+--name mindlogger-report-server \
+mindlogger-report-server:latest
+```

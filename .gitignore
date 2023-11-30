@@ -2,9 +2,11 @@
 node_modules
 outputs/
 keys/
+dist/
 
 *.log
 .idea/
+.vscode/
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
