@@ -1,6 +1,6 @@
 {
   "name": "mindlogger-pdf-server",
-  "version": "0.21.80",
+  "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
