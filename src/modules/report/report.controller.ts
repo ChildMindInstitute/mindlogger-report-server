@@ -8,7 +8,7 @@ import { v4 } from 'uuid'
 import { decryptData } from '../../encryption'
 import { ActivityResponse, SendPdfReportResponse } from '../../core/interfaces'
 import { getAppletKeys } from '../../db'
-import { convertMarkdownToHtml } from '../../core/helpers'
+import { convertMarkdownToHtml, logger } from '../../core/helpers'
 import { AppletEntity } from '../../models'
 import { getCurrentCount, convertHtmlToPdf, watermarkPDF, encryptPDF, getPDFPassword } from '../../pdf-utils'
 import { SendPdfReportRequest, SendPdfReportRequestPayload } from './types'
@@ -19,7 +19,7 @@ import { getSummary } from './services/getSummary'
 class ReportController {
   public async sendPdfReport(req: SendPdfReportRequest, res: Response): Promise<unknown> {
     const t0 = performance.now()
-    console.info('Generating PDF started')
+    logger.info('Generating PDF started')
 
     const { activityId, activityFlowId } = req.query
 
@@ -27,36 +27,28 @@ class ReportController {
 
     try {
       if (!req.body.payload) {
-        throw new Error('payload is required')
+        throw new Error('[ReportController:sendPdfReport] Payload is required')
       }
 
       if (!activityId) {
-        throw new Error('activityId is required')
+        throw new Error('[ReportController:sendPdfReport] ActivityId is required')
       }
 
-      console.info(`Payload length: ${req.body.payload.length}`)
-      const decryptPayloadT0 = performance.now()
+      logger.info(`Encrypted payload length: ${req.body.payload.length}`)
       const payload = decryptData<SendPdfReportRequestPayload>(req.body.payload)
-      const decryptPayloadT1 = performance.now()
-      console.info(`Payload decrypting took ${decryptPayloadT1 - decryptPayloadT0} milliseconds.`)
 
       const appletKeys = await getAppletKeys(payload.applet.id)
 
       if (!appletKeys || !appletKeys.privateKey) {
-        throw new Error('applet is not connected')
+        throw new Error('[ReportController:sendPdfReport] Applet is not connected')
       }
 
-      const decryptActivityResponsesT0 = performance.now()
       const responses: ActivityResponse[] = decryptActivityResponses({
         responses: payload.responses,
         appletPrivateKey: appletKeys.privateKey,
         appletEncryption: payload.applet.encryption,
         userPublicKey: payload.userPublicKey,
       })
-      const decryptActivityResponsesT1 = performance.now()
-      console.info(
-        `Activity responses descrypting took ${decryptActivityResponsesT1 - decryptActivityResponsesT0} milliseconds.`,
-      )
 
       const applet = new AppletEntity(payload.applet)
 
@@ -118,18 +110,17 @@ class ReportController {
 
       const t1 = performance.now()
 
-      console.info(`PDF generation took ${t1 - t0} milliseconds.`)
-      console.info(`PDF file string length: ${fs.readFileSync(filename, { encoding: 'base64' }).toString().length}`)
+      logger.info(`Total PDF generation took ${t1 - t0} milliseconds.`)
 
       res.status(200).json(<SendPdfReportResponse>{
         pdf: fs.readFileSync(filename, { encoding: 'base64' }).toString(),
         email: applet.getEmailConfigs(activityId, activityFlowId, responses, payload.user, payload.now),
       })
       fs.unlink(filename, () => {
-        console.info(`Deleted ${filename}`)
+        logger.info(`Deleted ${filename}`)
       })
     } catch (e) {
-      console.error('error', e)
+      logger.error('error', e)
 
       return res.status(400).json({ message: 'invalid request' })
     }

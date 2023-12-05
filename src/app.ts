@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import { serverController } from './modules/server/server.controller'
 import { reportController } from './modules/report/report.controller'
+import { logger } from './core/helpers'
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -25,5 +26,5 @@ app.post('/set-password', serverController.setPassword)
 app.post('/decrypt-user-responses', serverController.decryptUserResponses)
 
 app.listen(port, () => {
-  console.info(`MindLogger Report Server listening on port ${port}!`)
+  logger.info(`MindLogger Report Server listening on port ${port}!`)
 })

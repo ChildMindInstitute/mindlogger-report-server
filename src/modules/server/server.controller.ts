@@ -16,13 +16,11 @@ class ServerController {
 
     const isPublicKeyValid = verifyPublicKey(publicKey)
 
-    if (isPublicKeyValid) {
-      return res.status(200).json({
-        message: 'ok',
-      })
+    if (!isPublicKeyValid) {
+      return res.status(403).json({ message: 'invalid public key' })
     }
 
-    return res.status(403).json({ message: 'invalid public key' })
+    return res.status(200).json({ message: 'ok' })
   }
 
   public async setPassword(req: SetPasswordRequest, res: BaseResponse): Promise<BaseResponse> {
@@ -49,17 +47,12 @@ class ServerController {
       throw new Error('applet is not connected')
     }
 
-    const decryptActivityResponsesT0 = performance.now()
     const responses: ActivityResponse[] = decryptActivityResponses({
       responses: req.body.responses,
       appletPrivateKey: appletKeys.privateKey,
       appletEncryption: req.body.appletEncryption,
       userPublicKey: req.body.userPublicKey,
     })
-    const decryptActivityResponsesT1 = performance.now()
-    console.info(
-      `Activity responses descrypting took ${decryptActivityResponsesT1 - decryptActivityResponsesT0} milliseconds.`,
-    )
 
     return res.status(200).json({
       result: responses,

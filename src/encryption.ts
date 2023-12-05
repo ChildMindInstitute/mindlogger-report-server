@@ -2,6 +2,7 @@
 import 'dotenv/config'
 import crypto from 'crypto'
 import fs from 'fs'
+import { logger } from './core/helpers'
 
 const KEYS_FOLDER = process.env.KEYS_FOLDER || 'keys'
 
@@ -31,14 +32,24 @@ export const verifyPublicKey = (key: string): boolean => {
 }
 
 export const decryptData = <T>(response: string | string[]): T => {
+  const T0 = performance.now()
+
   const privateKey = getPrivateKey()
-  let data = ''
+  const dataArray = []
   if (Array.isArray(response)) {
     for (let i = 0; i < response.length; i++) {
-      data += crypto.privateDecrypt(privateKey, Buffer.from(response[i], 'base64'))
+      dataArray.push(crypto.privateDecrypt(privateKey, Buffer.from(response[i], 'base64')))
     }
   } else {
-    data = crypto.privateDecrypt(privateKey, Buffer.from(response, 'base64'))
+    dataArray.push(crypto.privateDecrypt(privateKey, Buffer.from(response, 'base64')))
   }
-  return JSON.parse(data)
+
+  const data = dataArray.join('')
+  const parsedJSON = JSON.parse(data)
+
+  const T1 = performance.now()
+
+  logger.info(`Decryption took ${T1 - T0} milliseconds.`)
+
+  return parsedJSON
 }
