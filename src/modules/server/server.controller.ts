@@ -1,6 +1,14 @@
-import { verifyPublicKey } from '../../encryption'
+import { decryptData, verifyPublicKey } from '../../encryption'
 import { BaseResponse } from '../../core/interfaces/responses'
-import { VerifyServerPublicKeyRequest } from './types'
+import {
+  DecryptUserResponsesRequest,
+  DecryptUserResponsesResponse,
+  SetPasswordRequest,
+  VerifyServerPublicKeyRequest,
+} from './types'
+import { ActivityResponse, SetPasswordRequestEncryptedPayload } from '../../core/interfaces'
+import { getAppletKeys, setAppletPassword } from '../../db'
+import { decryptActivityResponses } from '../report/helpers/decryptResponses'
 
 class ServerController {
   public async verifyServerPublicKey(req: VerifyServerPublicKeyRequest, res: BaseResponse): Promise<BaseResponse> {
@@ -15,6 +23,47 @@ class ServerController {
     }
 
     return res.status(403).json({ message: 'invalid public key' })
+  }
+
+  public async setPassword(req: SetPasswordRequest, res: BaseResponse): Promise<BaseResponse> {
+    const { password, appletId } = req.body
+
+    try {
+      const pdfPassword = decryptData<SetPasswordRequestEncryptedPayload>(password)
+      await setAppletPassword(appletId, pdfPassword.password, pdfPassword.privateKey)
+
+      return res.status(200).json({ message: 'success' })
+    } catch (e) {
+      console.error('error', e)
+      return res.status(403).json({ message: 'invalid password' })
+    }
+  }
+
+  public async decryptUserResponses(
+    req: DecryptUserResponsesRequest,
+    res: DecryptUserResponsesResponse,
+  ): Promise<DecryptUserResponsesResponse> {
+    const appletKeys = await getAppletKeys(req.body.appletId)
+
+    if (!appletKeys || !appletKeys.privateKey) {
+      throw new Error('applet is not connected')
+    }
+
+    const decryptActivityResponsesT0 = performance.now()
+    const responses: ActivityResponse[] = decryptActivityResponses({
+      responses: req.body.responses,
+      appletPrivateKey: appletKeys.privateKey,
+      appletEncryption: req.body.appletEncryption,
+      userPublicKey: req.body.userPublicKey,
+    })
+    const decryptActivityResponsesT1 = performance.now()
+    console.info(
+      `Activity responses descrypting took ${decryptActivityResponsesT1 - decryptActivityResponsesT0} milliseconds.`,
+    )
+
+    return res.status(200).json({
+      result: responses,
+    })
   }
 }
 
