@@ -18,7 +18,8 @@ type SetPasswordRequestPayload = {
 export type DecryptUserResponsesRequest = Request<any, any, DecryptUserResponsesRequestPayload, any, any>
 
 export type DecryptUserResponsesResponse = Response<{
-  result: ActivityResponse[]
+  message: string
+  result?: ActivityResponse[]
 }>
 
 type DecryptUserResponsesRequestPayload = {

@@ -44,7 +44,7 @@ class ServerController {
     const appletKeys = await getAppletKeys(req.body.appletId)
 
     if (!appletKeys || !appletKeys.privateKey) {
-      throw new Error('applet is not connected')
+      return res.status(400).json({ message: 'Applet is not connected. AppletId not found.' })
     }
 
     const responses: ActivityResponse[] = decryptActivityResponses({
@@ -55,6 +55,7 @@ class ServerController {
     })
 
     return res.status(200).json({
+      message: 'ok',
       result: responses,
     })
   }

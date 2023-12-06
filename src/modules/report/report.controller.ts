@@ -27,11 +27,13 @@ class ReportController {
 
     try {
       if (!req.body.payload) {
-        throw new Error('[ReportController:sendPdfReport] Payload is required')
+        logger.error('[ReportController:sendPdfReport] Payload is required')
+        return res.status(400).json({ message: 'Payload is required.' })
       }
 
       if (!activityId) {
-        throw new Error('[ReportController:sendPdfReport] ActivityId is required')
+        logger.error('[ReportController:sendPdfReport] ActivityId is required')
+        return res.status(400).json({ message: 'ActivityId is required.' })
       }
 
       logger.info(`Encrypted payload length: ${req.body.payload.length}`)
@@ -40,7 +42,8 @@ class ReportController {
       const appletKeys = await getAppletKeys(payload.applet.id)
 
       if (!appletKeys || !appletKeys.privateKey) {
-        throw new Error('[ReportController:sendPdfReport] Applet is not connected')
+        logger.error('[ReportController:sendPdfReport] Applet is not connected')
+        return res.status(400).json({ message: 'Applet is not connected. AppletId not found.' })
       }
 
       const responses: ActivityResponse[] = decryptActivityResponses({
@@ -55,7 +58,8 @@ class ReportController {
       const pdfPassword = await getPDFPassword(applet.id)
 
       if (!pdfPassword) {
-        throw new Error('[ReportController:sendPdfReport] Invalid pdf password')
+        logger.error('[ReportController:sendPdfReport] Invalid pdf password')
+        return res.status(400).json({ message: 'Invalid pdf password.' })
       }
 
       let html = ''
