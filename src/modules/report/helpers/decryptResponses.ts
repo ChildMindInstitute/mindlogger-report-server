@@ -1,3 +1,4 @@
+import { logger } from '../../../core/helpers'
 import { ActivityResponse, IAppletEncryption } from '../../../core/interfaces'
 import { decryptResponses } from '../../../encryption-dh'
 import { Response } from '../types'
@@ -10,7 +11,9 @@ type Params = {
 }
 
 export function decryptActivityResponses(params: Params): ActivityResponse[] {
-  return params.responses.map((response) => {
+  const T0 = performance.now()
+
+  const result = params.responses.map((response) => {
     const decryptedReponses = decryptResponses(
       response.answer,
       params.appletPrivateKey,
@@ -23,4 +26,9 @@ export function decryptActivityResponses(params: Params): ActivityResponse[] {
       data: decryptedReponses,
     }
   })
+
+  const T1 = performance.now()
+  logger.info(`Activity responses decrypting took ${T1 - T0} milliseconds.`)
+
+  return result
 }
