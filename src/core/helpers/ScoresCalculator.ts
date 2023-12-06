@@ -39,21 +39,26 @@ export class ScoresCalculator {
     }
   }
 
-  public static collectScoreForMultiSelect(item: ItemEntity, checkboxAnswers: number[]): number | null {
+  public static collectScoreForMultiSelect(item: ItemEntity, checkboxAnswers: number[] | number): number | null {
     if (checkboxAnswers == null) {
       return null
     }
 
-    const scores: number[] = item.options
-      .map<number | null>((option) => {
-        const foundAnswer = checkboxAnswers?.find((checkboxAnswer) => {
-          return checkboxAnswer === option.value
-        })
+    let scores: number[]
+    if(Array.isArray(checkboxAnswers)) {
+      scores = item.options
+          .map<number | null>((option) => {
+            const foundAnswer = checkboxAnswers?.find((checkboxAnswer) => {
+              return checkboxAnswer === option.value
+            })
 
-        return foundAnswer ? option.score : null
-      })
-      .filter((x) => x != null)
-      .map((x) => x!)
+            return foundAnswer ? option.score : null
+          })
+          .filter((x) => x != null)
+          .map((x) => x!)
+    } else {
+      scores = [checkboxAnswers]
+    }
 
     return Calculator.sum(scores)
   }
