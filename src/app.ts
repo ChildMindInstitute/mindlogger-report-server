@@ -23,8 +23,6 @@ app.put('/verify', serverController.verifyServerPublicKey)
 
 app.post('/set-password', serverController.setPassword)
 
-app.post('/decrypt-user-responses', serverController.decryptUserResponses)
-
 app.listen(port, () => {
   logger.info(`MindLogger Report Server listening on port ${port}!`)
 })
