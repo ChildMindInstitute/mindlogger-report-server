@@ -45,17 +45,16 @@ export class ScoresCalculator {
     }
 
     let scores: number[]
-    if(Array.isArray(checkboxAnswers)) {
+    if (Array.isArray(checkboxAnswers)) {
       scores = item.options
-          .map<number | null>((option) => {
-            const foundAnswer = checkboxAnswers?.find((checkboxAnswer) => {
-              return checkboxAnswer === option.value
-            })
-
-            return foundAnswer ? option.score : null
+        .map<number | null>((option) => {
+          const foundAnswer = checkboxAnswers?.find((checkboxAnswer) => {
+            return checkboxAnswer === option.value
           })
-          .filter((x) => x != null)
-          .map((x) => x!)
+
+          return foundAnswer !== undefined ? option.score : null
+        })
+        .filter((x) => x !== null) as number[]
     } else {
       scores = [checkboxAnswers]
     }
