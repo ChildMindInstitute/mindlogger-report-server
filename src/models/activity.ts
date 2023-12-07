@@ -56,7 +56,7 @@ export class ActivityEntity {
       const response = answers[i]
       const item = this.items[i]
 
-      scores[item.name] = item.getScore(response)
+      scores[item.name] = item.getScore(response) // here bug in calculating score
       maxScores[item.name] = item.getMaxScore()
     }
 
