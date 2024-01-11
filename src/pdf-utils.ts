@@ -5,6 +5,7 @@ import fs from 'fs'
 import fetch from 'node-fetch'
 import os from 'os'
 import { createDirectoryIfNotExists, getRandomFileName } from './core/helpers'
+import { getAppletKeys } from './db'
 
 export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<void> => {
   const browser = await puppeteer.launch({
@@ -97,4 +98,13 @@ export async function getCurrentCount(html: string): Promise<number> {
   const tmpFile = `${os.tmpdir()}/${getRandomFileName()}.pdf`
   await convertHtmlToPdf(`<div class="container">${html}</div>`, tmpFile)
   return await countPages(tmpFile)
+}
+
+export async function getPDFPassword(appletId: string): Promise<string | null> {
+  if (!appletId) {
+    throw new Error('[getPDFPassword]: appletId is required')
+  }
+
+  const row = await getAppletKeys(appletId)
+  return row ? row.key : null
 }

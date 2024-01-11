@@ -1,11 +1,12 @@
 {
   "name": "mindlogger-pdf-server",
-  "version": "0.21.80",
+  "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
     "start": "tsc && node ./dist/src/app.js",
+    "dev": "nodemon",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\""
