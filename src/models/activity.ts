@@ -51,19 +51,16 @@ export class ActivityEntity {
   }
 
   evaluateScores(responses: ResponseItem[]): KVObject {
-    // const answers = responses.filter((x) => x !== null)
     const answers = responses
 
     const scores: KVObject = {}
     const maxScores: KVObject = {}
 
-    // const visibleItems = this.getVisibleItems()
     for (let i = 0; i < answers.length; i++) {
       const response = answers[i]
       if (response === null) {
         continue;
       }
-      // const item = visibleItems[i]
       const item = this.items[i]
       
       scores[item.name] = item.getScore(response)
