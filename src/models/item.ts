@@ -40,7 +40,7 @@ export class ItemEntity {
   }
 
   getScore(value: ResponseItem): number {
-    if (value === null || !this.scoring) {
+    if (!value || !this.scoring) {
       return 0
     }
 

@@ -46,7 +46,7 @@ export class ActivityEntity {
     this.reports = data.scoresAndReports?.reports || []
   }
 
-  getVisibleItems() : ItemEntity[] {
+  getVisibleItems(): ItemEntity[] {
     return this.items.filter((item) => !item.json.isHidden)
   }
 
@@ -58,11 +58,8 @@ export class ActivityEntity {
 
     for (let i = 0; i < answers.length; i++) {
       const response = answers[i]
-      if (response === null) {
-        continue;
-      }
       const item = this.items[i]
-      
+
       scores[item.name] = item.getScore(response)
       maxScores[item.name] = item.getMaxScore()
     }
