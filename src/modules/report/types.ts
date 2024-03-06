@@ -3,8 +3,10 @@ import { Applet, User } from '../../core/interfaces'
 
 export type SendPdfReportRequest = Request<any, any, SendPdfReportBody, SendPdfReportQuery, any>
 
+export type Response = { activityId: string; answer: string }
+
 export type SendPdfReportRequestPayload = {
-  responses: Array<{ activityId: string; answer: string }>
+  responses: Array<Response>
   userPublicKey: string
   now: string
   user: User

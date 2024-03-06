@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { ItemEntity } from './item'
 import {
   IActivity,
@@ -11,10 +10,10 @@ import {
   KVObject,
   ScoreForSummary,
 } from '../core/interfaces'
-import { Calculator, convertMarkdownToHtml, isFloat, toFixed } from '../core/helpers'
+import { Calculator, convertMarkdownToHtml, getScoresSummary, isFloat, toFixed } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer/'
-import { checkAllRules, checkAnyRules, checkConditionByPattern } from '../modules/report/helpers/conditionalLogic'
 import { ScoresCalculator } from '../core/helpers/ScoresCalculator'
+import { ConditionalLogicService } from '../modules/report/helpers/conditionalLogic'
 
 export class ActivityEntity {
   public json: IActivity
@@ -47,26 +46,23 @@ export class ActivityEntity {
     this.reports = data.scoresAndReports?.reports || []
   }
 
-  private getScoresSumForReport(scores: KVObject, allowedNamesToCalculateScore: string[]): number {
-    const allowedScores: KVObject = {}
-    for (const name in scores) {
-      if (allowedNamesToCalculateScore.includes(name)) {
-        allowedScores[name] = scores[name]
-      }
-    }
-    return _.sum(_.values(allowedScores))
+  getVisibleItems() : ItemEntity[] {
+    return this.items.filter((item) => !item.json.isHidden)
   }
 
   evaluateScores(responses: ResponseItem[]): KVObject {
-    const answers = responses.filter((x) => x !== null)
+    const answers = responses
 
     const scores: KVObject = {}
     const maxScores: KVObject = {}
 
     for (let i = 0; i < answers.length; i++) {
       const response = answers[i]
+      if (response === null) {
+        continue;
+      }
       const item = this.items[i]
-
+      
       scores[item.name] = item.getScore(response)
       maxScores[item.name] = item.getMaxScore()
     }
@@ -74,8 +70,8 @@ export class ActivityEntity {
     // calculate scores first
     for (const report of this.reports) {
       if (report.type === 'score') {
-        const reportScore = this.getScoresSumForReport(scores, report.itemsScore)
-        const reportMaxScore = this.getScoresSumForReport(maxScores, report.itemsScore)
+        const reportScore = getScoresSummary(scores, report.itemsScore)
+        const reportMaxScore = getScoresSummary(maxScores, report.itemsScore)
 
         maxScores[report.id] = reportMaxScore
 
@@ -309,7 +305,7 @@ export class ActivityEntity {
       if (key in scores) {
         const score = isFloat(scores[key]) ? parseFloat(scores[key]) : scores[key]
 
-        const checkResult = checkConditionByPattern({
+        const checkResult = ConditionalLogicService.checkConditionByPattern({
           type: condition.type,
           payload: condition.payload,
           scoreOrValue: score,
@@ -323,9 +319,9 @@ export class ActivityEntity {
 
     switch (match) {
       case 'all':
-        return checkAllRules({ results })
+        return ConditionalLogicService.checkAllRules(results)
       case 'any':
-        return checkAnyRules({ results })
+        return ConditionalLogicService.checkAnyRules(results)
       default:
         return false
     }

@@ -9,9 +9,9 @@ type Params = {
   items: ItemEntity[]
 }
 
-export function replaceVariablesInMarkdown({ user, markdown, items, scores }: Params): string | null {
+export function replaceVariablesInMarkdown({ user, markdown, items, scores }: Params): string {
   if (!markdown) {
-    return null
+    return ""
   }
 
   const nickname = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim()
