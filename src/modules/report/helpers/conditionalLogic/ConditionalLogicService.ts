@@ -16,7 +16,7 @@ export class ConditionalLogicService {
   static checkConditionByPattern({ type, payload, scoreOrValue }: CheckConditionParams): boolean {
     switch (type) {
       case 'BETWEEN':
-        return payload.minValue <= scoreOrValue && payload.maxValue >= scoreOrValue
+        return payload.minValue < scoreOrValue && payload.maxValue > scoreOrValue
 
       case 'OUTSIDE_OF':
         return payload.minValue > scoreOrValue || payload.maxValue < scoreOrValue
