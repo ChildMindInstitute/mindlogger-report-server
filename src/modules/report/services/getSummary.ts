@@ -1,4 +1,5 @@
 import { ICON_URL } from '../../../core/constants'
+import { isNotEmpty } from '../../../core/helpers'
 import { ActivityResponse, ScoreForSummary } from '../../../core/interfaces'
 import { ActivityEntity } from '../../../models'
 
@@ -28,7 +29,10 @@ export function getSummary(params: Params): string {
 
     alerts = alerts.concat(activity.getAlertsForSummary(response.data))
 
-    const scores = activity.getScoresForSummary(response.data)
+    const scores = activity
+      .getScoresForSummary(response.data)
+      .filter((score) => isNotEmpty(score.value) && score.prefLabel)
+
     if (scores.length) {
       scoresHTML += buildScoreSummaryHTML(scores, activity.name)
     }
