@@ -1,4 +1,4 @@
-import { isString } from 'lodash'
+import { isString } from '../isString'
 
 export function isFloat(inputString: any): boolean {
   if (Array.isArray(inputString)) {

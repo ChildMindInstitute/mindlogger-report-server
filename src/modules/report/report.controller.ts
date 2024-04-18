@@ -8,7 +8,8 @@ import { v4 } from 'uuid'
 import { decryptData } from '../../encryption'
 import { ActivityResponse, SendPdfReportResponse } from '../../core/interfaces'
 import { getAppletKeys } from '../../db'
-import { convertMarkdownToHtml, logger } from '../../core/helpers'
+import { convertMarkdownToHtml } from '../../core/helpers'
+import { logger } from '../../core/services/LoggerService'
 import { AppletEntity } from '../../models'
 import { getCurrentCount, convertHtmlToPdf, watermarkPDF, encryptPDF, getPDFPassword } from '../../pdf-utils'
 import { SendPdfReportRequest, SendPdfReportRequestPayload } from './types'
@@ -83,23 +84,23 @@ class ReportController {
       for (const response of responses) {
         const activity = applet.activities.find((activity) => activity.id === response.activityId)
 
-        if (activity) {
-          const markdown = activity.evaluateReports(response.data, payload.user)
-          splashPage = getSplashImageHTML(pageBreak, activity.splashImage)
-
-          html += splashPage + '\n'
-          html += convertMarkdownToHtml(markdown, splashPage === '' && skipPages.length === 0) + '\n'
-
-          const count = await getCurrentCount(html)
-          if (splashPage != '') {
-            skipPages.push(pageCount + 1)
-          }
-
-          pageCount = count
-          pageBreak = true
-        } else {
-          throw new Error(`unable to find ${response.activityId}`)
+        if (!activity) {
+          throw new Error(`[Report.controller] Unable to find ${response.activityId}`)
         }
+
+        const markdown = activity.evaluateReports(response.data, payload.user)
+        splashPage = getSplashImageHTML(pageBreak, activity.splashImage)
+
+        html += splashPage + '\n'
+        html += convertMarkdownToHtml(markdown, splashPage === '' && skipPages.length === 0) + '\n'
+
+        const count = await getCurrentCount(html)
+        if (splashPage !== '') {
+          skipPages.push(pageCount + 1)
+        }
+
+        pageCount = count
+        pageBreak = true
       }
 
       html += getReportFooter() + '\n'

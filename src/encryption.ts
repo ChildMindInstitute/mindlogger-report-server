@@ -1,8 +1,7 @@
-// @ts-nocheck
 import 'dotenv/config'
 import crypto from 'crypto'
 import fs from 'fs'
-import { logger } from './core/helpers'
+import { logger } from './core/services/LoggerService'
 
 const KEYS_FOLDER = process.env.KEYS_FOLDER || 'keys'
 
@@ -23,7 +22,8 @@ export const verifyPublicKey = (key: string): boolean => {
   try {
     const publicKey = crypto.createPublicKey({ key, format: 'pem', type: 'pkcs1', encoding: 'utf-8' })
     const privateKey = getPrivateKey()
-    const plain = crypto.privateDecrypt(privateKey, crypto.publicEncrypt(publicKey, 'pdf')).toString()
+
+    const plain = crypto.privateDecrypt(privateKey, crypto.publicEncrypt(publicKey, Buffer.from('pdf'))).toString()
 
     return plain == 'pdf'
   } catch (e) {}
