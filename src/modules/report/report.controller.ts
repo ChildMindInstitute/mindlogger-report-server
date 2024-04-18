@@ -84,23 +84,23 @@ class ReportController {
       for (const response of responses) {
         const activity = applet.activities.find((activity) => activity.id === response.activityId)
 
-        if (activity) {
-          const markdown = activity.evaluateReports(response.data, payload.user)
-          splashPage = getSplashImageHTML(pageBreak, activity.splashImage)
-
-          html += splashPage + '\n'
-          html += convertMarkdownToHtml(markdown, splashPage === '' && skipPages.length === 0) + '\n'
-
-          const count = await getCurrentCount(html)
-          if (splashPage != '') {
-            skipPages.push(pageCount + 1)
-          }
-
-          pageCount = count
-          pageBreak = true
-        } else {
-          throw new Error(`unable to find ${response.activityId}`)
+        if (!activity) {
+          throw new Error(`[Report.controller] Unable to find ${response.activityId}`)
         }
+
+        const markdown = activity.evaluateReports(response.data, payload.user)
+        splashPage = getSplashImageHTML(pageBreak, activity.splashImage)
+
+        html += splashPage + '\n'
+        html += convertMarkdownToHtml(markdown, splashPage === '' && skipPages.length === 0) + '\n'
+
+        const count = await getCurrentCount(html)
+        if (splashPage !== '') {
+          skipPages.push(pageCount + 1)
+        }
+
+        pageCount = count
+        pageBreak = true
       }
 
       html += getReportFooter() + '\n'
