@@ -39,9 +39,7 @@ export function getSummary(params: Params): string {
   }
 
   alerts = alerts.filter((alert) => alert && alert != '0')
-  if (!alerts.length && !scoresHTML) {
-    return ''
-  }
+  if (!alerts.length && !scoresHTML) return ''
 
   if (alerts.length) {
     alertsHTML = '<div class="alerts-title">Alerts</div>'

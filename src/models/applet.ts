@@ -147,6 +147,7 @@ export class AppletEntity {
     }
 
     pdfName += `_${moment.utc(this.timestamp).format('YYYY-MM-DD-HHmmss')}`
+
     return `${pdfName}.pdf`
   }
 
