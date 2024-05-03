@@ -3,7 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import { serverController } from './modules/server/server.controller'
 import { reportController } from './modules/report/report.controller'
-import { logger } from './core/helpers'
+import { logger } from './core/services/LoggerService'
 
 const app = express()
 const port = process.env.PORT || 3000

@@ -1,4 +1,4 @@
-import { logger } from '../../../core/helpers'
+import { logger } from '../../../core/services/LoggerService'
 import { ActivityResponse, IAppletEncryption } from '../../../core/interfaces'
 import { decryptResponses } from '../../../encryption-dh'
 import { Response } from '../types'

@@ -199,7 +199,7 @@ export type ResponseItem = {
   text?: string
 }
 
-export interface KVObject {
+export type Map = {
   [key: string]: any
 }
 
