@@ -1,15 +1,15 @@
 import { format, intervalToDuration, isSameDay, addDays } from 'date-fns'
 import { ItemEntity } from '../../../models'
-import { KVObject } from '../../interfaces'
+import { Map } from '../../interfaces'
 
 export class MarkdownVariableReplacer {
   private readonly activityItems: ItemEntity[]
-  private readonly answers: KVObject
+  private readonly answers: Map
   private readonly nickName: string
   private readonly lastResponseTime: Date | number | null
   private readonly now: number
 
-  constructor(activityItems: ItemEntity[], answers: KVObject, lastResponseTime: Date | number | null, nickName = '') {
+  constructor(activityItems: ItemEntity[], answers: Map, lastResponseTime: Date | number | null, nickName = '') {
     this.activityItems = activityItems
     this.answers = answers
     this.nickName = nickName

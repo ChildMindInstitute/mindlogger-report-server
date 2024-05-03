@@ -1,11 +1,11 @@
 import { ItemEntity } from '../../../models'
-import { KVObject, User } from '../../interfaces'
+import { Map, User } from '../../interfaces'
 import { MarkdownVariableReplacer } from './MarkdownVariableReplacer'
 
 type Params = {
   markdown: string | null
   user: User
-  scores: KVObject
+  scores: Map
   items: ItemEntity[]
 }
 

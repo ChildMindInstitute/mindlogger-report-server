@@ -24,15 +24,19 @@ const initDB = () => {
     db = new sqlite.Database(PASSWORD_FILE)
 
     db.serialize(() => {
-      db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='pdf_keys';`, [], (err, row) => {
-        if (row?.name) {
-          resolve()
-        } else {
-          runQuery(db, `CREATE TABLE pdf_keys ( appletId VARCHAR(255), key VARCHAR(255), privateKey VARCHAR(255) )`) // Todo: probably need to drop key column
-            .then(() => runQuery(db, `CREATE INDEX APPLET_ID_INDEX ON pdf_keys (appletId)`))
-            .then(() => resolve())
-        }
-      })
+      db.get(
+        `SELECT name FROM sqlite_master WHERE type='table' AND name='pdf_keys';`,
+        [],
+        (err, row: { name?: string }) => {
+          if (row?.name) {
+            resolve()
+          } else {
+            runQuery(db, `CREATE TABLE pdf_keys ( appletId VARCHAR(255), key VARCHAR(255), privateKey VARCHAR(255) )`) // Todo: probably need to drop key column
+              .then(() => runQuery(db, `CREATE INDEX APPLET_ID_INDEX ON pdf_keys (appletId)`))
+              .then(() => resolve())
+          }
+        },
+      )
     })
   })
 }
@@ -64,7 +68,7 @@ export const getAppletKeys = (appletId: string): Promise<PdfKey | null> => {
 
   return preprocess.then(() => {
     return new Promise((resolve) => {
-      db.get(`SELECT * from pdf_keys where appletId=?`, [appletId], (err, row) => {
+      db.get(`SELECT * from pdf_keys where appletId=?`, [appletId], (err, row: PdfKey) => {
         if (err) {
           resolve(null)
         }

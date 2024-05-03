@@ -1,7 +1,7 @@
-import { KVObject } from '../interfaces'
+import { Map } from '../interfaces'
 import { Calculator } from './calculator'
 
-export function getScoresSummary(scores: KVObject, allowedScoreNames: string[]): number {
+export function getScoresSummary(scores: Map, allowedScoreNames: string[]): number {
   const allowedScores: number[] = []
   for (const name in scores) {
     if (allowedScoreNames.includes(name)) {

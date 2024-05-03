@@ -7,7 +7,7 @@ import {
   IActivityScoresAndReportsSections,
   ResponseItem,
   User,
-  KVObject,
+  Map,
   ScoreForSummary,
 } from '../core/interfaces'
 import { Calculator, convertMarkdownToHtml, getScoresSummary, isFloat, toFixed } from '../core/helpers'
@@ -50,11 +50,11 @@ export class ActivityEntity {
     return this.items.filter((item) => !item.json.isHidden)
   }
 
-  evaluateScores(responses: ResponseItem[]): KVObject {
+  evaluateScores(responses: ResponseItem[]): Map {
     const answers = responses
 
-    const scores: KVObject = {}
-    const maxScores: KVObject = {}
+    const scores: Map = {}
+    const maxScores: Map = {}
 
     for (let i = 0; i < answers.length; i++) {
       const response = answers[i]
@@ -94,7 +94,11 @@ export class ActivityEntity {
         }
 
         for (const conditional of report.conditionalLogic) {
-          scores[conditional.id] = this.testVisibility(conditional, scores)
+          const isReportVisible = this.testVisibility(conditional, scores)
+
+          if (!isReportVisible) {
+            delete scores[conditional.id]
+          }
         }
       }
     }
@@ -102,7 +106,7 @@ export class ActivityEntity {
     return scores
   }
 
-  scoresToValues(scores: KVObject, responses: ResponseItem[]): KVObject[] {
+  scoresToValues(scores: Map, responses: ResponseItem[]): Map[] {
     const values = { ...scores }
     const rawValues = { ...scores }
     for (let i = 0; i < responses.length; i++) {
@@ -137,8 +141,8 @@ export class ActivityEntity {
     markdown: string,
     report: IActivityScoresAndReportsSections,
     responses: ResponseItem[],
-    rawValues: KVObject,
-    values: KVObject,
+    rawValues: Map,
+    values: Map,
     user: User,
   ): string {
     const isVis = this.testVisibility(report.conditionalLogic, rawValues)
@@ -177,9 +181,9 @@ export class ActivityEntity {
     markdown: string,
     report: IActivityScoresAndReportsScores,
     responses: ResponseItem[],
-    values: KVObject,
+    values: Map,
     user: User,
-    scores: KVObject,
+    scores: Map,
   ): string {
     const reportMessage = replaceVariablesInMarkdown({
       markdown: report.message,
@@ -250,23 +254,27 @@ export class ActivityEntity {
 
     const result = []
     for (const report of this.reports) {
-      if (report.type === 'score') {
-        let flagScore = false
+      const isScore = report.type === 'score'
 
-        for (const conditional of report.conditionalLogic) {
-          const isVis = this.testVisibility(conditional, scores)
-          if (isVis && conditional.flagScore) {
-            flagScore = true
-            break
-          }
-        }
-
-        result.push({
-          prefLabel: report.name,
-          value: scores[report.id],
-          flagScore,
-        })
+      if (!isScore) {
+        continue
       }
+
+      let flagScore = false
+
+      for (const conditional of report.conditionalLogic) {
+        const isVis = this.testVisibility(conditional, scores)
+        if (isVis && conditional.flagScore) {
+          flagScore = true
+          break
+        }
+      }
+
+      result.push({
+        prefLabel: report.name,
+        value: scores[report.id],
+        flagScore,
+      })
     }
 
     return result
@@ -289,7 +297,7 @@ export class ActivityEntity {
     return markdown
   }
 
-  testVisibility(conditional: IActivityScoresAndReportsConditionalLogic | null, scores: KVObject): boolean {
+  testVisibility(conditional: IActivityScoresAndReportsConditionalLogic | null, scores: Map): boolean {
     if (!conditional) {
       return true
     }
