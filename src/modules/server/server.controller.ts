@@ -1,8 +1,14 @@
 import { decryptData, verifyPublicKey } from '../../encryption'
 import { BaseResponse } from '../../core/interfaces/responses'
-import { SetPasswordRequest, VerifyServerPublicKeyRequest } from './types'
-import { SetPasswordRequestEncryptedPayload } from '../../core/interfaces'
-import { setAppletPassword } from '../../db'
+import {
+  DecryptUserResponsesRequest,
+  DecryptUserResponsesResponse,
+  SetPasswordRequest,
+  VerifyServerPublicKeyRequest,
+} from './types'
+import { ActivityResponse, SetPasswordRequestEncryptedPayload } from '../../core/interfaces'
+import { getAppletKeys, setAppletPassword } from '../../db'
+import { decryptActivityResponses } from '../report/helpers/decryptResponses'
 
 class ServerController {
   public async verifyServerPublicKey(req: VerifyServerPublicKeyRequest, res: BaseResponse): Promise<BaseResponse> {
@@ -29,6 +35,29 @@ class ServerController {
       console.error('error', e)
       return res.status(403).json({ message: 'invalid password' })
     }
+  }
+
+  public async decryptUserResponses(
+    req: DecryptUserResponsesRequest,
+    res: DecryptUserResponsesResponse,
+  ): Promise<DecryptUserResponsesResponse> {
+    const appletKeys = await getAppletKeys(req.body.appletId)
+
+    if (!appletKeys || !appletKeys.privateKey) {
+      return res.status(400).json({ message: 'Applet is not connected. AppletId not found.' })
+    }
+
+    const responses: ActivityResponse[] = decryptActivityResponses({
+      responses: req.body.responses,
+      appletPrivateKey: appletKeys.privateKey,
+      appletEncryption: req.body.appletEncryption,
+      userPublicKey: req.body.userPublicKey,
+    })
+
+    return res.status(200).json({
+      message: 'ok',
+      result: responses,
+    })
   }
 }
 
