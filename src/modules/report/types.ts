@@ -8,6 +8,7 @@ export type Response = { activityId: string; answer: string }
 export type SendPdfReportRequestPayload = {
   responses: Array<Response>
   userPublicKey: string
+  userPublicKeys: string[]
   now: string
   user: User
   applet: Applet

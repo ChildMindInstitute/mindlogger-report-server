@@ -8,17 +8,21 @@ type Params = {
   appletPrivateKey: string
   appletEncryption: IAppletEncryption
   userPublicKey: string
+  userPublicKeys: string[]
 }
 
 export function decryptActivityResponses(params: Params): ActivityResponse[] {
   const T0 = performance.now()
 
-  const result = params.responses.map((response) => {
+  const userPublicKeys =
+    params.userPublicKeys || ([] as string[]).fill(params.userPublicKey, 0, params.responses.length)
+
+  const result = params.responses.map((response, index) => {
     const decryptedReponses = decryptResponses(
       response.answer,
       params.appletPrivateKey,
       params.appletEncryption,
-      params.userPublicKey,
+      userPublicKeys[index],
     )
 
     return {

@@ -13,7 +13,10 @@ export function decryptResponses(
     JSON.parse(encryption.prime) as number[],
     JSON.parse(encryption.base) as number[],
   )
-  return JSON.parse(decryptData(responses, AESKey)) as ResponseItem[]
+
+  const decryptedData: string = decryptData(responses, AESKey)
+
+  return JSON.parse(decryptedData) as ResponseItem[]
 }
 
 function decryptData(text: string, key: Buffer): string {

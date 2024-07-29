@@ -26,5 +26,6 @@ type DecryptUserResponsesRequestPayload = {
   responses: Array<EncryptedActivityResponse>
   appletEncryption: IAppletEncryption
   userPublicKey: string
+  userPublicKeys: string[]
   appletId: string
 }
