@@ -25,7 +25,5 @@ export type DecryptUserResponsesResponse = Response<{
 type DecryptUserResponsesRequestPayload = {
   responses: Array<EncryptedActivityResponse>
   appletEncryption: IAppletEncryption
-  userPublicKey: string
-  userPublicKeys: string[]
   appletId: string
 }
