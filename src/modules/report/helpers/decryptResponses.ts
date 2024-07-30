@@ -7,7 +7,6 @@ type Params = {
   responses: Array<Response>
   appletPrivateKey: string
   appletEncryption: IAppletEncryption
-  userPublicKey: string
 }
 
 export function decryptActivityResponses(params: Params): ActivityResponse[] {
@@ -18,7 +17,7 @@ export function decryptActivityResponses(params: Params): ActivityResponse[] {
       response.answer,
       params.appletPrivateKey,
       params.appletEncryption,
-      params.userPublicKey,
+      response.userPublicKey,
     )
 
     return {

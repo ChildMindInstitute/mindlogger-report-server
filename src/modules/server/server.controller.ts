@@ -51,7 +51,6 @@ class ServerController {
       responses: req.body.responses,
       appletPrivateKey: appletKeys.privateKey,
       appletEncryption: req.body.appletEncryption,
-      userPublicKey: req.body.userPublicKey,
     })
 
     return res.status(200).json({
