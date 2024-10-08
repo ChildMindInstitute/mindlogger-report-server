@@ -66,7 +66,12 @@ class ReportController {
       let pageBreak = false
       let splashPage = undefined
 
-      html += getSummary({ responses, activities: applet.activities })
+      html += getSummary({
+        responses,
+        activities: applet.activities,
+        scoringType: payload.scoringType,
+        subscaleTableData: payload.subscaleTableData,
+      })
 
       const appletId = payload.applet.id
       const pdfName = applet.getPDFFileName(activityId, activityFlowId, responses, payload.user)
@@ -87,7 +92,12 @@ class ReportController {
           throw new Error(`[Report.controller] Unable to find ${response.activityId}`)
         }
 
-        const markdown = activity.evaluateReports(response.data, payload.user)
+        const markdown = activity.evaluateReports(
+          response.data,
+          payload.user,
+          payload.scoringType,
+          payload.subscaleTableData,
+        )
         splashPage = getSplashImageHTML(pageBreak, activity.splashImage)
 
         html += splashPage + '\n'
@@ -118,7 +128,15 @@ class ReportController {
 
       res.status(200).json(<SendPdfReportResponse>{
         pdf: fs.readFileSync(filename, { encoding: 'base64' }).toString(),
-        email: applet.getEmailConfigs(activityId, activityFlowId, responses, payload.user, payload.now),
+        email: applet.getEmailConfigs(
+          activityId,
+          activityFlowId,
+          responses,
+          payload.user,
+          payload.now,
+          payload.scoringType,
+          payload.subscaleTableData,
+        ),
       })
       fs.unlink(filename, () => {
         logger.info(`Deleted ${filename}`)

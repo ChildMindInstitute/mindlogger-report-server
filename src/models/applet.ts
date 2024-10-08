@@ -70,6 +70,8 @@ export class AppletEntity {
     responses: ActivityResponse[],
     user: User,
     now: string,
+    scoringType: string,
+    subscaleTableData: Record<string, string>[] | null,
   ): Email {
     let emailBody = this.reportConfigs.emailBody
 
@@ -79,7 +81,7 @@ export class AppletEntity {
         throw new Error(`Can't find activity ${response.activityId}`)
       }
 
-      const scores = activity.evaluateScores(response.data)
+      const scores = activity.evaluateScores(response.data, scoringType, subscaleTableData)
 
       const [values, rawValues] = activity.scoresToValues(scores, response.data)
 

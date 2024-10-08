@@ -14,6 +14,8 @@ export type SendPdfReportRequestPayload = {
   now: string
   user: User
   applet: Applet
+  scoringType: string
+  subscaleTableData: Record<string, string>[] | null
 }
 
 type SendPdfReportQuery = {
