@@ -9,6 +9,8 @@ import {
   User,
   Map,
   ScoreForSummary,
+  ActivitySubscalesSetting,
+  ScoringType,
 } from '../core/interfaces'
 import { Calculator, convertMarkdownToHtml, getScoresSummary, isFloat, toFixed } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer/'
@@ -27,12 +29,7 @@ const enum Sex {
   F = 'F',
 }
 
-const parseSex = (sex: string | null) => (sex === Sex.M ? '0' : '1')
-
-const enum ScoreType {
-  score = 'score',
-  raw_score = 'raw_score',
-}
+const parseSex = (sex: string | null | undefined) => (sex === Sex.M ? '0' : '1')
 
 export class ActivityEntity {
   public json: IActivity
@@ -45,6 +42,7 @@ export class ActivityEntity {
   public reportIncludeItem: string
   public allowSummary: boolean
   public reports: IActivityScoresAndReportsSections[] | IActivityScoresAndReportsScores[]
+  public subscaleSetting: ActivitySubscalesSetting
 
   constructor(data: IActivity, items: IActivityItem[] = []) {
     this.json = data
@@ -63,17 +61,14 @@ export class ActivityEntity {
 
     this.allowSummary = data.scoresAndReports?.showScoreSummary || false
     this.reports = data.scoresAndReports?.reports || []
+    this.subscaleSetting = data.subscaleSetting || null
   }
 
   getVisibleItems(): ItemEntity[] {
     return this.items.filter((item) => !item.json.isHidden)
   }
 
-  evaluateScores(
-    responses: ResponseItem[],
-    scoringType: string,
-    subscaleTableData: Record<string, string>[] | null,
-  ): Map {
+  evaluateScores(responses: ResponseItem[]): Map {
     const answers = responses
 
     const scores: Map = {}
@@ -116,19 +111,22 @@ export class ActivityEntity {
             break
         }
 
-        if (subscaleTableData && subscaleTableData.length > 0) {
+        const subscaleItem = this.subscaleSetting.subscales.find(({ name }) => name === report.subscaleName)
+
+        if (subscaleItem?.subscaleTableData && subscaleItem.subscaleTableData.length > 0) {
           const calculatedScore = scores[report.id]
           const genderItemIndex = this.items.findIndex((item) => item.name == LookupTableItems.Gender_screen)
           const genderAnswer = responses[genderItemIndex]
           const ageItemIndex = this.items.findIndex((item) => item.name == LookupTableItems.Age_screen)
           const ageAnswer = responses[ageItemIndex]
+          const subscaleTableData = subscaleItem.subscaleTableData
 
-          const subscaleTableDataItem = subscaleTableData.find(({ sex, age, raw_score: rawScore }) => {
-            let reportedAge: string | null = null
+          const subscaleTableDataItem = subscaleTableData.find(({ sex, age, rawScore }) => {
+            let reportedAge: number | null = null
             if (typeof ageAnswer === 'string') {
-              reportedAge = ageAnswer
+              reportedAge = Number(ageAnswer)
             } else if ('value' in ageAnswer && typeof ageAnswer.value === 'number') {
-              reportedAge = String(ageAnswer.value)
+              reportedAge = ageAnswer.value
             }
 
             const withAge = age === reportedAge
@@ -144,7 +142,7 @@ export class ActivityEntity {
             return Number(minScore) <= calculatedScore && calculatedScore <= Number(maxScore)
           })
 
-          if (scoringType == ScoreType.score && subscaleTableDataItem) {
+          if (report.scoringType == ScoringType.score && subscaleTableDataItem) {
             scores[report.id] = Number(subscaleTableDataItem.score) || calculatedScore
           }
         }
@@ -174,13 +172,8 @@ export class ActivityEntity {
     return [values, rawValues]
   }
 
-  evaluateReports(
-    responses: ResponseItem[],
-    user: User,
-    scoringType: string,
-    subscaleTableData: Record<string, string>[] | null,
-  ): string {
-    const scores = this.evaluateScores(responses, scoringType, subscaleTableData)
+  evaluateReports(responses: ResponseItem[], user: User): string {
+    const scores = this.evaluateScores(responses)
     const [values, rawValues] = this.scoresToValues(scores, responses)
 
     let markdown = ''
@@ -310,12 +303,8 @@ export class ActivityEntity {
     return alerts
   }
 
-  getScoresForSummary(
-    responses: ResponseItem[],
-    scoringType: string,
-    subscaleTableData: Record<string, string>[] | null,
-  ): ScoreForSummary[] {
-    const scores = this.evaluateScores(responses, scoringType, subscaleTableData)
+  getScoresForSummary(responses: ResponseItem[]): ScoreForSummary[] {
+    const scores = this.evaluateScores(responses)
 
     const result = []
     for (const report of this.reports) {

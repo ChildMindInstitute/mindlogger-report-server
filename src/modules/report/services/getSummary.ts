@@ -6,8 +6,6 @@ import { ActivityEntity } from '../../../models'
 type Params = {
   responses: ActivityResponse[]
   activities: ActivityEntity[]
-  scoringType: string
-  subscaleTableData: Record<string, string>[] | null
 }
 
 export function getSummary(params: Params): string {
@@ -32,7 +30,7 @@ export function getSummary(params: Params): string {
     alerts = alerts.concat(activity.getAlertsForSummary(response.data))
 
     const scores = activity
-      .getScoresForSummary(response.data, params.scoringType, params.subscaleTableData)
+      .getScoresForSummary(response.data)
       .filter((score) => isNotEmpty(score.value) && score.prefLabel)
 
     if (scores.length) {
