@@ -9,11 +9,27 @@ import {
   User,
   Map,
   ScoreForSummary,
+  ActivitySubscalesSetting,
+  ScoringType,
 } from '../core/interfaces'
 import { Calculator, convertMarkdownToHtml, getScoresSummary, isFloat, toFixed } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer/'
 import { ScoresCalculator } from '../core/helpers/ScoresCalculator'
 import { ConditionalLogicService } from '../modules/report/helpers/conditionalLogic'
+
+const INTERVAL_SYMBOL = '~'
+
+const enum LookupTableItems {
+  Age_screen = 'age_screen',
+  Gender_screen = 'gender_screen',
+}
+
+const enum Sex {
+  M = 'M',
+  F = 'F',
+}
+
+const parseSex = (sex: string | null | undefined) => (sex === Sex.M ? '0' : '1')
 
 export class ActivityEntity {
   public json: IActivity
@@ -26,6 +42,7 @@ export class ActivityEntity {
   public reportIncludeItem: string
   public allowSummary: boolean
   public reports: IActivityScoresAndReportsSections[] | IActivityScoresAndReportsScores[]
+  public subscaleSetting: ActivitySubscalesSetting
 
   constructor(data: IActivity, items: IActivityItem[] = []) {
     this.json = data
@@ -44,6 +61,7 @@ export class ActivityEntity {
 
     this.allowSummary = data.scoresAndReports?.showScoreSummary || false
     this.reports = data.scoresAndReports?.reports || []
+    this.subscaleSetting = data.subscaleSetting || null
   }
 
   getVisibleItems(): ItemEntity[] {
@@ -91,6 +109,42 @@ export class ActivityEntity {
 
             scores[report.id] = toFixed(Calculator.avg(filteredScores))
             break
+        }
+
+        const subscaleItem = this.subscaleSetting.subscales.find(({ name }) => name === report.subscaleName)
+
+        if (subscaleItem?.subscaleTableData && subscaleItem.subscaleTableData.length > 0) {
+          const calculatedScore = scores[report.id]
+          const genderItemIndex = this.items.findIndex((item) => item.name == LookupTableItems.Gender_screen)
+          const genderAnswer = responses[genderItemIndex]
+          const ageItemIndex = this.items.findIndex((item) => item.name == LookupTableItems.Age_screen)
+          const ageAnswer = responses[ageItemIndex]
+          const subscaleTableData = subscaleItem.subscaleTableData
+
+          const subscaleTableDataItem = subscaleTableData.find(({ sex, age, rawScore }) => {
+            let reportedAge: number | null = null
+            if (typeof ageAnswer === 'string') {
+              reportedAge = Number(ageAnswer)
+            } else if ('value' in ageAnswer && typeof ageAnswer.value === 'number') {
+              reportedAge = ageAnswer.value
+            }
+
+            const withAge = age === reportedAge
+            const withSex = parseSex(sex) === String(genderAnswer?.value)
+
+            if (!withSex || !withAge) return false
+
+            const hasInterval = rawScore.includes(INTERVAL_SYMBOL)
+            if (!hasInterval) return rawScore === String(calculatedScore)
+
+            const [minScore, maxScore] = rawScore.replace(/\s/g, '').split(INTERVAL_SYMBOL)
+
+            return Number(minScore) <= calculatedScore && calculatedScore <= Number(maxScore)
+          })
+
+          if (report.scoringType == ScoringType.score && subscaleTableDataItem) {
+            scores[report.id] = Number(subscaleTableDataItem.score) || calculatedScore
+          }
         }
 
         for (const conditional of report.conditionalLogic) {
