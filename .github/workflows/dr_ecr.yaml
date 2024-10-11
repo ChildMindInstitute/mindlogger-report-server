@@ -74,8 +74,6 @@ jobs:
 #          cache-to: mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ env.ECR_REPO }}:cache
 #          cache-from: type=registry,ref=${{ env.ECR_REPO }}:cache
           tags: |
-#            ${{ env.ECR_REPO }}:latest
-#            ${{ env.ECR_REPO }}:${{ steps.sha.outputs.SHORT_SHA }}
             ${{ env.DR_ECR_REPO }}:latest
             ${{ env.DR_ECR_REPO }}:${{ steps.sha.outputs.SHORT_SHA }}
           platforms: linux/amd64,linux/arm64
