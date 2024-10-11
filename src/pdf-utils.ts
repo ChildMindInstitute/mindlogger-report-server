@@ -1,7 +1,7 @@
 import fs from 'fs'
 import os from 'os'
 
-import HummusRecipe from 'hummus-recipe'
+import { Recipe as MuhammaraRecipe } from 'muhammara'
 import puppeteer from 'puppeteer'
 import { PDFDocument } from 'pdf-lib'
 import { createDirectoryIfNotExists, getRandomFileName } from './core/helpers'
@@ -9,7 +9,6 @@ import { getAppletKeys } from './db'
 
 export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<void> => {
   const browser = await puppeteer.launch({
-    headless: 'new',
     args: ['--disable-dev-shm-usage', '--no-sandbox', '--headless', '--disable-gpu'],
   })
 
@@ -38,8 +37,9 @@ export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<vo
 
 export const encryptPDF = (path: string, password: string) =>
   new Promise((resolve) => {
-    const pdfDoc = new HummusRecipe(path, path)
+    const pdfDoc = new MuhammaraRecipe(path, path)
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     pdfDoc.encrypt({ userPassword: password, ownerPassword: password, userProtectionFlag: 4 }).endPDF(() => {
       resolve(null)

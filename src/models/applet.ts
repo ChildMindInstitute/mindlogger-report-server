@@ -81,6 +81,7 @@ export class AppletEntity {
 
       const scores = activity.evaluateScores(response.data)
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [values, rawValues] = activity.scoresToValues(scores, response.data)
 
       const addActivityPrefix = (key: string) => `${activity.name}/${key}`
