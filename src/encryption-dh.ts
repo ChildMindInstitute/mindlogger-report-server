@@ -21,6 +21,7 @@ export function decryptResponses(
 
 function decryptData(text: string, key: Buffer): string {
   const textParts: string[] = text.split(':')
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const iv = Buffer.from(textParts.shift(), 'hex')
   const encryptedText = Buffer.from(textParts.join(':'), 'hex')
