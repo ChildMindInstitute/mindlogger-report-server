@@ -1,6 +1,6 @@
 import { ActivityEntity } from './activity'
 import ActivityFlow from './activity-flow'
-import moment from 'moment-timezone'
+import { formatInTimeZone } from 'date-fns-tz'
 import { Email, Applet, IAppletEncryption, ActivityResponse, User } from '../core/interfaces'
 import { ItemEntity } from './item'
 import { convertMarkdownToHtml, truncateString } from '../core/helpers'
@@ -81,6 +81,7 @@ export class AppletEntity {
 
       const scores = activity.evaluateScores(response.data)
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [values, rawValues] = activity.scoresToValues(scores, response.data)
 
       const addActivityPrefix = (key: string) => `${activity.name}/${key}`
@@ -146,7 +147,8 @@ export class AppletEntity {
       pdfName += `_[${itemName}]`
     }
 
-    pdfName += `_${moment.utc(this.timestamp).format('YYYY-MM-DD-HHmmss')}`
+    const date = new Date(this.timestamp)
+    pdfName += `_${formatInTimeZone(date, 'UTC', 'YYYY-MM-DD-HHmmss')}`
 
     return `${pdfName}.pdf`
   }

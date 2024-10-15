@@ -1,7 +1,8 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import markdownIt from 'markdown-it'
 
-import emoji from 'markdown-it-emoji'
+import { full as emoji } from 'markdown-it-emoji'
 import footnote from 'markdown-it-footnote'
 import container from 'markdown-it-container'
 

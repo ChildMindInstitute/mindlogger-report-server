@@ -11,7 +11,7 @@ type Params = {
 
 export function replaceVariablesInMarkdown({ user, markdown, items, scores }: Params): string {
   if (!markdown) {
-    return ""
+    return ''
   }
 
   const nickname = !!user.nickname ? user.nickname : `${user.firstName} ${user.lastName}`.trim()
