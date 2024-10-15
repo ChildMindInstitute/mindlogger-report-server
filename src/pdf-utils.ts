@@ -6,7 +6,7 @@ import puppeteer from 'puppeteer'
 import { PDFDocument } from 'pdf-lib'
 import { createDirectoryIfNotExists, getRandomFileName } from './core/helpers'
 import { getAppletKeys } from './db'
-import fetch from 'node-fetch'
+import { decryptData } from './modules/report/services/kmsEncryption'
 
 export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<void> => {
   const browser = await puppeteer.launch({
@@ -107,5 +107,5 @@ export async function getPDFPassword(appletId: string): Promise<string | null> {
   }
 
   const row = await getAppletKeys(appletId)
-  return row ? row.key : null
+  return row ? decryptData(row.key) : null
 }
