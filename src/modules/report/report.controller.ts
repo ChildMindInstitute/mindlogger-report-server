@@ -118,7 +118,7 @@ class ReportController {
 
       res.status(200).json(<SendPdfReportResponse>{
         pdf: fs.readFileSync(filename, { encoding: 'base64' }).toString(),
-        email: applet.getEmailConfigs(activityId, activityFlowId, responses, payload.user, payload.now),
+        email: applet.getEmailConfigs(activityId, activityFlowId, responses, payload.user),
       })
       fs.unlink(filename, () => {
         logger.info(`Deleted ${filename}`)

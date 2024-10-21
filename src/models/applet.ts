@@ -64,13 +64,7 @@ export class AppletEntity {
     return applet.watermark
   }
 
-  getEmailConfigs(
-    activityId: string,
-    activityFlowId: string | null,
-    responses: ActivityResponse[],
-    user: User,
-    now: string,
-  ): Email {
+  getEmailConfigs(activityId: string, activityFlowId: string | null, responses: ActivityResponse[], user: User): Email {
     let emailBody = this.reportConfigs.emailBody
 
     for (const response of responses) {
@@ -81,8 +75,7 @@ export class AppletEntity {
 
       const scores = activity.evaluateScores(response.data)
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [values, rawValues] = activity.scoresToValues(scores, response.data)
+      const [values] = activity.scoresToValues(scores, response.data)
 
       const addActivityPrefix = (key: string) => `${activity.name}/${key}`
 
@@ -148,7 +141,7 @@ export class AppletEntity {
     }
 
     const date = new Date(this.timestamp)
-    pdfName += `_${formatInTimeZone(date, 'UTC', 'YYYY-MM-DD-HHmmss')}`
+    pdfName += `_${formatInTimeZone(date, 'UTC', 'yyyy-MM-dd-HHmmss')}`
 
     return `${pdfName}.pdf`
   }
