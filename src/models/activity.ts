@@ -42,7 +42,7 @@ export class ActivityEntity {
   public reportIncludeItem: string
   public allowSummary: boolean
   public reports: IActivityScoresAndReportsSections[] | IActivityScoresAndReportsScores[]
-  public subscaleSetting: ActivitySubscalesSetting
+  public subscaleSetting?: ActivitySubscalesSetting
 
   constructor(data: IActivity, items: IActivityItem[] = []) {
     this.json = data
@@ -61,7 +61,7 @@ export class ActivityEntity {
 
     this.allowSummary = data.scoresAndReports?.showScoreSummary || false
     this.reports = data.scoresAndReports?.reports || []
-    this.subscaleSetting = data.subscaleSetting || null
+    this.subscaleSetting = data.subscaleSetting
   }
 
   getVisibleItems(): ItemEntity[] {
@@ -111,7 +111,7 @@ export class ActivityEntity {
             break
         }
 
-        const subscaleItem = this.subscaleSetting.subscales.find(({ name }) => name === report.subscaleName)
+        const subscaleItem = this.subscaleSetting?.subscales.find(({ name }) => name === report.subscaleName)
 
         if (subscaleItem?.subscaleTableData && subscaleItem.subscaleTableData.length > 0) {
           const calculatedScore = scores[report.id]

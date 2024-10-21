@@ -39,7 +39,7 @@ export interface IActivity {
   reportIncludedItemName: string
   responseIsEditable: boolean
   scoresAndReports: IActivityScoresAndReports
-  subscaleSetting: ActivitySubscalesSetting
+  subscaleSetting?: ActivitySubscalesSetting
   showAllAtOnce: boolean
   splashScreen: string
   items: IActivityItem[]
