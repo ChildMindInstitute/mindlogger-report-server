@@ -6,6 +6,7 @@ import puppeteer from 'puppeteer'
 import { PDFDocument } from 'pdf-lib'
 import { createDirectoryIfNotExists, getRandomFileName } from './core/helpers'
 import { getAppletKeys } from './db'
+import fetch from 'node-fetch'
 
 export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<void> => {
   const browser = await puppeteer.launch({
