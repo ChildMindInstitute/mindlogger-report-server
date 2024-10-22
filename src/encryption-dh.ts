@@ -20,11 +20,9 @@ export function decryptResponses(
 }
 
 function decryptData(text: string, key: Buffer): string {
-  const textParts: string[] = text.split(':')
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const iv = Buffer.from(textParts.shift(), 'hex')
-  const encryptedText = Buffer.from(textParts.join(':'), 'hex')
+  const [first, ...rest]: string[] = text.split(':')
+  const iv = Buffer.from(first, 'hex')
+  const encryptedText = Buffer.from(rest.join(':'), 'hex')
   const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(key), iv)
   const decrypted = decipher.update(encryptedText)
 
