@@ -51,7 +51,6 @@ class ReportController {
         responses: payload.responses,
         appletPrivateKey: appletKeys.privateKey,
         appletEncryption: payload.applet.encryption,
-        userPublicKey: payload.userPublicKey,
       })
 
       const applet = new AppletEntity(payload.applet)
