@@ -40,8 +40,6 @@ export const encryptPDF = (path: string, password: string) =>
   new Promise((resolve) => {
     const pdfDoc = new MuhammaraRecipe(path, path)
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     pdfDoc.encrypt({ userPassword: password, ownerPassword: password, userProtectionFlag: 4 }).endPDF(() => {
       resolve(null)
     })
