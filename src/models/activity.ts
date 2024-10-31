@@ -148,11 +148,7 @@ export class ActivityEntity {
         }
 
         for (const conditional of report.conditionalLogic) {
-          const isReportVisible = this.testVisibility(conditional, scores)
-
-          if (!isReportVisible) {
-            delete scores[conditional.id]
-          }
+          scores[conditional.id] = this.testVisibility(conditional, scores)
         }
       }
     }
