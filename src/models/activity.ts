@@ -125,7 +125,7 @@ export class ActivityEntity {
             let reportedAge: number | null = null
             if (typeof ageAnswer === 'string') {
               reportedAge = Number(ageAnswer)
-            } else if ('value' in ageAnswer && typeof ageAnswer.value === 'number') {
+            } else if ('value' in ageAnswer && ['number', 'string'].includes(typeof ageAnswer.value)) {
               reportedAge = ageAnswer.value
             }
 
