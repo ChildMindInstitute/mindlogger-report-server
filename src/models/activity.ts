@@ -122,14 +122,28 @@ export class ActivityEntity {
           const subscaleTableData = subscaleItem.subscaleTableData
 
           const subscaleTableDataItem = subscaleTableData.find(({ sex, age, rawScore }) => {
-            let reportedAge: number | null = null
-            if (typeof ageAnswer === 'string') {
-              reportedAge = Number(ageAnswer)
-            } else if ('value' in ageAnswer && ['number', 'string'].includes(typeof ageAnswer.value)) {
-              reportedAge = ageAnswer.value
+            let reportedAge: string | null = null
+            if (
+              typeof ageAnswer === 'string' ||
+              ('value' in ageAnswer && ['number', 'string'].includes(typeof ageAnswer.value))
+            ) {
+              reportedAge = String(ageAnswer)
             }
 
-            const withAge = age === reportedAge
+            // const withAge = age === reportedAge
+            const hasAgeInterval = age && typeof age === 'string' && age.includes(INTERVAL_SYMBOL)
+            let withAge = true
+
+            if (age) {
+              if (!hasAgeInterval) {
+                withAge = String(age) === reportedAge
+              } else {
+                const [minAge, maxAge] = age.replace(/\s/g, '').split(INTERVAL_SYMBOL)
+                const reportedAgeNum = Number(reportedAge)
+                withAge = Number(minAge) <= reportedAgeNum && reportedAgeNum <= Number(maxAge)
+              }
+            }
+
             const withSex = parseSex(sex) === String(genderAnswer?.value)
 
             if (!withSex || !withAge) return false
