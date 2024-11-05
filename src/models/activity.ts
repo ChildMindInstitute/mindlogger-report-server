@@ -123,11 +123,10 @@ export class ActivityEntity {
 
           const subscaleTableDataItem = subscaleTableData.find(({ sex, age, rawScore }) => {
             let reportedAge: string | null = null
-            if (
-              typeof ageAnswer === 'string' ||
-              ('value' in ageAnswer && ['number', 'string'].includes(typeof ageAnswer.value))
-            ) {
-              reportedAge = String(ageAnswer)
+            if (typeof ageAnswer === 'string') {
+              reportedAge = ageAnswer
+            } else if (ageAnswer && 'value' in ageAnswer && ['number', 'string'].includes(typeof ageAnswer.value)) {
+              reportedAge = String(ageAnswer.value)
             }
 
             const hasAgeInterval = age && typeof age === 'string' && age.includes(INTERVAL_SYMBOL)
