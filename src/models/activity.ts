@@ -130,7 +130,6 @@ export class ActivityEntity {
               reportedAge = String(ageAnswer)
             }
 
-            // const withAge = age === reportedAge
             const hasAgeInterval = age && typeof age === 'string' && age.includes(INTERVAL_SYMBOL)
             let withAge = true
 
