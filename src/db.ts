@@ -3,7 +3,7 @@ import { encryptData } from './modules/report/services/kmsEncryption'
 
 const KEYS_FOLDER = process.env.KEYS_FOLDER || 'keys'
 const PASSWORD_FILE = `${KEYS_FOLDER}/passwords`
-let db: sqlite3.Database
+export let db: sqlite3.Database
 
 // {
 //   appletId: string
