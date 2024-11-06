@@ -14,6 +14,7 @@ async function run() {
 
     for (const row of rows) {
       if (row.key && row.key.length > 0 && !row.key.startsWith('ENC_')) {
+        console.log('Encrypting password for appletId:', row.appletId)
         setAppletPassword(row.appletId, row.key, row.privateKey)
       }
     }
