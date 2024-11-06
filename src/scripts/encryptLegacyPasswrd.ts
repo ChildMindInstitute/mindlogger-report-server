@@ -1,7 +1,12 @@
 import { setAppletPassword, PdfKey, db } from '../db'
 
 async function run() {
-  db.all(`SELECT * from pdf_keys`, [], (err, rows: PdfKey[]) => {
+  if (!process.env.AWS_KMS_KEY_ID) {
+    console.warn('AWS_KMS_KEY_ID is not set, skipping encryption')
+    return
+  }
+
+  db.all(`SELECT * FROM pdf_keys WHERE key NOT LIKE 'ENC_%'`, [], (err, rows: PdfKey[]) => {
     if (err) {
       console.log('Error: ', err)
       return
