@@ -173,7 +173,7 @@ export class ItemEntity {
   }
 
   getPrinted(value: ResponseItem, context: { items: ItemEntity[]; responses: ResponseItem[] | string[] }): string {
-    const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'text']
+    const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'text', 'numberSelect']
 
     if (!allowedTypes.includes(this.inputType)) {
       return ''
