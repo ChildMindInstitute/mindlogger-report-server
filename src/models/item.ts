@@ -214,7 +214,7 @@ export class ItemEntity {
       const maxLabelHtml = `<div class="slider-value">${maxLabel}</div>`
 
       optionsHtml += `<div class="option">${minLabelHtml}<input type="range" min="${minValue}" max="${maxValue}" value="${response[0]}">${maxLabelHtml}</div>`
-    } else if (this.inputType === 'text') {
+    } else if (this.inputType === 'text' || this.inputType === 'numberSelect') {
       optionsHtml += response[0]
     }
     //additional input
