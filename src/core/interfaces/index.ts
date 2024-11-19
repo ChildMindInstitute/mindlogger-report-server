@@ -195,6 +195,7 @@ export interface User {
   nickname: string
   firstName: string | null
   lastName: string | null
+  tag: string | null
 }
 
 export type ActivityResponse = {

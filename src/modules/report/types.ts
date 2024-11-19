@@ -22,5 +22,5 @@ type SendPdfReportQuery = {
 }
 
 type SendPdfReportBody = {
-  payload: string | string[]
+  payload: SendPdfReportRequestPayload
 }

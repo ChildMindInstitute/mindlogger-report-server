@@ -5,14 +5,13 @@ import { Response } from 'express'
 
 import { v4 } from 'uuid'
 
-import { decryptData } from '../../encryption'
 import { ActivityResponse, SendPdfReportResponse } from '../../core/interfaces'
 import { getAppletKeys } from '../../db'
 import { convertMarkdownToHtml } from '../../core/helpers'
 import { logger } from '../../core/services/LoggerService'
 import { AppletEntity } from '../../models'
 import { getCurrentCount, convertHtmlToPdf, watermarkPDF, encryptPDF, getPDFPassword } from '../../pdf-utils'
-import { SendPdfReportRequest, SendPdfReportRequestPayload } from './types'
+import { SendPdfReportRequest } from './types'
 import { getReportFooter, getReportStyles, getSplashImageHTML } from './helpers'
 import { decryptActivityResponses } from './helpers/decryptResponses'
 import { getSummary } from './services/getSummary'
@@ -37,8 +36,7 @@ class ReportController {
         return res.status(400).json({ message: 'ActivityId is required.' })
       }
 
-      logger.info(`Encrypted payload length: ${req.body.payload.length}`)
-      const payload = decryptData<SendPdfReportRequestPayload>(req.body.payload)
+      const { payload } = req.body
 
       const appletKeys = await getAppletKeys(payload.applet.id)
 
