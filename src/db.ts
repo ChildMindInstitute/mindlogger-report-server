@@ -1,8 +1,9 @@
 import sqlite3 from 'sqlite3'
+import { encryptData } from './modules/report/services/kmsEncryption'
 
 const KEYS_FOLDER = process.env.KEYS_FOLDER || 'keys'
 const PASSWORD_FILE = `${KEYS_FOLDER}/passwords`
-let db: sqlite3.Database
+export let db: sqlite3.Database
 
 // {
 //   appletId: string
@@ -51,13 +52,15 @@ export const setAppletPassword = async (appletId: string, password: string, priv
 
   const row = await getAppletKeys(appletId)
 
+  const encryptedPassword: string = await encryptData(password)
+
   if (row) {
     const stmt = db.prepare(`UPDATE pdf_keys SET key=?, privateKey=? WHERE appletId=?`) // Todo: probably need to drop key column
-    stmt.run(password, privateKey, appletId)
+    stmt.run(encryptedPassword, privateKey, appletId)
     stmt.finalize()
   } else {
     const stmt = db.prepare(`INSERT INTO pdf_keys VALUES (?, ?, ?)`)
-    stmt.run(appletId, password, privateKey)
+    stmt.run(appletId, encryptedPassword, privateKey)
     stmt.finalize()
   }
 }
