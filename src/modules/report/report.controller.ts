@@ -16,6 +16,7 @@ import { SendPdfReportRequest, SendPdfReportRequestPayload } from './types'
 import { getReportFooter, getReportStyles, getSplashImageHTML } from './helpers'
 import { decryptActivityResponses } from './helpers/decryptResponses'
 import { getSummary } from './services/getSummary'
+import { featureFlagsService } from '../../core/services/FeatureFlagsService'
 
 class ReportController {
   public async sendPdfReport(req: SendPdfReportRequest, res: Response): Promise<unknown> {
@@ -46,6 +47,9 @@ class ReportController {
         logger.error('[ReportController:sendPdfReport] Applet is not connected')
         return res.status(400).json({ message: 'Applet is not connected. AppletId not found.' })
       }
+
+      // Log into LD using workspace ID associated with applet (same as encryption account ID)
+      await featureFlagsService.login(payload.applet.encryption.accountId)
 
       const responses: ActivityResponse[] = decryptActivityResponses({
         responses: payload.responses,
@@ -127,6 +131,9 @@ class ReportController {
       logger.error('error', e)
 
       return res.status(400).json({ message: 'invalid request' })
+    } finally {
+      // Log out from LD
+      featureFlagsService.logout()
     }
   }
 }
