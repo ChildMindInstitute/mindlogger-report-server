@@ -7,7 +7,6 @@ dist/
 *.log
 .idea/
 .vscode/
-ldclient-user-cache
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
