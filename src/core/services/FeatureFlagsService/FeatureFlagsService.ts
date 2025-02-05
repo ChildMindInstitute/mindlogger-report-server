@@ -8,7 +8,7 @@ export class FeatureFlagsService {
   private client?: LaunchDarkly.LDClient
   private flags?: LaunchDarkly.LDFlagSet
 
-  init(): LaunchDarkly.LDClient | undefined {
+  constructor() {
     if (!this.client) {
       logger.info('[FeatureFlagsService]: Create and init LaunchDarkly client')
 
@@ -19,8 +19,16 @@ export class FeatureFlagsService {
         logger.error('[FeatureFlagsService]: Failed to initialize LaunchDarkly client', e)
       }
     }
+  }
 
-    return this.client
+  async closeClient() {
+    if (!this.client) {
+      return
+    }
+
+    logger.info('[FeatureFlagsService]: Close LaunchDarkly client')
+
+    await this.client.close()
   }
 
   private async setDefaultFlags() {
@@ -76,5 +84,3 @@ export class FeatureFlagsService {
     return process.env.LAUNCHDARKLY_CLIENT_ID ?? ''
   }
 }
-
-export const featureFlagsService = new FeatureFlagsService()

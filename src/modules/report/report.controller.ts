@@ -16,7 +16,7 @@ import { SendPdfReportRequest, SendPdfReportRequestPayload } from './types'
 import { getReportFooter, getReportStyles, getSplashImageHTML } from './helpers'
 import { decryptActivityResponses } from './helpers/decryptResponses'
 import { getSummary } from './services/getSummary'
-import { featureFlagsService } from '../../core/services/FeatureFlagsService'
+import { FeatureFlagsService } from '../../core/services/FeatureFlagsService'
 
 class ReportController {
   public async sendPdfReport(req: SendPdfReportRequest, res: Response): Promise<unknown> {
@@ -26,6 +26,8 @@ class ReportController {
     const { activityId, activityFlowId } = req.query
 
     const outputsFolder = process.env.OUTPUTS_FOLDER || os.tmpdir()
+
+    const featureFlags = new FeatureFlagsService()
 
     try {
       if (!req.body.payload) {
@@ -49,7 +51,7 @@ class ReportController {
       }
 
       // Log into LD using workspace ID associated with applet (same as encryption account ID)
-      await featureFlagsService.login(payload.applet.encryption.accountId)
+      await featureFlags.login(payload.applet.encryption.accountId)
 
       const responses: ActivityResponse[] = decryptActivityResponses({
         responses: payload.responses,
@@ -132,8 +134,8 @@ class ReportController {
 
       return res.status(400).json({ message: 'invalid request' })
     } finally {
-      // Log out from LD
-      featureFlagsService.logout()
+      // Close LD client
+      featureFlags.closeClient()
     }
   }
 }

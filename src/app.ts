@@ -4,12 +4,9 @@ import cors from 'cors'
 import { serverController } from './modules/server/server.controller'
 import { reportController } from './modules/report/report.controller'
 import { logger } from './core/services/LoggerService'
-import { featureFlagsService } from './core/services/FeatureFlagsService'
 
 const app = express()
 const port = process.env.PORT || 3000
-
-featureFlagsService.init()
 
 app.use(cors())
 app.use(express.json({ limit: '50mb' }))
