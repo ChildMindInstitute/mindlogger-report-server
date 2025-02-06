@@ -11,6 +11,8 @@ import {
   ScoreForSummary,
   ActivitySubscalesSetting,
   ScoringType,
+  Score,
+  ResponseValue,
 } from '../core/interfaces'
 import { Calculator, convertMarkdownToHtml, getScoresSummary, isFloat, toFixed } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer/'
@@ -71,8 +73,9 @@ export class ActivityEntity {
   evaluateScores(responses: ResponseItem[]): Map {
     const answers = responses
 
-    const scores: Map = {}
-    const maxScores: Map = {}
+    const scores: Map<Score> = {}
+    const maxScores: Map<Score> = {}
+    const conditionalVisibility: Map<boolean> = {}
 
     for (let i = 0; i < answers.length; i++) {
       const response = answers[i]
@@ -151,7 +154,10 @@ export class ActivityEntity {
 
             const [minScore, maxScore] = rawScore.replace(/\s/g, '').split(INTERVAL_SYMBOL)
 
-            return Number(minScore) <= calculatedScore && calculatedScore <= Number(maxScore)
+            const numericCalculatedScore = Number(calculatedScore)
+            if (isNaN(numericCalculatedScore)) return false
+
+            return Number(minScore) <= numericCalculatedScore && numericCalculatedScore <= Number(maxScore)
           })
 
           if (report.scoringType == ScoringType.score && subscaleTableDataItem) {
@@ -160,17 +166,20 @@ export class ActivityEntity {
         }
 
         for (const conditional of report.conditionalLogic) {
-          scores[conditional.id] = this.testVisibility(conditional, scores)
+          conditionalVisibility[conditional.id] = this.testVisibility(conditional, scores)
         }
       }
     }
 
-    return scores
+    return {
+      scores,
+      conditionalVisibility,
+    }
   }
 
-  scoresToValues(scores: Map, responses: ResponseItem[]): Map[] {
+  scoresToValues(scores: Map<Score>, responses: ResponseItem[]): Map[] {
     const values = { ...scores }
-    const rawValues = { ...scores }
+    const rawValues: Map<ResponseValue | Array<ResponseValue>> = { ...scores }
     for (let i = 0; i < responses.length; i++) {
       const response = responses[i]
       const item = this.items[i]
@@ -181,7 +190,7 @@ export class ActivityEntity {
   }
 
   evaluateReports(responses: ResponseItem[], user: User): string {
-    const scores = this.evaluateScores(responses)
+    const { scores, conditionalVisibility } = this.evaluateScores(responses)
     const [values, rawValues] = this.scoresToValues(scores, responses)
 
     let markdown = ''
@@ -189,10 +198,8 @@ export class ActivityEntity {
     for (const report of this.reports) {
       if (report.type === 'section') {
         markdown = this.generateReportSection(markdown, report, responses, rawValues, values, user)
-      }
-
-      if (report.type === 'score') {
-        markdown = this.generateReportScore(markdown, report, responses, values, user, scores)
+      } else if (report.type === 'score') {
+        markdown = this.generateReportScore(markdown, report, responses, values, user, conditionalVisibility)
       }
     }
 
@@ -245,7 +252,7 @@ export class ActivityEntity {
     responses: ResponseItem[],
     values: Map,
     user: User,
-    scores: Map,
+    conditionalVisibility: Map<boolean>,
   ): string {
     const reportMessage = replaceVariablesInMarkdown({
       markdown: report.message,
@@ -271,7 +278,7 @@ export class ActivityEntity {
     }
 
     for (const conditional of report.conditionalLogic) {
-      const isVis = scores[conditional.id]
+      const isVis = conditionalVisibility[conditional.id]
 
       if (isVis) {
         const reportMessage = replaceVariablesInMarkdown({
@@ -312,7 +319,7 @@ export class ActivityEntity {
   }
 
   getScoresForSummary(responses: ResponseItem[]): ScoreForSummary[] {
-    const scores = this.evaluateScores(responses)
+    const { scores, conditionalVisibility } = this.evaluateScores(responses)
 
     const result = []
     for (const report of this.reports) {
@@ -325,7 +332,7 @@ export class ActivityEntity {
       let flagScore = false
 
       for (const conditional of report.conditionalLogic) {
-        const isVis = this.testVisibility(conditional, scores)
+        const isVis = conditionalVisibility[report.id]
         if (isVis && conditional.flagScore) {
           flagScore = true
           break
