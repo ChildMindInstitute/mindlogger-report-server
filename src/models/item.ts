@@ -332,7 +332,7 @@ export class ItemEntity {
           }
           return a.value === value
         })
-        return [alert?.alert ?? '']
+        return alert?.alert ? [alert.alert] : []
 
       case 'singleSelect':
       case 'multiSelect':
