@@ -75,11 +75,11 @@ export class ItemEntity {
       return []
     }
     if (['singleSelectRows', 'multiSelectRows'].includes(this.inputType)) {
-      return this.getAlertsForSelectionPerRow(value.value)
+      return this.getAlertsForSelectionPerRow(value.value as Array<string | null>)
     }
 
     if (this.inputType === 'sliderRows') {
-      return this.getAlertsForSliderRow(value.value)
+      return this.getAlertsForSliderRow(value.value as Array<number | null>)
     }
 
     return this.getAlertForSimpleTypes(value, this.options)
@@ -323,7 +323,7 @@ export class ItemEntity {
   private getAlertForSimpleTypes(responseItem: ResponseItem, options: IActivityItemOption[]): string[] {
     switch (this.inputType) {
       case 'slider':
-        const value = responseItem.value
+        const value = responseItem.value as number
 
         const alerts = this.json.responseValues.alerts ?? []
         const alert = alerts.find((a) => {
@@ -362,11 +362,7 @@ export class ItemEntity {
     if (isObject(response) && !isArray(response)) {
       const { value } = response as ResponseItem
 
-      if (!isArray(value)) {
-        return [value]
-      }
-
-      return value
+      return [value].flat()
     }
 
     return [response]
