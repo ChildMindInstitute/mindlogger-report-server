@@ -10,7 +10,7 @@ import { decryptData } from './modules/report/services/kmsEncryption'
 
 export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<void> => {
   const browser = await puppeteer.launch({
-    args: ['--disable-dev-shm-usage', '--no-sandbox', '--headless', '--disable-gpu'],
+    args: ['--disable-dev-shm-usage', '--no-sandbox', '--headless', '--disable-gpu', '--disable-crashpad-for-testing'],
   })
 
   const page = await browser.newPage()
