@@ -53,13 +53,17 @@ class ReportController {
       // Log into LD using workspace ID associated with applet (same as encryption account ID)
       await featureFlags.login(payload.applet.encryption.accountId)
 
+      const treatNullAsZero = !featureFlags.getFlag('enable-subscale-null-when-skipped')
+
       const responses: ActivityResponse[] = decryptActivityResponses({
         responses: payload.responses,
         appletPrivateKey: appletKeys.privateKey,
         appletEncryption: payload.applet.encryption,
       })
 
-      const applet = new AppletEntity(payload.applet)
+      // TODO: Remove `treatNullAsZero` parameter once feature flag is removed
+      // https://mindlogger.atlassian.net/browse/M2-8635
+      const applet = new AppletEntity(payload.applet, treatNullAsZero)
 
       const pdfPassword = await getPDFPassword(applet.id)
 

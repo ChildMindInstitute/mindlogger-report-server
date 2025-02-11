@@ -202,18 +202,23 @@ export type ActivityResponse = {
   data: ResponseItem[]
 }
 
-export type ResponseItem = {
-  value: any
+export type SingleResponseValue = string | number | null
+export type ResponseValue = SingleResponseValue | SingleResponseValue[] | Array<SingleResponseValue[] | null>
+
+export type ResponseItem = null | {
+  value: ResponseValue
   text?: string
 }
 
-export type Map = {
-  [key: string]: any
+export type Score = string | number | null
+
+export type Map<T = any> = {
+  [key: string]: T
 }
 
 export interface ScoreForSummary {
   prefLabel: string
-  value: number
+  value: Score
   flagScore: boolean
 }
 
