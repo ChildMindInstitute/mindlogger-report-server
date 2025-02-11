@@ -205,7 +205,7 @@ export type ActivityResponse = {
 export type SingleResponseValue = string | number | null
 export type ResponseValue = SingleResponseValue | SingleResponseValue[] | Array<SingleResponseValue[] | null>
 
-export type ResponseItem = {
+export type ResponseItem = null | {
   value: ResponseValue
   text?: string
 }
@@ -218,7 +218,7 @@ export type Map<T = any> = {
 
 export interface ScoreForSummary {
   prefLabel: string
-  value: number
+  value: Score
   flagScore: boolean
 }
 
