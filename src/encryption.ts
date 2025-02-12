@@ -26,7 +26,7 @@ export const verifyPublicKey = (key: string): boolean => {
     const plain = crypto.privateDecrypt(privateKey, crypto.publicEncrypt(publicKey, Buffer.from('pdf'))).toString()
 
     return plain == 'pdf'
-  } catch (e) {}
+  } catch {}
 
   return false
 }
