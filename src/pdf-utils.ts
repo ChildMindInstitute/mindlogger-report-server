@@ -1,16 +1,16 @@
 import fs from 'fs'
 import os from 'os'
 
-import * as muhammara from 'muhammara'
+import { Recipe as MuhammaraRecipe } from 'muhammara'
 import puppeteer from 'puppeteer'
 import { PDFDocument } from 'pdf-lib'
 import { createDirectoryIfNotExists, getRandomFileName } from './core/helpers'
 import { getAppletKeys } from './db'
+import { decryptData } from './modules/report/services/kmsEncryption'
 
 export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<void> => {
   const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--disable-dev-shm-usage', '--no-sandbox', '--headless', '--disable-gpu'],
+    args: ['--disable-dev-shm-usage', '--no-sandbox', '--headless', '--disable-gpu', '--disable-crashpad-for-testing'],
   })
 
   const page = await browser.newPage()
@@ -38,9 +38,8 @@ export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<vo
 
 export const encryptPDF = (path: string, password: string) =>
   new Promise((resolve) => {
-    const pdfDoc = new muhammara.Recipe(path, path)
+    const pdfDoc = new MuhammaraRecipe(path, path)
 
-    // @ts-ignore
     pdfDoc.encrypt({ userPassword: password, ownerPassword: password, userProtectionFlag: 4 }).endPDF(() => {
       resolve(null)
     })
@@ -106,5 +105,5 @@ export async function getPDFPassword(appletId: string): Promise<string | null> {
   }
 
   const row = await getAppletKeys(appletId)
-  return row ? row.key : null
+  return row ? decryptData(row.key) : null
 }

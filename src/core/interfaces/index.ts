@@ -39,6 +39,7 @@ export interface IActivity {
   reportIncludedItemName: string
   responseIsEditable: boolean
   scoresAndReports: IActivityScoresAndReports
+  subscaleSetting?: ActivitySubscalesSetting
   showAllAtOnce: boolean
   splashScreen: string
   items: IActivityItem[]
@@ -130,6 +131,11 @@ export interface IActivityScoresAndReports {
   reports: IActivityScoresAndReportsScores[] | IActivityScoresAndReportsSections[]
 }
 
+export enum ScoringType {
+  score = 'score',
+  raw_score = 'raw_score',
+}
+
 export interface IActivityScoresAndReportsScores {
   type: 'score'
   id: string
@@ -139,6 +145,8 @@ export interface IActivityScoresAndReportsScores {
   itemsPrint: string[]
   itemsScore: string[]
   message: string | null
+  scoringType: ScoringType | null
+  subscaleName: string | null
 }
 
 export interface IActivityScoresAndReportsSections {
@@ -224,4 +232,27 @@ export interface Email {
 export interface SendPdfReportResponse {
   pdf: string
   email: Email
+}
+
+export const TScoreSeverity = ['Minimal', 'Mild', 'Moderate', 'Severe'] as const
+
+export type TScoreSeverity = (typeof TScoreSeverity)[number]
+
+export type LookupTableDataItem = {
+  score?: string
+  rawScore: string
+  optionalText: string
+  severity: TScoreSeverity | null
+  age?: string | number | null
+  sex?: string | null
+  id: string
+}
+
+export type Subscale = {
+  name: string
+  subscaleTableData?: LookupTableDataItem[] | null
+}
+
+export type ActivitySubscalesSetting = {
+  subscales: Subscale[]
 }

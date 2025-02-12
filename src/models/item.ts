@@ -173,7 +173,7 @@ export class ItemEntity {
   }
 
   getPrinted(value: ResponseItem, context: { items: ItemEntity[]; responses: ResponseItem[] | string[] }): string {
-    const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'text']
+    const allowedTypes = ['singleSelect', 'multiSelect', 'slider', 'text', 'numberSelect']
 
     if (!allowedTypes.includes(this.inputType)) {
       return ''
@@ -214,7 +214,7 @@ export class ItemEntity {
       const maxLabelHtml = `<div class="slider-value">${maxLabel}</div>`
 
       optionsHtml += `<div class="option">${minLabelHtml}<input type="range" min="${minValue}" max="${maxValue}" value="${response[0]}">${maxLabelHtml}</div>`
-    } else if (this.inputType === 'text') {
+    } else if (this.inputType === 'text' || this.inputType === 'numberSelect') {
       optionsHtml += response[0]
     }
     //additional input
@@ -332,7 +332,7 @@ export class ItemEntity {
           }
           return a.value === value
         })
-        return [alert?.alert ?? '']
+        return alert?.alert ? [alert.alert] : []
 
       case 'singleSelect':
       case 'multiSelect':
