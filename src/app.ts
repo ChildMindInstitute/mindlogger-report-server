@@ -1,3 +1,4 @@
+import './tracer' // must come before importing any instrumented module.
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
