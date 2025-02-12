@@ -1,7 +1,7 @@
 import fs from 'fs'
 import os from 'os'
 
-import HummusRecipe from 'hummus-recipe'
+import * as muhammara from 'muhammara'
 import puppeteer from 'puppeteer'
 import { PDFDocument } from 'pdf-lib'
 import { createDirectoryIfNotExists, getRandomFileName } from './core/helpers'
@@ -38,7 +38,7 @@ export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<vo
 
 export const encryptPDF = (path: string, password: string) =>
   new Promise((resolve) => {
-    const pdfDoc = new HummusRecipe(path, path)
+    const pdfDoc = new muhammara.Recipe(path, path)
 
     // @ts-ignore
     pdfDoc.encrypt({ userPassword: password, ownerPassword: password, userProtectionFlag: 4 }).endPDF(() => {

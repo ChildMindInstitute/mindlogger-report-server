@@ -59,3 +59,18 @@ docker run -d \
 --name mindlogger-report-server \
 mindlogger-report-server:latest
 ```
+
+## Troubleshooting
+
+### Python distutils missing
+
+```shell
+pip install setuptools
+```
+
+### npm native modules fail to build
+Sometimes a clean install of command line tools is needed on MacOS:
+```shell
+sudo rm -rf /Library/Developer/CommandLineTools
+xcode-select --install
+```
