@@ -50,12 +50,14 @@ jobs:
       - name: Define Tag Value
         id: tag
         run: |
-          if [[ -n ${{ env.CURRENT_TAG }} ]]; then
-            current_build=$(echo ${{ env.CURRENT_TAG }} | awk -F 'rc' '{print $2}')
-            echo tag_value="${{ env.RELEASE_BRANCH }}-rc$((current_build + 1))" >> $GITHUB_OUTPUT
-            echo BUILD_NUMBER="$current_build" >> $GITHUB_ENV
+          if [[ -n "${CURRENT_TAG}" ]]; then
+            current_build=$(echo "${CURRENT_TAG}" | awk -F 'rc' '{print $2}')
+            BUILD_NUM=$((current_build + 1))
+            echo "Current build: ${BUILD_NUM}"
+            echo tag_value="${RELEASE_BRANCH}-rc${BUILD_NUM}" >> $GITHUB_OUTPUT
+            echo BUILD_NUMBER="${BUILD_NUM}" >> $GITHUB_ENV
           else
-            echo tag_value="${{ env.RELEASE_BRANCH }}-rc1" >> $GITHUB_OUTPUT
+            echo tag_value="${RELEASE_BRANCH}-rc1" >> $GITHUB_OUTPUT
             echo BUILD_NUMBER="1" >> $GITHUB_ENV
           fi
         shell: bash
@@ -65,7 +67,7 @@ jobs:
           git config --global user.email "automateduser@mindlogger"
           git tag ${{ steps.tag.outputs.tag_value }}
           git push origin ${{ steps.tag.outputs.tag_value }}
-      
+
       - name: Generate Release Notes
         run: |
           RELEASE_NOTES=$(gh api \
@@ -89,7 +91,6 @@ jobs:
     uses: ./.github/workflows/build_push.yaml
     needs: Tagging
     with:
-      repo-name: test-repo
       tag: ${{ needs.Tagging.outputs.tag_value }}
 
   Deploy:
@@ -122,57 +123,3 @@ jobs:
           service: report-server
           cluster: cmiml-uat
           wait-for-service-stability: true
-  Failed-Notification:
-    needs:
-      - App_Build
-      - Deploy
-    if: failure()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Format Slack Message (Failed)
-        if: failure()
-        run: |
-          sed -i "s|\${APP}|Report Server|g" .github/configs/failed_deploy.json
-          sed -i "s|\${ENVIRONMENT}|dev|g" .github/configs/failed_deploy.json
-          sed -i "s|\${IMAGE}|${{ needs.App_Build.outputs.short-image }}|g" .github/configs/failed_deploy.json
-
-          echo JSON_PAYLOAD=$(cat .github/configs/failed_deploy.json) >> $GITHUB_ENV
-        shell: bash
-      - name: Send Slack Message
-        uses: slackapi/slack-github-action@v1.27.0
-        with:
-          payload: |
-            ${{ env.JSON_PAYLOAD }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.CODE_GURU_REPORTS_WEBHOOK }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-  
-  Success-Notification:
-    needs:
-      - App_Build
-      - Deploy
-    if: success()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Format Slack Message (Success)
-        run: |
-          sed -i "s|\${APP}|Report Server|g" .github/configs/successful_deploy.json
-          sed -i "s|\${ENVIRONMENT}|dev|g" .github/configs/successful_deploy.json
-          sed -i "s|\${IMAGE}|${{ needs.App_Build.outputs.short-image }}|g" .github/configs/successful_deploy.json
-
-          echo JSON_PAYLOAD=$(cat .github/configs/successful_deploy.json) >> $GITHUB_ENV
-        shell: bash
-      - name: Send Slack Message
-        uses: slackapi/slack-github-action@v1.27.0
-        with:
-          payload: |
-            ${{ env.JSON_PAYLOAD }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.CODE_GURU_REPORTS_WEBHOOK }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
