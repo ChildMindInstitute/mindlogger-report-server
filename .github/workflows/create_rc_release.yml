@@ -54,7 +54,11 @@ jobs:
             current_build=$(echo "${CURRENT_TAG}" | awk -F 'rc' '{print $2}')
             BUILD_NUM=$((current_build + 1))
             echo "Current build: ${BUILD_NUM}"
-            echo tag_value="${RELEASE_BRANCH}-rc${BUILD_NUM}" >> $GITHUB_OUTPUT
+          
+            TAG_VAL="${RELEASE_BRANCH}-rc${BUILD_NUM}"
+            echo "Tag value: ${TAG_VAL}"
+          
+            echo tag_value="${TAG_VAL}" >> $GITHUB_OUTPUT
             echo BUILD_NUMBER="${BUILD_NUM}" >> $GITHUB_ENV
           else
             echo tag_value="${RELEASE_BRANCH}-rc1" >> $GITHUB_OUTPUT
