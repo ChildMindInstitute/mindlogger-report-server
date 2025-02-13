@@ -80,7 +80,6 @@ jobs:
     uses: ./.github/workflows/build_push.yaml
     needs: Tagging
     with:
-      repo-name: test-repo
       tag: ${{ needs.Tagging.outputs.release_tag }}
 
   Deploy:
