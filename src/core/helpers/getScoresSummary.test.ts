@@ -40,7 +40,7 @@ describe('getScoresSummary', () => {
       score2: null,
       score3: 20,
     }
-    const allowedScoreNames = ['score1', 'score3']
+    const allowedScoreNames = ['score1', 'score2', 'score3']
     spyCalculatorSum.mockReturnValue(30)
 
     const result = getScoresSummary(scores, allowedScoreNames)
