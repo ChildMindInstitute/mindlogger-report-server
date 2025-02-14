@@ -1,7 +1,9 @@
+import { ResponseValue } from '../../../../core/interfaces'
+
 type CheckConditionParams = {
   type: string
   payload: any
-  scoreOrValue: number | number[]
+  scoreOrValue: ResponseValue | ResponseValue[]
 }
 
 export class ConditionalLogicService {
@@ -14,6 +16,11 @@ export class ConditionalLogicService {
   }
 
   static checkConditionByPattern({ type, payload, scoreOrValue }: CheckConditionParams): boolean {
+    // Skipped responses do not match any condition
+    if (scoreOrValue === null) {
+      return false
+    }
+
     switch (type) {
       case 'BETWEEN':
         return payload.minValue < scoreOrValue && payload.maxValue > scoreOrValue
@@ -40,10 +47,12 @@ export class ConditionalLogicService {
         return scoreOrValue !== payload.value
 
       case 'INCLUDES_OPTION':
-        return Array.isArray(scoreOrValue) && scoreOrValue.includes(parseFloat(payload.optionValue))
+        const parsedIncludeValue = parseFloat(payload.optionValue)
+        return Array.isArray(scoreOrValue) && scoreOrValue.some((value) => value === parsedIncludeValue)
 
       case 'NOT_INCLUDES_OPTION':
-        return Array.isArray(scoreOrValue) && !scoreOrValue.includes(parseFloat(payload.optionValue))
+        const parsedExcludeValue = parseFloat(payload.optionValue)
+        return Array.isArray(scoreOrValue) && !scoreOrValue.some((value) => value === parsedExcludeValue)
 
       case 'EQUAL_TO_SCORE':
         return payload.value === scoreOrValue

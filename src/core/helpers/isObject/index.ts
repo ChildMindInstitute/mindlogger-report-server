@@ -1,3 +1,3 @@
-export function isObject<T>(value: T): boolean {
+export function isObject(value: any): value is object {
   return typeof value === 'object'
 }

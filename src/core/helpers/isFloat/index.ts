@@ -1,6 +1,6 @@
 import { isString } from '../isString'
 
-export function isFloat(inputString: any): boolean {
+export function isFloat(inputString: any): inputString is number | string {
   if (Array.isArray(inputString)) {
     return false
   }

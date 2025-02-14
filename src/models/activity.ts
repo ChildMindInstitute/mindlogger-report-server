@@ -11,6 +11,8 @@ import {
   ScoreForSummary,
   ActivitySubscalesSetting,
   ScoringType,
+  Score,
+  ResponseValue,
 } from '../core/interfaces'
 import { Calculator, convertMarkdownToHtml, getScoresSummary, isFloat, toFixed } from '../core/helpers'
 import { replaceVariablesInMarkdown } from '../core/helpers/markdownVariableReplacer/'
@@ -44,7 +46,9 @@ export class ActivityEntity {
   public reports: IActivityScoresAndReportsSections[] | IActivityScoresAndReportsScores[]
   public subscaleSetting?: ActivitySubscalesSetting
 
-  constructor(data: IActivity, items: IActivityItem[] = []) {
+  // TODO: Remove `treatNullAsZero` when 'enable-subscale-null-when-skipped' feature flag is removed
+  // https://mindlogger.atlassian.net/browse/M2-8635
+  constructor(data: IActivity, items: IActivityItem[] = [], treatNullAsZero: boolean) {
     this.json = data
 
     this.schemaId = data.id
@@ -53,7 +57,7 @@ export class ActivityEntity {
     this.splashImage = data.splashScreen
 
     this.items = items.map((item) => {
-      return new ItemEntity(item)
+      return new ItemEntity(item, treatNullAsZero)
     })
 
     //TODO: activity.items.find(item => item.name == activity.reportIncludeItem);
@@ -68,14 +72,13 @@ export class ActivityEntity {
     return this.items.filter((item) => !item.json.isHidden)
   }
 
-  evaluateScores(responses: ResponseItem[]): Map {
-    const answers = responses
+  evaluateScores(responses: ResponseItem[]) {
+    const scores: Map<Score> = {}
+    const maxScores: Map<number | null> = {}
+    const conditionalVisibility: Map<boolean> = {}
 
-    const scores: Map = {}
-    const maxScores: Map = {}
-
-    for (let i = 0; i < answers.length; i++) {
-      const response = answers[i]
+    for (let i = 0; i < responses.length; i++) {
+      const response = responses[i]
       const item = this.items[i]
 
       scores[item.name] = item.getScore(response)
@@ -85,8 +88,8 @@ export class ActivityEntity {
     // calculate scores first
     for (const report of this.reports) {
       if (report.type === 'score') {
-        const reportScore = getScoresSummary(scores, report.itemsScore)
-        const reportMaxScore = getScoresSummary(maxScores, report.itemsScore)
+        const reportScore = getScoresSummary(scores as Map<number | null>, report.itemsScore)
+        const reportMaxScore = getScoresSummary(maxScores as Map<number>, report.itemsScore) as number
 
         maxScores[report.id] = reportMaxScore
 
@@ -94,7 +97,12 @@ export class ActivityEntity {
           case 'sum':
             scores[report.id] = reportScore
             break
+
           case 'percentage':
+            if (reportScore === null) {
+              scores[report.id] = null
+              break
+            }
             if (reportMaxScore === 0) {
               scores[report.id] = 0
               break
@@ -103,10 +111,15 @@ export class ActivityEntity {
 
             scores[report.id] = toFixed(percentageScore)
             break
-          case 'average':
-            const score = ScoresCalculator.collectActualScores(this.items, report.itemsScore, responses)
-            const filteredScores: number[] = score.filter((x) => x !== null).map((x) => x!)
 
+          case 'average':
+            const actualScores = ScoresCalculator.collectActualScores(this.items, report.itemsScore, responses)
+            const filteredScores: number[] = actualScores.filter((x): x is number => x !== null)
+
+            if (filteredScores.length === 0) {
+              scores[report.id] = null
+              break
+            }
             scores[report.id] = toFixed(Calculator.avg(filteredScores))
             break
         }
@@ -115,6 +128,11 @@ export class ActivityEntity {
 
         if (subscaleItem?.subscaleTableData && subscaleItem.subscaleTableData.length > 0) {
           const calculatedScore = scores[report.id]
+          if (calculatedScore === null) {
+            scores[report.id] = null
+            break
+          }
+
           const genderItemIndex = this.items.findIndex((item) => item.name == LookupTableItems.Gender_screen)
           const genderAnswer = responses[genderItemIndex]
           const ageItemIndex = this.items.findIndex((item) => item.name == LookupTableItems.Age_screen)
@@ -142,7 +160,7 @@ export class ActivityEntity {
               }
             }
 
-            const withSex = parseSex(sex) === String(genderAnswer?.value)
+            const withSex = !sex || parseSex(sex) === String(genderAnswer?.value)
 
             if (!withSex || !withAge) return false
 
@@ -151,7 +169,10 @@ export class ActivityEntity {
 
             const [minScore, maxScore] = rawScore.replace(/\s/g, '').split(INTERVAL_SYMBOL)
 
-            return Number(minScore) <= calculatedScore && calculatedScore <= Number(maxScore)
+            const numericCalculatedScore = Number(calculatedScore)
+            if (isNaN(numericCalculatedScore)) return false
+
+            return Number(minScore) <= numericCalculatedScore && numericCalculatedScore <= Number(maxScore)
           })
 
           if (report.scoringType == ScoringType.score && subscaleTableDataItem) {
@@ -160,28 +181,31 @@ export class ActivityEntity {
         }
 
         for (const conditional of report.conditionalLogic) {
-          scores[conditional.id] = this.testVisibility(conditional, scores)
+          conditionalVisibility[conditional.id] = this.testVisibility(conditional, scores)
         }
       }
     }
 
-    return scores
+    return {
+      scores,
+      conditionalVisibility,
+    }
   }
 
-  scoresToValues(scores: Map, responses: ResponseItem[]): Map[] {
+  scoresToValues(scores: Map<Score>, responses: ResponseItem[]): [Map<Score>, Map<ResponseValue | ResponseValue[]>] {
     const values = { ...scores }
-    const rawValues = { ...scores }
+    const rawValues: Map<ResponseValue | Array<ResponseValue>> = { ...scores }
     for (let i = 0; i < responses.length; i++) {
       const response = responses[i]
       const item = this.items[i]
       values[item.name] = item.getVariableValue(response)
-      rawValues[item.name] = response?.value
+      rawValues[item.name] = response?.value ?? null
     }
     return [values, rawValues]
   }
 
   evaluateReports(responses: ResponseItem[], user: User): string {
-    const scores = this.evaluateScores(responses)
+    const { scores, conditionalVisibility } = this.evaluateScores(responses)
     const [values, rawValues] = this.scoresToValues(scores, responses)
 
     let markdown = ''
@@ -189,10 +213,8 @@ export class ActivityEntity {
     for (const report of this.reports) {
       if (report.type === 'section') {
         markdown = this.generateReportSection(markdown, report, responses, rawValues, values, user)
-      }
-
-      if (report.type === 'score') {
-        markdown = this.generateReportScore(markdown, report, responses, values, user, scores)
+      } else if (report.type === 'score') {
+        markdown = this.generateReportScore(markdown, report, responses, values, user, conditionalVisibility)
       }
     }
 
@@ -203,8 +225,8 @@ export class ActivityEntity {
     markdown: string,
     report: IActivityScoresAndReportsSections,
     responses: ResponseItem[],
-    rawValues: Map,
-    values: Map,
+    rawValues: Map<ResponseValue | Array<ResponseValue>>,
+    values: Map<Score>,
     user: User,
   ): string {
     const isVis = this.testVisibility(report.conditionalLogic, rawValues)
@@ -243,9 +265,9 @@ export class ActivityEntity {
     markdown: string,
     report: IActivityScoresAndReportsScores,
     responses: ResponseItem[],
-    values: Map,
+    values: Map<Score>,
     user: User,
-    scores: Map,
+    conditionalVisibility: Map<boolean>,
   ): string {
     const reportMessage = replaceVariablesInMarkdown({
       markdown: report.message,
@@ -271,7 +293,7 @@ export class ActivityEntity {
     }
 
     for (const conditional of report.conditionalLogic) {
-      const isVis = scores[conditional.id]
+      const isVis = conditionalVisibility[conditional.id]
 
       if (isVis) {
         const reportMessage = replaceVariablesInMarkdown({
@@ -312,7 +334,7 @@ export class ActivityEntity {
   }
 
   getScoresForSummary(responses: ResponseItem[]): ScoreForSummary[] {
-    const scores = this.evaluateScores(responses)
+    const { scores, conditionalVisibility } = this.evaluateScores(responses)
 
     const result = []
     for (const report of this.reports) {
@@ -325,7 +347,7 @@ export class ActivityEntity {
       let flagScore = false
 
       for (const conditional of report.conditionalLogic) {
-        const isVis = this.testVisibility(conditional, scores)
+        const isVis = conditionalVisibility[report.id]
         if (isVis && conditional.flagScore) {
           flagScore = true
           break
@@ -359,7 +381,10 @@ export class ActivityEntity {
     return markdown
   }
 
-  testVisibility(conditional: IActivityScoresAndReportsConditionalLogic | null, scores: Map): boolean {
+  testVisibility(
+    conditional: IActivityScoresAndReportsConditionalLogic | null,
+    scores: Map<Score | ResponseValue | ResponseValue[]>,
+  ): boolean {
     if (!conditional) {
       return true
     }
@@ -370,7 +395,7 @@ export class ActivityEntity {
       const key = condition.itemName
 
       if (key in scores) {
-        const score = isFloat(scores[key]) ? parseFloat(scores[key]) : scores[key]
+        const score = isFloat(scores[key]) ? parseFloat(String(scores[key])) : scores[key]
 
         const checkResult = ConditionalLogicService.checkConditionByPattern({
           type: condition.type,

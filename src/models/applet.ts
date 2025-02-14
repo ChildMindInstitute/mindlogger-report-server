@@ -20,7 +20,9 @@ export class AppletEntity {
   public activities: ActivityEntity[]
   public activityFlows: ActivityFlow[]
 
-  constructor(data: Applet) {
+  // TODO: Remove `treatNullAsZero` when 'enable-subscale-null-when-skipped' feature flag is removed
+  // https://mindlogger.atlassian.net/browse/M2-8635
+  constructor(data: Applet, treatNullAsZero: boolean) {
     this.json = data
 
     this.timestamp = Date.now()
@@ -33,7 +35,7 @@ export class AppletEntity {
 
     // parse activities
     this.activities = data.activities.map((item) => {
-      return new ActivityEntity(item, item.items)
+      return new ActivityEntity(item, item.items, treatNullAsZero)
     })
 
     // parse activity flows
@@ -68,12 +70,12 @@ export class AppletEntity {
     let emailBody = this.reportConfigs.emailBody
 
     for (const response of responses) {
-      const activity = this.activities.find((activity) => activity.id === response.activityId)
+      const activity = this.activities.find(({ id }) => id === response.activityId)
       if (!activity) {
         throw new Error(`Can't find activity ${response.activityId}`)
       }
 
-      const scores = activity.evaluateScores(response.data)
+      const { scores } = activity.evaluateScores(response.data)
 
       const [values] = activity.scoresToValues(scores, response.data)
 
