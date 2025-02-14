@@ -60,7 +60,7 @@ export class ScoresCalculator {
       scores = [checkboxAnswers]
     }
 
-    const numericScores = scores.filter((x) => x !== null)
+    const numericScores = scores.filter((x): x is number => x !== null)
     if (numericScores.length === 0) {
       return null
     }

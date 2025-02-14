@@ -114,7 +114,7 @@ export class ActivityEntity {
 
           case 'average':
             const actualScores = ScoresCalculator.collectActualScores(this.items, report.itemsScore, responses)
-            const filteredScores: number[] = actualScores.filter((x) => x !== null)
+            const filteredScores: number[] = actualScores.filter((x): x is number => x !== null)
 
             if (filteredScores.length === 0) {
               scores[report.id] = null
