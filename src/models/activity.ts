@@ -347,7 +347,7 @@ export class ActivityEntity {
       let flagScore = false
 
       for (const conditional of report.conditionalLogic) {
-        const isVis = conditionalVisibility[report.id]
+        const isVis = conditionalVisibility[conditional.id]
         if (isVis && conditional.flagScore) {
           flagScore = true
           break
