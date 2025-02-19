@@ -14,7 +14,7 @@ export const convertHtmlToPdf = async (html: string, saveTo: string): Promise<vo
   })
 
   const page = await browser.newPage()
-  await page.setContent(html, { waitUntil: 'networkidle0' })
+  await page.setContent(html, { waitUntil: 'load' })
 
   try {
     createDirectoryIfNotExists(saveTo)
