@@ -2,6 +2,7 @@ import 'dotenv/config'
 import crypto from 'crypto'
 import fs from 'fs'
 import { logger } from './core/services/LoggerService'
+import tracer from './tracer'
 
 const KEYS_FOLDER = process.env.KEYS_FOLDER || 'keys'
 
@@ -50,6 +51,7 @@ export const decryptData = <T>(response: string | string[]): T => {
   const T1 = performance.now()
 
   logger.info(`Decryption took ${T1 - T0} milliseconds.`)
+  tracer.dogstatsd.gauge('report_server.decryption.duration', T1 - T0)
 
   return parsedJSON
 }
