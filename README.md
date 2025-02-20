@@ -96,7 +96,10 @@ mindlogger-report-server:latest
 ### Python distutils missing
 
 ```shell
+# Try:
 pip install setuptools
+# or:
+brew install python-setuptools
 ```
 
 ### npm native modules fail to build
