@@ -51,7 +51,7 @@ export const decryptData = <T>(response: string | string[]): T => {
   const T1 = performance.now()
 
   logger.info(`Decryption took ${T1 - T0} milliseconds.`)
-  tracer.dogstatsd.gauge('report_server.decryption.duration', T1 - T0)
+  tracer.dogstatsd.gauge('report_server.decrypt.duration', T1 - T0)
 
   return parsedJSON
 }
