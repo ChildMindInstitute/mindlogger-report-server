@@ -1,0 +1,19 @@
+{
+	"blocks": [
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": ":tada: ${APP} Successful Deploy",
+				"emoji": true
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "Deploy to *${ENVIRONMENT}* with image *${IMAGE}* succeded"
+			}
+		}
+	]
+}
