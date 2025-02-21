@@ -20,6 +20,15 @@ app.get('/', async (req: express.Request, res: express.Response) => {
   res.status(200).send(`MindLogger Report Server is UP (fixes v3) ${buildVersion ? `[Build: ${buildVersion}]` : ''}`)
 })
 
+// Standard health checks that can be filtered out of logs
+app.get('/liveness', async (req: express.Request, res: express.Response) => {
+  res.status(200).send('Liveness - OK')
+})
+
+app.get('/readiness', async (req: express.Request, res: express.Response) => {
+  res.status(200).send('Readiness - OK')
+})
+
 app.post('/send-pdf-report', reportController.sendPdfReport)
 
 app.put('/verify', serverController.verifyServerPublicKey)
