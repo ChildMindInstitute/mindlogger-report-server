@@ -130,7 +130,7 @@ export class ActivityEntity {
           const calculatedScore = scores[report.id]
           if (calculatedScore === null) {
             scores[report.id] = null
-            break
+            continue
           }
 
           const genderItemIndex = this.items.findIndex((item) => item.name == LookupTableItems.Gender_screen)
