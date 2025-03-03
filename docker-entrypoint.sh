@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [ "${DD_TRACE_ENABLED}" == "true" ]; then
   TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600") && \
