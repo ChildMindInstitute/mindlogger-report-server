@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "tsc && node ./dist/src/app.js 2>&1",
-    "start-dd": "tsc && DD_TRACE_ENALBED=true node ./dist/src/app.js",
+    "start-dd": "tsc && DD_TRACE_ENABLED=true node ./dist/src/app.js",
     "dev": "nodemon",
     "test": "npx --experimental-vm-modules jest -- --testPathIgnorePatterns=./dist/",
     "lint": "eslint \"{src,apps,libs,test}/**/*.{ts,js}\"",
