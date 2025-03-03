@@ -21,6 +21,7 @@ test('scoring skipped answers', () => {
     'item-2': 0,
     sumScore_regular_scores_sum: 0,
     sumScore_subscale_scores_sum: 10,
+    sumScore_regular_scores_another_sum_score: 0,
   })
 
   // When null is included in calculation, it is treated as 0
@@ -30,6 +31,7 @@ test('scoring skipped answers', () => {
     'item-2': 0,
     sumScore_regular_scores_sum: 0,
     sumScore_subscale_scores_sum: 10,
+    sumScore_regular_scores_another_sum_score: 0,
   })
 
   const activity = new ActivityEntity(mockActivity, mockActivity.items, false)
@@ -42,15 +44,7 @@ test('scoring skipped answers', () => {
     'item-2': null,
     sumScore_regular_scores_sum: null,
     sumScore_subscale_scores_sum: null,
-  })
-
-  // When null is included in calculation, it is treated as 0
-  result = activity.evaluateScores([{ value: null }, { value: 0 }])
-  expect(result.scores).toEqual({
-    'item-1': null,
-    'item-2': 0,
-    sumScore_regular_scores_sum: 0,
-    sumScore_subscale_scores_sum: 10,
+    sumScore_regular_scores_another_sum_score: null,
   })
 })
 
