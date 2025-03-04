@@ -33,7 +33,7 @@ RUN addgroup webuser \
 
 USER webuser
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["node", "./dist/src/app.js", "2>&1"]
 
 EXPOSE 3000/tcp
