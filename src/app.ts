@@ -41,6 +41,6 @@ app.listen(port, () => {
   logger.info(`MindLogger Report Server listening on port ${port}!`)
   logger.info(`Datadog trace status: ${process.env.DD_TRACE_ENABLED}`)
   if (process.env.DD_TRACE_ENABLED === 'true') {
-    logger.info(`Sending traces too: ${process.env.DD_TRACE_AGENT_HOSTNAME}`)
+    logger.info(`Sending traces to: ${process.env.DD_TRACE_AGENT_HOSTNAME}`)
   }
 })
