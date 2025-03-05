@@ -22,6 +22,7 @@ COPY package*.json /app/
 RUN npm ci
 
 COPY ./ /app/
+RUN chmod a+x docker-entrypoint.sh
 
 RUN npm run build
 
@@ -32,5 +33,7 @@ RUN addgroup webuser \
 
 USER webuser
 
-CMD ["node", "./dist/src/app.js"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["node", "./dist/src/app.js", "2>&1"]
+
 EXPOSE 3000/tcp
