@@ -121,6 +121,6 @@ export class MarkdownVariableReplacer {
     if (!(variableName in this.answers)) {
       return ''
     }
-    return this.answers[variableName].toString()
+    return this.answers[variableName]?.toString() ?? ''
   }
 }
