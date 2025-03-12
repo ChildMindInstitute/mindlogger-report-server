@@ -1,11 +1,9 @@
-
 name: Create Dev Release
 on:
   workflow_dispatch: {}
-  # push:
-  #   branches:
-  #     - dev
-
+  push:
+    branches:
+      - adding-report-server-gha
 
 concurrency:
   cancel-in-progress: true
@@ -52,7 +50,7 @@ jobs:
           service: report-server
           cluster: cmiml-dev
           wait-for-service-stability: true
-  
+
   Failed-Notification:
     needs:
       - App_Build
@@ -80,7 +78,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.CODE_GURU_REPORTS_WEBHOOK }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-  
+
   Success-Notification:
     needs:
       - App_Build
