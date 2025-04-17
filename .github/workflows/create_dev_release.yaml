@@ -19,6 +19,9 @@ jobs:
   build:
     name: Docker Build and Push
     uses: ./.github/workflows/_build.yaml
+    permissions:
+      id-token: write
+      contents: read
     with:
       tag-name: dev
 

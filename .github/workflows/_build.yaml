@@ -17,7 +17,6 @@ concurrency:
 permissions:
   id-token: write
   contents: read
-  issues: write
 
 env:
   GITHUB_REPO_NAME: ${{ github.event.repository.name }}
