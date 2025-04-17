@@ -27,9 +27,12 @@ jobs:
 
   deploy-dev:
     name: Deploy to Dev
-    needs: [ build ]
+#    needs: [ build ]
     secrets: inherit
     uses: ./.github/workflows/_deploy.yaml
+    permissions:
+      contents: read
+      id-token: write
     with:
       image-tag: dev
       env-name: dev
