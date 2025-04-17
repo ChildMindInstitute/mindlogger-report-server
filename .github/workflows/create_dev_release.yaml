@@ -35,7 +35,7 @@ jobs:
       id-token: write
     with:
       image-tag: dev
-      env-name: dev
+      env-name: prod
 
 #  Deploy:
 #    needs: App_Build
