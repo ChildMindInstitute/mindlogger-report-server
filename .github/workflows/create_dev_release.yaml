@@ -20,7 +20,7 @@ jobs:
     name: Docker Build and Push
     uses: ./.github/workflows/_build.yaml
     with:
-      tag: dev
+      tag-name: dev
 
 #  Deploy:
 #    needs: App_Build
