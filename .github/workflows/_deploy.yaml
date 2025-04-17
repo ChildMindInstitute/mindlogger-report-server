@@ -115,9 +115,9 @@ jobs:
         with:
           result-encoding: string
           script: |
-            let matrix = [{ name: "report-server", task-def: "report_server", service: "report-server", container: "report_server" }]
+            let matrix = [{ "name": "report-server", "task-def": "report_server", "service": "report-server", "container": "report_server" }]
             if ("${{ inputs.env-name }}" == "prod") {
-              matrix.push({ name: "ped-report-server", task-def: "ped_screener_report_server", service: ped-screener-report, container: "report_server" })
+              matrix.push({ "name": "ped-report-server", "task-def": "ped_screener_report_server", "service": "ped-screener-report", "container": "report_server" })
             }
             return JSON.stringify(matrix);
 
