@@ -1,0 +1,196 @@
+name: Deploy
+on:
+  # Keep this for someday in the future
+#  workflow_dispatch:
+#    inputs:
+#      image-tag:
+#        required: true
+#        type: string
+#        description: Docker tag
+#      env-name:
+#        required: true
+#        type: choice
+#        description: Environment name
+#        options:
+#          - dev
+#          - test
+#          - uat
+#          - stage
+#          - prod
+#          - prod-dr
+
+  workflow_call:
+    inputs:
+      env-name:
+        required: true
+        type: string
+      image-tag:
+        required: true
+        type: string
+        description: Docker tag
+
+# Wait for other deploys to finish
+concurrency:
+  cancel-in-progress: false
+  group: report-server-deploy
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/report-server-server
+  ECR_ADDRESS: 917902836630.dkr.ecr.us-east-1.amazonaws.com
+
+jobs:
+  setup-vars:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Map env to AWS Role
+        id: role
+        run: |
+          ENV_NAME="${{ inputs.env-name }}"
+          case "$ENV_NAME" in
+            "dev")
+              echo 'role=arn:aws:iam::017925157769:role/cmiml-dev-oidc-github-role' >> "$GITHUB_OUTPUT"
+            ;;
+            "test")
+              echo 'role=arn:aws:iam::641513112151:role/cmiml-test-oidc-github-role' >> "$GITHUB_OUTPUT"
+            ;;
+            "uat")
+              echo 'role=arn:aws:iam::641513112151:role/cmiml-uat-oidc-github-role' >> "$GITHUB_OUTPUT"
+            ;;
+            "stage")
+              echo 'role=arn:aws:iam::641513112151:role/cmiml-stage-oidc-github-role' >> "$GITHUB_OUTPUT"
+            ;;
+            "prod")
+              echo 'role=arn:aws:iam::641513112151:role/cmiml-prod-oidc-github-role' >> "$GITHUB_OUTPUT"
+            ;;
+            "prod-dr")
+              echo 'role=arn:aws:iam::973422231492:role/cmiml-dr-oidc-github-role' >> "$GITHUB_OUTPUT"
+            ;;
+            *)
+              echo "Bad environment name"
+              exit 1;
+          esac
+
+      - name: Map env to AWS Region
+        id: region
+        run: |
+          ENV_NAME="${{ inputs.env-name }}"
+          case "$ENV_NAME" in
+            "prod-dr")
+              echo "region=us-west-2" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "region=us-east-1" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+      - name: Map env to ECS cluster
+        id: cluster
+        run: |
+          ENV_NAME="${{ inputs.env-name }}"
+          case "$ENV_NAME" in
+            "prod-dr")
+              echo "cluster=prod-dr-us-west-2" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "cluster=cmiml-${ENV_NAME}" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+    outputs:
+      role: ${{ steps.role.outputs.role }}
+      region: ${{ steps.region.outputs.region }}
+      cluster: ${{ steps.cluster.outputs.cluster }}
+
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.result }}
+    steps:
+      - uses: actions/github-script@v6
+        id: set-matrix
+        with:
+          result-encoding: string
+          script: |
+            let matrix = [{ name: "report-server", task-def: "report_server", service: "report-server", container: "report_server" }]
+            if ("${{ inputs.env-name }}" == "prod") {
+              matrix.push({ name: "ped-report-server", task-def: "ped_screener_report_server", service: ped-screener-report, container: "report_server" })
+            }
+            return JSON.stringify(matrix);
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [setup-vars, setup-matrix]
+
+    name: Deploy ${{ matrix.apps.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        apps: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+    env:
+      AWS_REGION: ${{ needs.setup-vars.outputs.region }}
+
+    steps:
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ needs.setup-vars.outputs.role }}
+          role-session-name: OIDC-GHA-session-deploy
+          aws-region: ${{ needs.setup-vars.outputs.region }}
+
+      - name: Download task definition
+        if: ${{ inputs.env-name }}
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ matrix.apps.task-def }} --query taskDefinition > task-definition.json
+
+#      - name: Render Amazon ECS task definition
+#        id: task-def
+#        uses: aws-actions/amazon-ecs-render-task-definition@v1
+#        with:
+#          task-definition: task-definition.json
+#          container-name: ${{ matrix.apps.container }}
+#          image: ${{ env.ECR_REPO }}:${{ inputs.image-tag }}
+#
+#      - name: Update Task Definition
+#        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+#        with:
+#          task-definition: ${{ steps.task-def.outputs.task-definition }}
+#          service: ${{ matrix.apps.service }}
+#          cluster: ${{ needs.setup-vars.outputs.cluster }}
+#          wait-for-service-stability: true
+#
+#
+#  on-deploy-failure:
+#    runs-on: ubuntu-latest
+#    if: ${{ !cancelled() && (needs.deploy.result == 'failure' || needs.deploy.result == 'timed_out') }}
+#    needs:
+#      - deploy
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: "Send Slack message on failure"
+#        uses: rtCamp/action-slack-notify@v2
+#        env:
+#          SLACK_COLOR: failure
+#          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_DEV }}
+#          MSG_MINIMAL: actions url
+#          SLACK_TITLE: Deployment to DEV environment
+#          SLACK_MESSAGE: '🚨 Error when executing deployment!'
+#
+#  on-deploy-success:
+#    runs-on: ubuntu-latest
+#    if: ${{ !cancelled() && (needs.deploy.result == 'success') }}
+#    needs:
+#      - deploy
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: "Send Slack message on success"
+#        uses: rtCamp/action-slack-notify@v2
+#        env:
+#          SLACK_COLOR: success
+#          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_DEV }}
+#          MSG_MINIMAL: actions url
+#          SLACK_TITLE: Deployment to DEV environment
+#          SLACK_MESSAGE: '🚀 Deployment was successful!'
