@@ -16,6 +16,8 @@ import { SendPdfReportRequest, SendPdfReportRequestPayload } from './types'
 import { getReportFooter, getReportStyles, getSplashImageHTML } from './helpers'
 import { decryptActivityResponses } from './helpers/decryptResponses'
 import { getSummary } from './services/getSummary'
+import { FeatureFlagsService } from '../../core/services/FeatureFlagsService'
+import tracer from '../../tracer'
 
 class ReportController {
   public async sendPdfReport(req: SendPdfReportRequest, res: Response): Promise<unknown> {
@@ -25,6 +27,8 @@ class ReportController {
     const { activityId, activityFlowId } = req.query
 
     const outputsFolder = process.env.OUTPUTS_FOLDER || os.tmpdir()
+
+    const featureFlags = new FeatureFlagsService()
 
     try {
       if (!req.body.payload) {
@@ -47,13 +51,20 @@ class ReportController {
         return res.status(400).json({ message: 'Applet is not connected. AppletId not found.' })
       }
 
+      // Log into LD using workspace ID associated with applet (same as encryption account ID)
+      await featureFlags.login(payload.applet.encryption.accountId)
+
+      const treatNullAsZero = !featureFlags.getFlag('enable-subscale-null-when-skipped')
+
       const responses: ActivityResponse[] = decryptActivityResponses({
         responses: payload.responses,
         appletPrivateKey: appletKeys.privateKey,
         appletEncryption: payload.applet.encryption,
       })
 
-      const applet = new AppletEntity(payload.applet)
+      // TODO: Remove `treatNullAsZero` parameter once feature flag is removed
+      // https://mindlogger.atlassian.net/browse/M2-8635
+      const applet = new AppletEntity(payload.applet, treatNullAsZero)
 
       const pdfPassword = await getPDFPassword(applet.id)
 
@@ -115,6 +126,7 @@ class ReportController {
       const t1 = performance.now()
 
       logger.info(`Total PDF generation took ${t1 - t0} milliseconds.`)
+      tracer.dogstatsd.gauge('report_server.pdf_generator.duration', t1 - t0)
 
       res.status(200).json(<SendPdfReportResponse>{
         pdf: fs.readFileSync(filename, { encoding: 'base64' }).toString(),
@@ -127,6 +139,9 @@ class ReportController {
       logger.error('error', e)
 
       return res.status(400).json({ message: 'invalid request' })
+    } finally {
+      // Close LD client
+      featureFlags.closeClient()
     }
   }
 }

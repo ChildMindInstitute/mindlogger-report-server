@@ -1,11 +1,9 @@
-
 name: Create Dev Release
 on:
   workflow_dispatch: {}
-  # push:
-  #   branches:
-  #     - dev
-
+  push:
+    branches:
+      - adding-report-server-gha
 
 concurrency:
   cancel-in-progress: true

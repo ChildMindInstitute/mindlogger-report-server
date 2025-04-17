@@ -4,13 +4,105 @@
   "splashScreen": "",
   "image": "",
   "showAllAtOnce": false,
-  "isSkippable": false,
+  "isSkippable": true,
   "isReviewable": false,
   "responseIsEditable": true,
   "isHidden": false,
   "scoresAndReports": {
     "generateReport": true,
     "showScoreSummary": true,
+    "reports": [
+      {
+        "type": "score",
+        "name": "Regular scores: Sum",
+        "id": "sumScore_regular_scores_sum",
+        "calculationType": "sum",
+        "itemsScore": ["item-1", "item-2"],
+        "message": "",
+        "itemsPrint": [],
+        "conditionalLogic": [
+          {
+            "name": "Equal to 0",
+            "id": "sumScore_regular_scores_sum_equal_to_0",
+            "flagScore": false,
+            "message": "",
+            "itemsPrint": [],
+            "match": "all",
+            "conditions": [
+              {
+                "itemName": "sumScore_regular_scores_sum",
+                "type": "EQUAL",
+                "payload": {
+                  "value": 0
+                }
+              }
+            ]
+          }
+        ],
+        "scoringType": "raw_score",
+        "subscaleName": ""
+      },
+      {
+        "type": "score",
+        "name": "Subscale scores",
+        "id": "sumScore_subscale_scores_sum",
+        "calculationType": "sum",
+        "itemsScore": ["item-1", "item-2"],
+        "message": "",
+        "itemsPrint": [],
+        "conditionalLogic": [
+          {
+            "name": "Subscale score is 0",
+            "id": "sumScore_subscale_scores_subscale_score_is_0",
+            "flagScore": false,
+            "message": "",
+            "itemsPrint": [],
+            "match": "all",
+            "conditions": [
+              {
+                "itemName": "sumScore_subscale_scores",
+                "type": "EQUAL",
+                "payload": {
+                  "value": 0
+                }
+              }
+            ]
+          }
+        ],
+        "scoringType": "score",
+        "subscaleName": "Subscale score"
+      },
+      {
+        "type": "score",
+        "name": "Regular scores: Another sum score",
+        "id": "sumScore_regular_scores_another_sum_score",
+        "calculationType": "sum",
+        "itemsScore": ["item-1", "item-2"],
+        "message": "",
+        "itemsPrint": [],
+        "conditionalLogic": [
+          {
+            "name": "Equal to 0",
+            "id": "sumScore_regular_scores_another_sum_score_equal_to_0",
+            "flagScore": false,
+            "message": "",
+            "itemsPrint": [],
+            "match": "all",
+            "conditions": [
+              {
+                "itemName": "sumScore_regular_scores_sum",
+                "type": "EQUAL",
+                "payload": {
+                  "value": 0
+                }
+              }
+            ]
+          }
+        ],
+        "scoringType": "raw_score",
+        "subscaleName": ""
+      }
+    ],
     "scores": [
       {
         "name": "postpartumdepression",
@@ -18,16 +110,11 @@
         "calculationType": "average",
         "minScore": 1,
         "maxScore": 3,
-        "itemsScore": [
-          "5e90d62b-65b8-4567-b259-2214d74a50e0"
-        ],
+        "itemsScore": ["5e90d62b-65b8-4567-b259-2214d74a50e0"],
         "showMessage": true,
         "message": "Scores on the EDPS range from 0 to 30, with any score at or above 10 indicating possible depression. ",
         "printItems": true,
-        "itemsPrint": [
-          "5e90d62b-65b8-4567-b259-2214d74a50e0",
-          "acc8d88b-f205-4baa-9a29-551a404a36dd"
-        ],
+        "itemsPrint": ["5e90d62b-65b8-4567-b259-2214d74a50e0", "acc8d88b-f205-4baa-9a29-551a404a36dd"],
         "conditionalLogic": [
           {
             "name": "high",
@@ -36,10 +123,7 @@
             "showMessage": true,
             "message": "**++The mother’s score on the EPDS is [[sumScore_postpartumdepression]]. This score indicates the likely presence of postpartum depression.++**\n\nIf not currently being addressed, high scores on this scale may signal the need for further clinical evaluation and attention depending on the level of difficulties encountered in the home, work, or social environments. ",
             "printItems": true,
-            "itemsPrint": [
-              "5e90d62b-65b8-4567-b259-2214d74a50e0",
-              "acc8d88b-f205-4baa-9a29-551a404a36dd"
-            ],
+            "itemsPrint": ["5e90d62b-65b8-4567-b259-2214d74a50e0", "acc8d88b-f205-4baa-9a29-551a404a36dd"],
             "match": "all",
             "conditions": [
               {
@@ -59,10 +143,7 @@
             "showMessage": true,
             "message": "**The mother’s score on the EPDS is [[sumScore_postpartumdepression]].** This score indicates that postpartum depression is not present in the mother.\n\nIf you remain concerned about their symptoms, functioning, or well-being, please advise and assist them to seek additional consultation and guidance, even though their score is in the low-risk range.",
             "printItems": true,
-            "itemsPrint": [
-              "5e90d62b-65b8-4567-b259-2214d74a50e0",
-              "acc8d88b-f205-4baa-9a29-551a404a36dd"
-            ],
+            "itemsPrint": ["5e90d62b-65b8-4567-b259-2214d74a50e0", "acc8d88b-f205-4baa-9a29-551a404a36dd"],
             "match": "all",
             "conditions": [
               {
@@ -84,10 +165,7 @@
         "showMessage": true,
         "message": "## Edinburgh Postnatal Depression Scale (EDPS)\n\nA common complication of childbearing is postpartum depression, which refers to the onset of depression or depression-like symptoms following childbirth. The EDPS identifies mothers at risk for \"perinatal\" depression. \n\nThe EDPS recommends the following resources:\n-  National Women's Health Information Center <www.4women.gov>\n- Postpartum\nSupport International <www.chss.iup.edu/postpartum>\n- Depression after Delivery\n<www.depressionafterdelivery.com>",
         "printItems": true,
-        "itemsPrint": [
-          "5e90d62b-65b8-4567-b259-2214d74a50e0",
-          "acc8d88b-f205-4baa-9a29-551a404a36dd"
-        ],
+        "itemsPrint": ["5e90d62b-65b8-4567-b259-2214d74a50e0", "acc8d88b-f205-4baa-9a29-551a404a36dd"],
         "conditionalLogic": {
           "name": "section-condition",
           "id": "180bbf86-b427-423b-bd1c-6fa590404cfe",
@@ -126,12 +204,103 @@
   },
   "subscaleSetting": {
     "calculateTotalScore": null,
-    "subscales": [],
+    "subscales": [
+      {
+        "name": "Subscale score",
+        "subscaleTableData": [
+          {
+            "id": "1",
+            "rawScore": "0 ~ 2",
+            "score": "10",
+            "optionalText": "",
+            "severity": null
+          }
+        ]
+      }
+    ],
     "totalScoresTableData": []
   },
   "id": "0656ccb3-3b25-4197-be8e-c8479599a12c",
   "order": 2,
   "items": [
+    {
+      "id": "item-1",
+      "name": "item-1",
+      "isHidden": false,
+      "allowEdit": true,
+      "question": "",
+      "responseType": "singleSelect",
+      "config": {
+        "addScores": true
+      },
+      "responseValues": {
+        "options": [
+          {
+            "id": "option-1",
+            "text": "Option 1",
+            "value": 0,
+            "score": 0,
+            "image": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "tooltip": null
+          },
+          {
+            "id": "option-2",
+            "text": "Option 2",
+            "value": 1,
+            "score": 1,
+            "image": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "tooltip": null
+          }
+        ],
+        "scores": [0, 10]
+      },
+      "conditionalLogic": null
+    },
+    {
+      "id": "item-2",
+      "name": "item-2",
+      "isHidden": false,
+      "allowEdit": true,
+      "question": "",
+      "responseType": "singleSelect",
+      "config": {
+        "addScores": true
+      },
+      "responseValues": {
+        "options": [
+          {
+            "id": "option-1",
+            "text": "Option 1",
+            "value": 0,
+            "score": 0,
+            "image": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "tooltip": null
+          },
+          {
+            "id": "option-2",
+            "text": "Option 2",
+            "value": 1,
+            "score": 1,
+            "image": null,
+            "isHidden": false,
+            "color": null,
+            "alert": null,
+            "tooltip": null
+          }
+        ],
+        "scores": [0, 10]
+      },
+      "conditionalLogic": null
+    },
     {
       "question": "MotherDOB",
       "responseType": "multiSelect",

@@ -29,40 +29,46 @@ export class ScoresCalculator {
 
     switch (item.inputType) {
       case 'slider':
-        return this.collectScoreForSlider(item, answer.value as number)
+        return this.collectScoreForSlider(item, answer.value as null | number)
       case 'singleSelect':
-        return this.collectScoreForSingleSelect(item, answer.value as number)
+        return this.collectScoreForSingleSelect(item, answer.value as null | number)
       case 'multiSelect':
-        return this.collectScoreForMultiSelect(item, answer.value as number[])
+        return this.collectScoreForMultiSelect(item, answer.value as null | Array<null | number>)
       default:
         return null
     }
   }
 
-  public static collectScoreForMultiSelect(item: ItemEntity, checkboxAnswers: number[] | number): number | null {
+  public static collectScoreForMultiSelect(
+    item: ItemEntity,
+    checkboxAnswers: null | number | Array<null | number>,
+  ): number | null {
     if (checkboxAnswers == null) {
       return null
     }
 
-    let scores: number[]
+    let scores: Array<number | null> = []
     if (Array.isArray(checkboxAnswers)) {
-      scores = item.options
-        .map<number | null>((option) => {
-          const foundAnswer = checkboxAnswers?.find((checkboxAnswer) => {
-            return checkboxAnswer === option.value
-          })
-
-          return foundAnswer !== undefined ? option.score : null
+      scores = item.options.map<number | null>((option) => {
+        const foundAnswer = checkboxAnswers?.find((checkboxAnswer) => {
+          return checkboxAnswer === option.value
         })
-        .filter((x) => x !== null) as number[]
+
+        return foundAnswer !== undefined ? option.score : null
+      })
     } else {
       scores = [checkboxAnswers]
     }
 
-    return Calculator.sum(scores)
+    const numericScores = scores.filter((x): x is number => x !== null)
+    if (numericScores.length === 0) {
+      return null
+    }
+
+    return Calculator.sum(numericScores)
   }
 
-  public static collectScoreForSingleSelect(item: ItemEntity, radioAnswer: number): number | null {
+  public static collectScoreForSingleSelect(item: ItemEntity, radioAnswer: number | null): number | null {
     if (radioAnswer === null) {
       return null
     }
@@ -72,11 +78,12 @@ export class ScoresCalculator {
     return option ? option.score : null
   }
 
-  public static collectScoreForSlider(item: ItemEntity, itemAnswer: number): number | null {
-    const sliderAnswer = itemAnswer
+  public static collectScoreForSlider(item: ItemEntity, sliderAnswer: number | null): number | null {
+    if (sliderAnswer === null) {
+      return null
+    }
 
-    const minValue = item.json.responseValues.minValue
-    const maxValue = item.json.responseValues.maxValue
+    const { minValue, maxValue } = item.json.responseValues
 
     if (sliderAnswer < minValue || sliderAnswer > maxValue) {
       return null
@@ -88,7 +95,7 @@ export class ScoresCalculator {
       return null
     }
 
-    const valueIndex = sliderAnswer - item.json.responseValues.minValue
+    const valueIndex = sliderAnswer - minValue
     const scores = item.json.responseValues.scores ?? []
 
     return scores[valueIndex] ?? null

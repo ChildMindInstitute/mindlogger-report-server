@@ -24,7 +24,9 @@ export class ItemEntity {
   public setAlerts: boolean
   public options: IActivityItemOption[]
 
-  constructor(data: IActivityItem) {
+  private treatNullAsZero: boolean
+
+  constructor(data: IActivityItem, treatNullAsZero = false) {
     this.json = data
 
     this.id = data.id
@@ -37,36 +39,33 @@ export class ItemEntity {
     this.scoring = data.config?.addScores || false
     this.setAlerts = data.config?.setAlerts || false
     this.options = (data.responseValues?.options ?? []).map((o) => ({ ...o }))
+
+    this.treatNullAsZero = treatNullAsZero
   }
 
-  getScore(value: ResponseItem): number {
-    if (!value || !this.scoring) {
-      return 0
-    }
+  getScore(value: ResponseItem): number | null {
+    const nullScore = this.treatNullAsZero ? 0 : null
 
-    let totalScore = 0
+    if (!value || !this.scoring) {
+      return nullScore
+    }
 
     switch (this.inputType) {
       case 'multiSelect':
-        const multiSelectScore = ScoresCalculator.collectScoreForMultiSelect(this, value.value as number[])
-        totalScore += multiSelectScore ?? 0
-        break
+        return (
+          ScoresCalculator.collectScoreForMultiSelect(this, value.value as null | number | Array<null | number>) ??
+          nullScore
+        )
 
       case 'singleSelect':
-        const singleSelecScore = ScoresCalculator.collectScoreForSingleSelect(this, value.value as number)
-        totalScore += singleSelecScore ?? 0
-        break
+        return ScoresCalculator.collectScoreForSingleSelect(this, value.value as null | number) ?? nullScore
 
       case 'slider':
-        const sliderScore = ScoresCalculator.collectScoreForSlider(this, value.value as number)
-        totalScore += sliderScore ?? 0
-        break
+        return ScoresCalculator.collectScoreForSlider(this, value.value as null | number) ?? nullScore
 
       default:
-        break
+        return nullScore
     }
-
-    return totalScore
   }
 
   getAlerts(value: ResponseItem): string[] {
@@ -75,11 +74,11 @@ export class ItemEntity {
       return []
     }
     if (['singleSelectRows', 'multiSelectRows'].includes(this.inputType)) {
-      return this.getAlertsForSelectionPerRow(value.value)
+      return this.getAlertsForSelectionPerRow(value.value as Array<string | null>)
     }
 
     if (this.inputType === 'sliderRows') {
-      return this.getAlertsForSliderRow(value.value)
+      return this.getAlertsForSliderRow(value.value as Array<number | null>)
     }
 
     return this.getAlertForSimpleTypes(value, this.options)
@@ -218,7 +217,7 @@ export class ItemEntity {
       optionsHtml += response[0]
     }
     //additional input
-    if (isString(value.text)) {
+    if (value && isString(value.text)) {
       optionsHtml += value.text
     }
 
@@ -323,7 +322,7 @@ export class ItemEntity {
   private getAlertForSimpleTypes(responseItem: ResponseItem, options: IActivityItemOption[]): string[] {
     switch (this.inputType) {
       case 'slider':
-        const value = responseItem.value
+        const value = responseItem?.value as number
 
         const alerts = this.json.responseValues.alerts ?? []
         const alert = alerts.find((a) => {
@@ -332,7 +331,7 @@ export class ItemEntity {
           }
           return a.value === value
         })
-        return [alert?.alert ?? '']
+        return alert?.alert ? [alert.alert] : []
 
       case 'singleSelect':
       case 'multiSelect':
@@ -360,13 +359,9 @@ export class ItemEntity {
     }
 
     if (isObject(response) && !isArray(response)) {
-      const { value } = response as ResponseItem
+      const { value } = response
 
-      if (!isArray(value)) {
-        return [value]
-      }
-
-      return value
+      return [value].flat()
     }
 
     return [response]

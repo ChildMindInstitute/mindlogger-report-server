@@ -29,14 +29,15 @@ mkdir keys
 mkdir outputs
 ```
 
-| Key            | Default value | Description                                                                                             |
-| -------------- | ------------- | ------------------------------------------------------------------------------------------------------- |
-| PORT           | 3000          | Port server will listen to requests                                                                     |
-| KEYS_FOLDER    | keys          | Folder in local storage with keys                                                                       |
-| OUTPUTS_FOLDER | os.tmpdir()   | Folder in local storage to temporary store generated PDF                                                |
-| BUILD_VERSION  | null          | Version of report server                                                                                |
-| AWS_KMS_KEY_ID | null          | AWS KMS Key id used to crypt applet password in database, if null password will be stored as plain text |
-| AWS_REGION     | us-east-1     | AWS region of KMS Key                                                                                   |
+| Key                    | Default value | Description                                                                                             |
+| ---------------------- | ------------- | ------------------------------------------------------------------------------------------------------- |
+| PORT                   | 3000          | Port server will listen to requests                                                                     |
+| KEYS_FOLDER            | keys          | Folder in local storage with keys                                                                       |
+| OUTPUTS_FOLDER         | os.tmpdir()   | Folder in local storage to temporary store generated PDF                                                |
+| BUILD_VERSION          | null          | Version of report server                                                                                |
+| AWS_KMS_KEY_ID         | null          | AWS KMS Key id used to crypt applet password in database, if null password will be stored as plain text |
+| AWS_REGION             | us-east-1     | AWS region of KMS Key                                                                                   |
+| LAUNCHDARKLY_CLIENT_ID | env-key       | LaunchDarkly client ID                                                                                  |
 
 ### AWS KMS
 
@@ -88,4 +89,22 @@ docker run -d \
 -p "3000:3000" \
 --name mindlogger-report-server \
 mindlogger-report-server:latest
+```
+
+## Troubleshooting
+
+### Python distutils missing
+
+```shell
+# Try:
+pip install setuptools
+# or:
+brew install python-setuptools
+```
+
+### npm native modules fail to build
+Sometimes a clean install of command line tools is needed on MacOS:
+```shell
+sudo rm -rf /Library/Developer/CommandLineTools
+xcode-select --install
 ```

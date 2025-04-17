@@ -1,15 +1,10 @@
-class LoggerService {
-  public info(message: string, ...args: unknown[]) {
-    console.info(message, ...args)
-  }
+import { createLogger, format, transports } from 'winston'
 
-  public error(message: string, ...args: unknown[]) {
-    console.error(message, ...args)
-  }
-
-  public warn(message: string, ...args: unknown[]) {
-    console.warn(message, ...args)
-  }
+export const loggerOptions = {
+  level: 'info',
+  exitOnError: false,
+  format: format.json(),
+  transports: [new transports.Console()],
 }
 
-export const logger = new LoggerService()
+export const logger = createLogger(loggerOptions)
