@@ -16,18 +16,18 @@ permissions:
   contents: read
 
 jobs:
-#  build:
-#    name: Docker Build and Push
-#    uses: ./.github/workflows/_build.yaml
-#    permissions:
-#      id-token: write
-#      contents: read
-#    with:
-#      tag-name: dev
+  build:
+    name: Docker Build and Push
+    uses: ./.github/workflows/_build.yaml
+    permissions:
+      id-token: write
+      contents: read
+    with:
+      tag-name: dev
 
   deploy-dev:
     name: Deploy to Dev
-#    needs: [ build ]
+    needs: [ build ]
     secrets: inherit
     uses: ./.github/workflows/_deploy.yaml
     permissions:
