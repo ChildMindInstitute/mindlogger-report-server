@@ -39,7 +39,7 @@ permissions:
   contents: read
 
 env:
-  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/report-server-server
+  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/report-server
   ECR_ADDRESS: 917902836630.dkr.ecr.us-east-1.amazonaws.com
 
 jobs:
