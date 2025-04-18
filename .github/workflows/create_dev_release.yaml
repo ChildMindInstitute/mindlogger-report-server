@@ -9,7 +9,7 @@ on:
 
 concurrency:
   cancel-in-progress: true
-  group: report-server-build-app-dev
+  group: report-server-dev
 
 permissions:
   id-token: write
@@ -35,90 +35,5 @@ jobs:
       id-token: write
     with:
       image-tag: dev
-      env-name: prod
+      env-name: dev
 
-#  Deploy:
-#    needs: App_Build
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: configure aws credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          role-to-assume: arn:aws:iam::017925157769:role/cmiml-dev-oidc-github-role
-#          role-session-name: OIDC-GHA-session
-#          aws-region: us-east-1
-#
-#      - name: Download task definition
-#        run: |
-#          aws ecs describe-task-definition --task-definition report_server --query taskDefinition > task-definition.json
-#
-#      - name: Render Amazon ECS task definition
-#        id: task-def
-#        uses: aws-actions/amazon-ecs-render-task-definition@v1
-#        with:
-#          task-definition: task-definition.json
-#          container-name: report_server
-#          image: ${{ needs.App_Build.outputs.image }}
-#
-#      - name: Update Task Definition
-#        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-#        with:
-#          task-definition: ${{ steps.task-def.outputs.task-definition }}
-#          service: report-server
-#          cluster: cmiml-dev
-#          wait-for-service-stability: true
-#
-#  Failed-Notification:
-#    needs:
-#      - App_Build
-#      - Deploy
-#    if: failure()
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#
-#      - name: Format Slack Message (Failed)
-#        if: failure()
-#        run: |
-#          sed -i "s|\${APP}|Report Server|g" .github/configs/failed_deploy.json
-#          sed -i "s|\${ENVIRONMENT}|dev|g" .github/configs/failed_deploy.json
-#          sed -i "s|\${IMAGE}|${{ needs.App_Build.outputs.short-image }}|g" .github/configs/failed_deploy.json
-#
-#          echo JSON_PAYLOAD=$(cat .github/configs/failed_deploy.json) >> $GITHUB_ENV
-#        shell: bash
-#      - name: Send Slack Message
-#        uses: slackapi/slack-github-action@v1.27.0
-#        with:
-#          payload: |
-#            ${{ env.JSON_PAYLOAD }}
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.CODE_GURU_REPORTS_WEBHOOK }}
-#          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-#
-#  Success-Notification:
-#    needs:
-#      - App_Build
-#      - Deploy
-#    if: success()
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#
-#      - name: Format Slack Message (Success)
-#        run: |
-#          sed -i "s|\${APP}|Report Server|g" .github/configs/successful_deploy.json
-#          sed -i "s|\${ENVIRONMENT}|dev|g" .github/configs/successful_deploy.json
-#          sed -i "s|\${IMAGE}|${{ needs.App_Build.outputs.short-image }}|g" .github/configs/successful_deploy.json
-#
-#          echo JSON_PAYLOAD=$(cat .github/configs/successful_deploy.json) >> $GITHUB_ENV
-#        shell: bash
-#      - name: Send Slack Message
-#        uses: slackapi/slack-github-action@v1.27.0
-#        with:
-#          payload: |
-#            ${{ env.JSON_PAYLOAD }}
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.CODE_GURU_REPORTS_WEBHOOK }}
-#          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
