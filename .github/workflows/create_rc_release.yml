@@ -1,0 +1,129 @@
+
+name: Create Release Candidate
+on:
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: write
+
+concurrency:
+  cancel-in-progress: true
+  group: report-server-build-app-rc
+
+jobs:
+  Allow_Run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Branch
+        run: |
+          if [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
+            echo "Branch is valid to deploy a release candidate. Proceeding ..."
+          else
+            echo "Branch don't match release candidate branch pattern."
+            exit 1
+          fi
+  Tagging:
+    runs-on: ubuntu-latest
+    needs: Allow_Run
+    outputs:
+      tag_value: ${{ steps.tag.outputs.tag_value }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      
+      - name: Get Release
+        run: |
+          echo RELEASE_BRANCH="$(echo ${{ github.ref }} | sed 's/refs\/.*\///g')" >> $GITHUB_ENV
+      
+      - name: Get Current Release Tag
+        run: |
+          echo CURRENT_TAG="$(git tag -l ${{ env.RELEASE_BRANCH }}-rc\* --sort=creatordate | tail -n 1)" >> $GITHUB_ENV
+      
+      - name: Get Latest Release
+        run: |
+          echo LATEST_RELEASE="$(git tag -l --sort=creatordate | tee | grep -v rc | tail -n 1)" >> $GITHUB_ENV
+
+      - name: Define Tag Value
+        id: tag
+        run: |
+          if [[ -n "${CURRENT_TAG}" ]]; then
+            current_build=$(echo "${CURRENT_TAG}" | awk -F 'rc' '{print $2}')
+            BUILD_NUM=$((current_build + 1))
+            echo "Current build: ${BUILD_NUM}"
+          
+            TAG_VAL="${RELEASE_BRANCH}-rc${BUILD_NUM}"
+            echo "Tag value: ${TAG_VAL}"
+          
+            echo tag_value="${TAG_VAL}" >> $GITHUB_OUTPUT
+            echo BUILD_NUMBER="${BUILD_NUM}" >> $GITHUB_ENV
+          else
+            echo tag_value="${RELEASE_BRANCH}-rc1" >> $GITHUB_OUTPUT
+            echo BUILD_NUMBER="1" >> $GITHUB_ENV
+          fi
+        shell: bash
+      - name: Push tag to Repository
+        run: |
+          git config --global user.name "Automated User"
+          git config --global user.email "automateduser@mindlogger"
+          git tag ${{ steps.tag.outputs.tag_value }}
+          git push origin ${{ steps.tag.outputs.tag_value }}
+
+      - name: Generate Release Notes
+        run: |
+          RELEASE_NOTES=$(gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/${{ github.repository }}/releases/generate-notes \
+          -f "tag_name=${{ steps.tag.outputs.tag_value }}" -f "target_commitish=${{ github.ref }}" -f "previous_tag_name=${{ env.LATEST_RELEASE }}" | jq -r .'body' | sed 's/\\n/\n/g')
+
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/${{ github.repository }}/releases \
+          -f "tag_name=${{ steps.tag.outputs.tag_value }}" -f "target_commitish=${{ github.ref }}" -f "name=Release Candidate #${{ env.BUILD_NUMBER }} (${{ env.RELEASE_BRANCH }})" -f "body=$RELEASE_NOTES" -F "prerelease=true"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  App_Build:
+    name: Release Candidate
+    uses: ./.github/workflows/build_push.yaml
+    needs: Tagging
+    with:
+      tag: ${{ needs.Tagging.outputs.tag_value }}
+
+  Deploy:
+    needs: App_Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::641513112151:role/cmiml-dev-oidc-github-role
+          role-session-name: OIDC-GHA-session
+          aws-region: us-east-1
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition report_server --query taskDefinition > task-definition.json
+
+      - name: Render Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: report_server
+          image: ${{ needs.App_Build.outputs.image }}
+
+      - name: Update Task Definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: report-server
+          cluster: cmiml-uat
+          wait-for-service-stability: true
