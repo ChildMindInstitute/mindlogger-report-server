@@ -1,0 +1,39 @@
+
+name: Create Dev Release
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - adding-report-server-gha
+
+
+concurrency:
+  cancel-in-progress: true
+  group: report-server-dev
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    name: Docker Build and Push
+    uses: ./.github/workflows/_build.yaml
+    permissions:
+      id-token: write
+      contents: read
+    with:
+      tag-name: dev
+
+  deploy-dev:
+    name: Deploy to Dev
+    needs: [ build ]
+    secrets: inherit
+    uses: ./.github/workflows/_deploy.yaml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      image-tag: dev
+      env-name: dev
+
