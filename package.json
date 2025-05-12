@@ -44,7 +44,7 @@
     "muhammara": "^5.3.0",
     "path-to-regexp": "^0.1.12",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^24.7.2",
+    "puppeteer": "^24.8.2",
     "sqlite3": "^5.0.9",
     "tar-fs": "^3.0.8",
     "uuid": "^10.0.0",
