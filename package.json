@@ -18,6 +18,7 @@
   "dependencies": {
     "@aws-sdk/client-kms": "^3.670.0",
     "cors": "^2.8.5",
+    "cross-spawn": "^7.0.6",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dd-trace": "^5.36.0",
@@ -41,9 +42,11 @@
     "markdown-it-task-lists": "^2.1.1",
     "mime-types": "^2.1.35",
     "muhammara": "^5.3.0",
+    "path-to-regexp": "^0.1.12",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^23.5.3",
+    "puppeteer": "^24.7.2",
     "sqlite3": "^5.0.9",
+    "tar-fs": "^3.0.8",
     "uuid": "^10.0.0",
     "winston": "^3.17.0"
   },
