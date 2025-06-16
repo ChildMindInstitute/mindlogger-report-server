@@ -3,7 +3,7 @@ name: Build
 on:
   workflow_call:
     inputs:
-      tag-name:
+      image-tag:
         description: Docker tag to create
         required: false
         default: latest
@@ -81,6 +81,6 @@ jobs:
           cache-to: mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ env.ECR_REPO }}:cache
           cache-from: type=registry,ref=${{ env.ECR_REPO }}:cache
           tags: |
-            ${{ env.ECR_REPO }}:${{ inputs.tag-name }}
+            ${{ env.ECR_REPO }}:${{ inputs.image-tag }}
             ${{ env.ECR_REPO }}:${{ steps.sha.outputs.SHORT_SHA }}
           platforms: linux/amd64,linux/arm64

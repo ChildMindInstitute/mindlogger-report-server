@@ -23,7 +23,7 @@ jobs:
       id-token: write
       contents: read
     with:
-      tag-name: dev
+      image-tag: dev
 
   deploy-dev:
     name: Deploy to Dev

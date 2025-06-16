@@ -12,7 +12,7 @@ concurrency:
   group: report-server-build-app-rc
 
 jobs:
-  Allow_Run:
+  should-run:
     runs-on: ubuntu-latest
     steps:
       - name: Check Branch
@@ -23,11 +23,11 @@ jobs:
             echo "Branch don't match release candidate branch pattern."
             exit 1
           fi
-  Tagging:
+  docker-tag:
     runs-on: ubuntu-latest
-    needs: Allow_Run
+    needs: should-run
     outputs:
-      tag_value: ${{ steps.tag.outputs.tag_value }}
+      tag-value: ${{ steps.tag.outputs.tag_value }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -90,40 +90,45 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-  App_Build:
+  build:
     name: Release Candidate
-    uses: ./.github/workflows/build_push.yaml
-    needs: Tagging
+    uses: ./.github/workflows/_build.yaml
+    needs: docker-tag
     with:
-      tag: ${{ needs.Tagging.outputs.tag_value }}
+      image-tag: ${{ needs.docker-tag.outputs.tag-value }}
 
   Deploy:
-    needs: App_Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::641513112151:role/cmiml-dev-oidc-github-role
-          role-session-name: OIDC-GHA-session
-          aws-region: us-east-1
+    needs: [build, docker-tag]
+    uses: ./.github/workflows/_deploy.yaml
+    with:
+      env-name: uat
+      image-tag: ${{ needs.docker-tag.outputs.tag-value }}
 
-      - name: Download task definition
-        run: |
-          aws ecs describe-task-definition --task-definition report_server --query taskDefinition > task-definition.json
-
-      - name: Render Amazon ECS task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: report_server
-          image: ${{ needs.App_Build.outputs.image }}
-
-      - name: Update Task Definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: report-server
-          cluster: cmiml-uat
-          wait-for-service-stability: true
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: configure aws credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: arn:aws:iam::641513112151:role/cmiml-dev-oidc-github-role
+#          role-session-name: OIDC-GHA-session
+#          aws-region: us-east-1
+#
+#      - name: Download task definition
+#        run: |
+#          aws ecs describe-task-definition --task-definition report_server --query taskDefinition > task-definition.json
+#
+#      - name: Render Amazon ECS task definition
+#        id: task-def
+#        uses: aws-actions/amazon-ecs-render-task-definition@v1
+#        with:
+#          task-definition: task-definition.json
+#          container-name: report_server
+#          image: ${{ needs.App_Build.outputs.image }}
+#
+#      - name: Update Task Definition
+#        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+#        with:
+#          task-definition: ${{ steps.task-def.outputs.task-definition }}
+#          service: report-server
+#          cluster: cmiml-uat
+#          wait-for-service-stability: true
