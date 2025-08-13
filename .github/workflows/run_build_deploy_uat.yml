@@ -55,32 +55,3 @@ jobs:
       env-name: dev
     secrets:
       slack-webhook: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_UAT }}
-
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: configure aws credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          role-to-assume: arn:aws:iam::641513112151:role/cmiml-dev-oidc-github-role
-#          role-session-name: OIDC-GHA-session
-#          aws-region: us-east-1
-#
-#      - name: Download task definition
-#        run: |
-#          aws ecs describe-task-definition --task-definition report_server --query taskDefinition > task-definition.json
-#
-#      - name: Render Amazon ECS task definition
-#        id: task-def
-#        uses: aws-actions/amazon-ecs-render-task-definition@v1
-#        with:
-#          task-definition: task-definition.json
-#          container-name: report_server
-#          image: ${{ needs.App_Build.outputs.image }}
-#
-#      - name: Update Task Definition
-#        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-#        with:
-#          task-definition: ${{ steps.task-def.outputs.task-definition }}
-#          service: report-server
-#          cluster: cmiml-uat
-#          wait-for-service-stability: true
