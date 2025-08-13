@@ -28,7 +28,6 @@ jobs:
   deploy-dev:
     name: Deploy to Dev
     needs: [ build ]
-    secrets: inherit
     uses: ./.github/workflows/_deploy.yaml
     permissions:
       contents: read
@@ -36,4 +35,6 @@ jobs:
     with:
       image-tag: dev
       env-name: dev
+    secrets:
+      slack-webhook: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_DEV }}
 

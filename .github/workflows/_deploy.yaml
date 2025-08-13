@@ -28,6 +28,9 @@ on:
         required: true
         type: string
         description: Docker tag
+    secrets:
+      slack-webhook:
+        required: true
 
 # Wait for other deploys to finish
 concurrency:
@@ -45,7 +48,6 @@ env:
 jobs:
   setup-vars:
     runs-on: ubuntu-latest
-
     steps:
       - name: Map env to AWS Role
         id: role
@@ -174,9 +176,9 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: failure
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_DEV }}
+          SLACK_WEBHOOK: ${{ secrets.slack-webhook }}
           MSG_MINIMAL: actions url
-          SLACK_TITLE: Report Server Deployment to DEV environment
+          SLACK_TITLE: Report Server Deploy Failed to ${{ inputs.env-name }}
           SLACK_MESSAGE: '🚨 Error when executing deployment!'
 
   on-deploy-success:
@@ -190,7 +192,7 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: success
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_DEV }}
+          SLACK_WEBHOOK: ${{ secrets.slack-webhook }}
           MSG_MINIMAL: actions url
-          SLACK_TITLE: Report Server Deployment to DEV environment
+          SLACK_TITLE: Report Server Deployed to ${{ inputs.env-name }}
           SLACK_MESSAGE: '🚀 Deployment was successful!'
