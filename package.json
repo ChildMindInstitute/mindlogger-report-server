@@ -16,7 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aws-sdk/client-kms": "^3.670.0",
+    "@aws-sdk/client-kms": "^3.864.0",
     "cors": "^2.8.5",
     "cross-spawn": "^7.0.6",
     "date-fns": "^4.1.0",
