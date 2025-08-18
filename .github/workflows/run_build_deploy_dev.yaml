@@ -23,17 +23,18 @@ jobs:
       id-token: write
       contents: read
     with:
-      image-tag: dev
+      image-tag: lated
 
   deploy-dev:
     name: Deploy to Dev
     needs: [ build ]
-    secrets: inherit
     uses: ./.github/workflows/_deploy.yaml
     permissions:
       contents: read
       id-token: write
     with:
-      image-tag: dev
+      image-tag: latest
       env-name: dev
+    secrets:
+      slack-webhook: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_DEV }}
 
