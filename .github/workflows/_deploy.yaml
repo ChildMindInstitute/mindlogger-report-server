@@ -139,4 +139,4 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.slack-webhook }}
           MSG_MINIMAL: actions url
           SLACK_TITLE: Report Server Deployed to ${{ inputs.env-name }}
-          SLACK_MESSAGE: '🚀 Deployment was successful!'
+          SLACK_MESSAGE: '🚀 Deployment was successful.  Version: ${{ inputs.image-tag }}'
