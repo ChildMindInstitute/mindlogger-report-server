@@ -25,7 +25,7 @@ jobs:
     with:
       image-tag: latest
 
-  deploy-dev:
+  deploy:
     name: Deploy to Dev
     needs: [ build ]
     uses: ./.github/workflows/_deploy.yaml
