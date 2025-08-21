@@ -99,6 +99,12 @@ jobs:
           task-definition: task-definition.json
           container-name: ${{ matrix.apps.container }}
           image: ${{ env.ECR_REPO }}:${{ inputs.image-tag }}
+          environment-variables: |
+            VERSION=${{ inputs.image-tag }}
+            DD_VERSION=${{ inputs.image-tag }}
+            SENTRY_RELEASE=${{ inputs.image-tag }}
+          docker-labels: |
+            com.datadoghq.tags.version=${{ inputs.image-tag }}
 
       - name: Update Task Definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
@@ -132,6 +138,19 @@ jobs:
       - deploy
     steps:
       - uses: actions/checkout@v4
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::917902836630:role/ssm-versions-oidc-github-role
+          role-session-name: OIDC-GHA-session-version
+          aws-region: us-east-1
+      - name: Store version in SSM
+        run: |
+          aws ssm put-parameter \
+                  --name "/curious/app/report-server/${{ inputs.env-name }}/version" \
+                  --value "${{ inputs.image-tag }}" \
+                  --type "String" \
+                  --overwrite
       - name: "Send Slack message on success"
         uses: rtCamp/action-slack-notify@v2
         env:
@@ -139,4 +158,4 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.slack-webhook }}
           MSG_MINIMAL: actions url
           SLACK_TITLE: Report Server Deployed to ${{ inputs.env-name }}
-          SLACK_MESSAGE: '🚀 Deployment was successful.  Version: ${{ inputs.image-tag }}'
+          SLACK_MESSAGE: '🚀 Deployment was successful.  Version: *${{ inputs.image-tag }}*'
