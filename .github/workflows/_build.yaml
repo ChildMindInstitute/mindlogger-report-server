@@ -9,10 +9,7 @@ on:
         default: latest
         type: string
 
-# Safe to cancel builds in progress
-concurrency:
-  cancel-in-progress: true
-  group: report-server-build
+
 
 permissions:
   id-token: write

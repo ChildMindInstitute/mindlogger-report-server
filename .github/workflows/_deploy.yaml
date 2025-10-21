@@ -32,11 +32,6 @@ on:
       slack-webhook:
         required: true
 
-# Wait for other deploys to finish
-concurrency:
-  cancel-in-progress: false
-  group: report-server-deploy
-
 permissions:
   id-token: write
   contents: read
