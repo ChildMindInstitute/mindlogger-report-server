@@ -1,5 +1,5 @@
 
-name: Create Production Release
+name: Build and Deploy to Prod
 
 on:
   release:
