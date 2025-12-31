@@ -4,7 +4,7 @@ Server for MindLogger PDF reports
 
 ## Requirements
 
-- Node >= 20
+- Node >= 24
 
 ## Installation
 
