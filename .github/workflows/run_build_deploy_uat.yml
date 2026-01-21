@@ -52,7 +52,7 @@ jobs:
     uses: ./.github/workflows/_deploy.yaml
     with:
       image-tag: ${{ needs.ref.outputs.target-ref }}
-      env-name: dev
+      env-name: uat
     secrets:
       slack-webhook: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_UAT }}
 
