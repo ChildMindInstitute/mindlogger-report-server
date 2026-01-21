@@ -4,7 +4,7 @@ Server for MindLogger PDF reports
 
 ## Requirements
 
-- Node >= 20
+- Node >= 24
 
 ## Installation
 
@@ -76,7 +76,7 @@ open http://localhost:3000
 ### Build the image first
 
 ```
-docker build -t mindlogger-report-server:latest -f ./Dockerfile .
+docker build -t mindlogger-report-server:latest .
 ```
 
 ### Run the image
