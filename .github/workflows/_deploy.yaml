@@ -95,7 +95,7 @@ jobs:
           container-name: ${{ matrix.apps.container }}
           image: ${{ env.ECR_REPO }}:${{ inputs.image-tag }}
           environment-variables: |
-            VERSION=${{ inputs.image-tag }}
+            BUILD_VERSION=${{ inputs.image-tag }}
             DD_VERSION=${{ inputs.image-tag }}
             SENTRY_RELEASE=${{ inputs.image-tag }}
           docker-labels: |
