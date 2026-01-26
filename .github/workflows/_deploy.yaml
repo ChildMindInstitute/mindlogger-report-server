@@ -28,11 +28,9 @@ on:
         required: true
         type: string
         description: Docker tag
-
-# Wait for other deploys to finish
-concurrency:
-  cancel-in-progress: false
-  group: report-server-deploy
+    secrets:
+      slack-webhook:
+        required: true
 
 permissions:
   id-token: write
@@ -44,66 +42,9 @@ env:
 
 jobs:
   setup-vars:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Map env to AWS Role
-        id: role
-        run: |
-          ENV_NAME="${{ inputs.env-name }}"
-          case "$ENV_NAME" in
-            "dev")
-              echo 'role=arn:aws:iam::017925157769:role/cmiml-dev-oidc-github-role' >> "$GITHUB_OUTPUT"
-            ;;
-            "test")
-              echo 'role=arn:aws:iam::641513112151:role/cmiml-test-oidc-github-role' >> "$GITHUB_OUTPUT"
-            ;;
-            "uat")
-              echo 'role=arn:aws:iam::641513112151:role/cmiml-uat-oidc-github-role' >> "$GITHUB_OUTPUT"
-            ;;
-            "stage")
-              echo 'role=arn:aws:iam::641513112151:role/cmiml-stage-oidc-github-role' >> "$GITHUB_OUTPUT"
-            ;;
-            "prod")
-              echo 'role=arn:aws:iam::410431445687:role/cmiml-prod-oidc-github-role' >> "$GITHUB_OUTPUT"
-            ;;
-            "prod-dr")
-              echo 'role=arn:aws:iam::973422231492:role/cmiml-dr-oidc-github-role' >> "$GITHUB_OUTPUT"
-            ;;
-            *)
-              echo "Bad environment name"
-              exit 1;
-          esac
-
-      - name: Map env to AWS Region
-        id: region
-        run: |
-          ENV_NAME="${{ inputs.env-name }}"
-          case "$ENV_NAME" in
-            "prod-dr")
-              echo "region=us-west-2" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "region=us-east-1" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
-      - name: Map env to ECS cluster
-        id: cluster
-        run: |
-          ENV_NAME="${{ inputs.env-name }}"
-          case "$ENV_NAME" in
-            "prod-dr")
-              echo "cluster=prod-dr-us-west-2" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "cluster=cmiml-${ENV_NAME}" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
-
-    outputs:
-      role: ${{ steps.role.outputs.role }}
-      region: ${{ steps.region.outputs.region }}
-      cluster: ${{ steps.cluster.outputs.cluster }}
+    uses: ./.github/workflows/_setup.yaml
+    with:
+      env-name: ${{ inputs.env-name }}
 
   setup-matrix:
     runs-on: ubuntu-latest
@@ -153,6 +94,12 @@ jobs:
           task-definition: task-definition.json
           container-name: ${{ matrix.apps.container }}
           image: ${{ env.ECR_REPO }}:${{ inputs.image-tag }}
+          environment-variables: |
+            BUILD_VERSION=${{ inputs.image-tag }}
+            DD_VERSION=${{ inputs.image-tag }}
+            SENTRY_RELEASE=${{ inputs.image-tag }}
+          docker-labels: |
+            com.datadoghq.tags.version=${{ inputs.image-tag }}
 
       - name: Update Task Definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
@@ -174,9 +121,9 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: failure
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_DEV }}
+          SLACK_WEBHOOK: ${{ secrets.slack-webhook }}
           MSG_MINIMAL: actions url
-          SLACK_TITLE: Report Server Deployment to DEV environment
+          SLACK_TITLE: Report Server Deploy Failed to ${{ inputs.env-name }}
           SLACK_MESSAGE: '🚨 Error when executing deployment!'
 
   on-deploy-success:
@@ -186,11 +133,24 @@ jobs:
       - deploy
     steps:
       - uses: actions/checkout@v4
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::917902836630:role/ssm-versions-oidc-github-role
+          role-session-name: OIDC-GHA-session-version
+          aws-region: us-east-1
+      - name: Store version in SSM
+        run: |
+          aws ssm put-parameter \
+                  --name "/curious/app/report-server/${{ inputs.env-name }}/version" \
+                  --value "${{ inputs.image-tag }}" \
+                  --type "String" \
+                  --overwrite
       - name: "Send Slack message on success"
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: success
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_DEV }}
+          SLACK_WEBHOOK: ${{ secrets.slack-webhook }}
           MSG_MINIMAL: actions url
-          SLACK_TITLE: Report Server Deployment to DEV environment
-          SLACK_MESSAGE: '🚀 Deployment was successful!'
+          SLACK_TITLE: Report Server Deployed to ${{ inputs.env-name }}
+          SLACK_MESSAGE: '🚀 Deployment was successful.  Version: *${{ inputs.image-tag }}*'

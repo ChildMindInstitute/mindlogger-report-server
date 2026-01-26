@@ -37,6 +37,11 @@ app.post('/set-password', serverController.setPassword)
 
 app.post('/decrypt-user-responses', serverController.decryptUserResponses)
 
+// Don't leak stack traces on errors
+app.use(async (req: express.Request, res: express.Response) => {
+  res.status(500).json({ error: 'Internal Server Error' })
+})
+
 app.listen(port, () => {
   logger.info(`MindLogger Report Server listening on port ${port}!`)
   logger.info(`Datadog trace status: ${process.env.DD_TRACE_ENABLED}`)

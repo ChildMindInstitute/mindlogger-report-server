@@ -1,5 +1,4 @@
-FROM node:22-alpine3.20
-
+FROM node:24-alpine3.23
 
 WORKDIR /app
 
@@ -24,7 +23,7 @@ RUN npm ci
 COPY ./ /app/
 RUN chmod a+x docker-entrypoint.sh
 
-RUN npm run build
+RUN NODE_ENV=production npm run build
 
 RUN addgroup webuser \
   && adduser webuser -D -G webuser \

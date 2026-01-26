@@ -1,10 +1,10 @@
 
-name: Create Dev Release
+name: Build and Deploy to Dev
 on:
   workflow_dispatch: {}
   push:
     branches:
-      - dev
+      - develop
 
 
 concurrency:
@@ -23,17 +23,18 @@ jobs:
       id-token: write
       contents: read
     with:
-      tag-name: dev
+      image-tag: latest
 
-  deploy-dev:
+  deploy:
     name: Deploy to Dev
     needs: [ build ]
-    secrets: inherit
     uses: ./.github/workflows/_deploy.yaml
     permissions:
       contents: read
       id-token: write
     with:
-      image-tag: dev
+      image-tag: latest
       env-name: dev
+    secrets:
+      slack-webhook: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_DEV }}
 

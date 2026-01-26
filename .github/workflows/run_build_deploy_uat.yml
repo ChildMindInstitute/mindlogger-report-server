@@ -1,0 +1,70 @@
+
+name: Build and Deploy to UAT
+
+on:
+  push:
+    tags:
+      - "*-rc[0-9]+"
+  workflow_dispatch:
+    inputs:
+      target-ref:
+        description: The RC tag to use
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: write
+
+concurrency:
+  cancel-in-progress: true
+  group: report-server-build-app-rc
+
+jobs:
+  ref:
+    name: Get target ref
+    runs-on: ubuntu-latest
+    outputs:
+      target-ref: ${{ steps.ref.outputs.ref }}
+    steps:
+      - id: ref
+        name: Select Ref
+        run: |
+          TARGET_REF="${{ github.event.inputs.target-ref }}"
+          # Use shell parameter expansion to provide a default value if input is unset or empty
+          # github.ref_name will be used if the input is not provided or empty
+          # Remove "refs/heads/" or "refs/tags/" if present in github.ref_name
+          TARGET_REF=${TARGET_REF:-$(echo "${{ github.ref_name }}" | sed 's/refs\/heads\///g' | sed 's/refs\/tags\///g')} 
+
+          echo "Target reference: $TARGET_REF"
+          echo "ref=$TARGET_REF" >> $GITHUB_OUTPUT
+
+  build:
+    name: Release Candidate
+    uses: ./.github/workflows/_build.yaml
+    needs: ref
+    with:
+      image-tag: ${{ needs.ref.outputs.target-ref }}
+
+  deploy:
+    name: Deploy
+    needs: [build, ref]
+    uses: ./.github/workflows/_deploy.yaml
+    with:
+      image-tag: ${{ needs.ref.outputs.target-ref }}
+      env-name: uat
+    secrets:
+      slack-webhook: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_UAT }}
+
+  notify:
+    name: Notifications
+    needs: [ ref, deploy ]
+    uses: ./.github/workflows/_notify-jira.yaml
+    with:
+      env-name: uat
+      git-tag: ${{ needs.ref.outputs.target-ref }}
+    secrets:
+      devops-repo-key: ${{ secrets.DEVOPS_REPO_KEY }}
+      jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
+      github-pat: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
+      slack-webhook: ${{ secrets.SLACK_WEBHOOK_RELEASE_COMMUNICATIONS }}
