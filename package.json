@@ -83,6 +83,7 @@
     "typescript": "^5.6.3"
   },
   "overrides": {
+    "@tootallnate/once": ">=3.0.1",
     "markdown-it": "$markdown-it",
     "tar": ">=7.5.10"
   }
