@@ -52,7 +52,7 @@
     "sqlite3": "^5.0.9",
     "tar-fs": "^3.0.8",
     "uuid": "^10.0.0",
-    "winston": "^3.17.0"
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
