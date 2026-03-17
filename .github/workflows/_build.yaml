@@ -90,5 +90,5 @@ jobs:
           cache-from: type=registry,ref=${{ needs.setup-vars.outputs.ecr }}:cache
           tags: |
             ${{ needs.setup-vars.outputs.ecr }}:${{ inputs.image-tag }}
-            ${{ needs.setup-vars.outputs.ecr }}:${{ steps.sha.outputs.SHORT_SHA }}
+            ${{ needs.setup-vars.outputs.ecr }}:sha-${{ steps.sha.outputs.SHORT_SHA }}
           platforms: linux/amd64,linux/arm64
