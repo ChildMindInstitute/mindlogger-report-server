@@ -50,7 +50,6 @@ jobs:
           secret-ids: |
             ,cmiml-devops
             
-      
 
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v6
