@@ -72,7 +72,6 @@ jobs:
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "IMAGE_NAME=${{ needs.setup-vars.outputs.ecr-repo }}/report-server:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
         uses: docker/build-push-action@v6
