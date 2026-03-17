@@ -34,9 +34,6 @@ jobs:
     name: Docker Build and Push
     needs: setup-vars
     runs-on: ubuntu-latest
-    outputs:
-      image-name: ${{ steps.sha.outputs.IMAGE_NAME }}
-      image-sha: ${{ steps.sha.outputs.SHORT_SHA }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -75,7 +72,7 @@ jobs:
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "IMAGE_NAME=${ECR_REPO}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "IMAGE_NAME=${{ needs.setup-vars.outputs.ecr-repo }}/report-server:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -86,9 +83,9 @@ jobs:
           build-args: |
             DD_GIT_REPOSITORY_URL=${{ github.repositoryUrl }}
             DD_GIT_COMMIT_SHA=${{ github.sha }}
-          cache-to: mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ needs.setup-vars.outputs.ecr }}:cache
+          cache-to: mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ needs.setup-vars.outputs.ecr }}/report-server:cache
           cache-from: type=registry,ref=${{ needs.setup-vars.outputs.ecr }}:cache
           tags: |
-            ${{ needs.setup-vars.outputs.ecr }}:${{ inputs.image-tag }}
-            ${{ needs.setup-vars.outputs.ecr }}:sha-${{ steps.sha.outputs.SHORT_SHA }}
+            ${{ needs.setup-vars.outputs.ecr }}/report-server:${{ inputs.image-tag }}
+            ${{ needs.setup-vars.outputs.ecr }}/report-server:sha-${{ steps.sha.outputs.SHORT_SHA }}
           platforms: linux/amd64,linux/arm64
