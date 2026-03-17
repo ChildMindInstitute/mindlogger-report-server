@@ -45,6 +45,7 @@ jobs:
     needs: ref
     with:
       image-tag: ${{ needs.ref.outputs.target-ref }}
+      env-name: uat
 
   deploy:
     name: Deploy

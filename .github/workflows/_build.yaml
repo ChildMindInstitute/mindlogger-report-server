@@ -8,6 +8,9 @@ on:
         required: false
         default: latest
         type: string
+      env-name:
+        required: true
+        type: string
 
 
 
@@ -18,13 +21,18 @@ permissions:
 env:
   AWS_REGION : "us-east-1"
 
-  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/report-server
-  ECR_ADDRESS: 917902836630.dkr.ecr.us-east-1.amazonaws.com
+#  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/report-server
+#  ECR_ADDRESS: 917902836630.dkr.ecr.us-east-1.amazonaws.com
 
 
 jobs:
+  setup-vars:
+    uses: ./.github/workflows/_setup.yaml
+    with:
+      env-name: ${{ inputs.env-name }}
   build:
     name: Docker Build and Push
+    needs: setup-vars
     runs-on: ubuntu-latest
     outputs:
       image-name: ${{ steps.sha.outputs.IMAGE_NAME }}
@@ -54,7 +62,7 @@ jobs:
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: arn:aws:iam::917902836630:role/github-oidc-ecr-push20260317121845560500000009
+          role-to-assume: ${{ needs.setup-vars.outputs.ecr-role }}
           role-session-name: gha-oidc-build
           aws-region: ${{ env.AWS_REGION }}
 
@@ -78,9 +86,9 @@ jobs:
           build-args: |
             DD_GIT_REPOSITORY_URL=${{ github.repositoryUrl }}
             DD_GIT_COMMIT_SHA=${{ github.sha }}
-          cache-to: mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ env.ECR_REPO }}:cache
-          cache-from: type=registry,ref=${{ env.ECR_REPO }}:cache
+          cache-to: mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ needs.setup-vars.outputs.ecr }}:cache
+          cache-from: type=registry,ref=${{ needs.setup-vars.outputs.ecr }}:cache
           tags: |
-            ${{ env.ECR_REPO }}:${{ inputs.image-tag }}
-            ${{ env.ECR_REPO }}:${{ steps.sha.outputs.SHORT_SHA }}
+            ${{ needs.setup-vars.outputs.ecr }}:${{ inputs.image-tag }}
+            ${{ needs.setup-vars.outputs.ecr }}:${{ steps.sha.outputs.SHORT_SHA }}
           platforms: linux/amd64,linux/arm64

@@ -11,6 +11,12 @@ on:
       cluster:
         description: ECS Cluster name
         value: ${{ jobs.setup-vars.outputs.cluster }}
+      ecr:
+        description: ECR repo name
+        value: ${{ jobs.setup-vars.outputs.ecr }}
+      ecr-role:
+        description: ECR role name
+        value: ${{ jobs.setup-vars.outputs.ecr-role }}
     inputs:
       env-name:
         required: true
@@ -75,8 +81,34 @@ jobs:
               echo "cluster=cmiml-${ENV_NAME}" >> "$GITHUB_OUTPUT"
               ;;
           esac
+      - name: Map env to ECR repo
+        id: ecr
+        run: |
+          ENV_NAME="${{ inputs.env-name }}"
+          case "$ENV_NAME" in
+            "prod-dr-us-west-2")
+              echo "repo=973422231492.dkr.ecr.us-west-2.amazonaws.com" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "repo=917902836630.dkr.ecr.us-east-1.amazonaws.com" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+      - name: Map env to ecr role
+        id: ecr-role
+        run: |
+          ENV_NAME="${{ inputs.env-name }}"
+          case "$ENV_NAME" in
+            "prod-dr-us-west-2")
+              echo "role=arn:aws:iam::973422231492:role/github-oidc-ecr20260317131325572800000002" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "role=arn:aws:iam::917902836630:role/github-oidc-ecr-push20260317121845560500000009" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
     outputs:
       role: ${{ steps.role.outputs.role }}
       region: ${{ steps.region.outputs.region }}
       cluster: ${{ steps.cluster.outputs.cluster }}
+      ecr: ${{ steps.ecr.outputs.repo }}
+      ecr-role: ${{ steps.ecr-role.outputs.role }}

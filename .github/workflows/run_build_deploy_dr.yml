@@ -45,7 +45,7 @@ jobs:
     needs: ref
     with:
       image-tag: ${{ needs.ref.outputs.target-ref }}
-      env-name: prod
+      env-name: prod-dr-us-west-2
 
   deploy:
     name: Deploy
@@ -53,7 +53,7 @@ jobs:
     uses: ./.github/workflows/_deploy.yaml
     with:
       image-tag: ${{ needs.ref.outputs.target-ref }}
-      env-name: prod
+      env-name: prod-dr-us-west-2
     secrets:
       slack-webhook: ${{ secrets.SLACK_WEBHOOK_DEPLOY_TO_PROD }}
 
