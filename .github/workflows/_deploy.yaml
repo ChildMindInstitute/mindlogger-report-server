@@ -90,7 +90,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ matrix.apps.container }}
-          image: ${{ needs.setup-vars.outputs.ecr }}/report_server:${{ inputs.image-tag }}
+          image: ${{ needs.setup-vars.outputs.ecr }}/report-server:${{ inputs.image-tag }}
           environment-variables: |
             BUILD_VERSION=${{ inputs.image-tag }}
             DD_VERSION=${{ inputs.image-tag }}
