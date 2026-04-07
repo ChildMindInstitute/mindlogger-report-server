@@ -24,6 +24,7 @@ jobs:
       contents: read
     with:
       image-tag: latest
+      env-name: dev
 
   deploy:
     name: Deploy to Dev

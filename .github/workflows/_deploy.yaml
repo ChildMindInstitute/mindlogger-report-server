@@ -36,9 +36,6 @@ permissions:
   id-token: write
   contents: read
 
-env:
-  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/report-server
-  ECR_ADDRESS: 917902836630.dkr.ecr.us-east-1.amazonaws.com
 
 jobs:
   setup-vars:
@@ -51,14 +48,14 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.result }}
     steps:
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v8
         id: set-matrix
         with:
           result-encoding: string
           script: |
             let matrix = [{ "name": "report-server", "task-def": "report_server", "service": "report-server", "container": "report_server" }]
             if ("${{ inputs.env-name }}" == "prod") {
-              matrix.push({ "name": "ped-report-server", "task-def": "ped_screener_report_server", "service": "ped-screener-report", "container": "report_server" })
+              matrix.push({ "name": "ped-report-server", "task-def": "ped_screener_report_server", "service": "ped-screener-report-server", "container": "report_server" })
             }
             return JSON.stringify(matrix);
 
@@ -76,7 +73,7 @@ jobs:
 
     steps:
       - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ needs.setup-vars.outputs.role }}
           role-session-name: OIDC-GHA-session-deploy
@@ -93,7 +90,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ matrix.apps.container }}
-          image: ${{ env.ECR_REPO }}:${{ inputs.image-tag }}
+          image: ${{ needs.setup-vars.outputs.ecr }}/report-server:${{ inputs.image-tag }}
           environment-variables: |
             BUILD_VERSION=${{ inputs.image-tag }}
             DD_VERSION=${{ inputs.image-tag }}
@@ -116,7 +113,7 @@ jobs:
     needs:
       - deploy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: "Send Slack message on failure"
         uses: rtCamp/action-slack-notify@v2
         env:
@@ -132,11 +129,11 @@ jobs:
     needs:
       - deploy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: arn:aws:iam::917902836630:role/ssm-versions-oidc-github-role
+          role-to-assume: arn:aws:iam::917902836630:role/github-oidc-ssm-version20260317121845461900000008
           role-session-name: OIDC-GHA-session-version
           aws-region: us-east-1
       - name: Store version in SSM
