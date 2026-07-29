@@ -25,12 +25,12 @@
     "cross-spawn": "^7.0.6",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "dd-trace": "^5.36.0",
+    "dd-trace": "^6.3.0",
     "dotenv": "^16.0.1",
-    "express": "^4.18.1",
+    "express": "^4.22.2",
     "express-winston": "^4.2.0",
-    "launchdarkly-node-client-sdk": "^3.3.0",
-    "markdown-it": "^14.1.1",
+    "launchdarkly-node-client-sdk": "^3.4.0",
+    "markdown-it": "^14.3.0",
     "markdown-it-abbr": "^2.0.0",
     "markdown-it-container": "^4.0.0",
     "markdown-it-deflist": "^3.0.0",
@@ -45,10 +45,10 @@
     "markdown-it-sup": "^2.0.0",
     "markdown-it-task-lists": "^2.1.1",
     "mime-types": "^2.1.35",
-    "muhammara": "^6.0.4",
+    "muhammara": "^6.0.5",
     "path-to-regexp": "^0.1.12",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^24.7.2",
+    "puppeteer": "^24.43.1",
     "sqlite3": "^5.0.9",
     "tar-fs": "^3.0.8",
     "uuid": "^14.0.0",
@@ -61,7 +61,7 @@
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.13",
     "@types/markdown-it": "^14.1.2",
-    "@types/markdown-it-container": "^2.0.5",
+    "@types/markdown-it-container": "^4.0.0",
     "@types/markdown-it-emoji": "^3.0.1",
     "@types/markdown-it-footnote": "^3.0.0",
     "@types/mime-types": "^2.1.1",
@@ -85,6 +85,7 @@
   "overrides": {
     "@tootallnate/once": ">=3.0.1",
     "markdown-it": "$markdown-it",
-    "tar": ">=7.5.10"
+    "tar": ">=7.5.16",
+    "socks": ">=2.8.9"
   }
 }
