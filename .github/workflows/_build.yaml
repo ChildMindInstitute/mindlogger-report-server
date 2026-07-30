@@ -65,7 +65,7 @@ jobs:
           echo "IMAGE_NAME=${ECR_REPO}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile
@@ -78,4 +78,4 @@ jobs:
           tags: |
             ${{ env.ECR_REPO }}:${{ inputs.image-tag }}
             ${{ env.ECR_REPO }}:${{ steps.sha.outputs.SHORT_SHA }}
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
