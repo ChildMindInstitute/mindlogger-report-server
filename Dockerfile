@@ -1,8 +1,9 @@
-FROM node:24-alpine3.23
+FROM node:24-alpine3.24
 
 WORKDIR /app
 
-RUN apk add --no-cache \
+RUN apk update && \
+  apk add --no-cache \
   # healthcheck
   curl \
   # MuhammaraJS deps
