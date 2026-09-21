@@ -87,4 +87,4 @@ jobs:
           tags: |
             ${{ needs.setup-vars.outputs.ecr }}/report-server:${{ inputs.image-tag }}
             ${{ needs.setup-vars.outputs.ecr }}/report-server:sha-${{ steps.sha.outputs.SHORT_SHA }}
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
