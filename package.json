@@ -30,7 +30,7 @@
     "express": "^4.22.2",
     "express-winston": "^4.2.0",
     "launchdarkly-node-client-sdk": "^3.4.0",
-    "markdown-it": "^14.3.0",
+    "markdown-it": "^14.3.3",
     "markdown-it-abbr": "^2.0.0",
     "markdown-it-container": "^4.0.0",
     "markdown-it-deflist": "^3.0.0",
