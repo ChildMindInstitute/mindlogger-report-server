@@ -1,5 +1,5 @@
 
-name: Build and Deploy to Prod
+name: Build and Deploy to DR
 
 on:
   release:

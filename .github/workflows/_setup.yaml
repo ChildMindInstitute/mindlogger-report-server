@@ -99,7 +99,7 @@ jobs:
           ENV_NAME="${{ inputs.env-name }}"
           case "$ENV_NAME" in
             "prod-dr-us-west-2")
-              echo "role=arn:aws:iam::973422231492:role/github-oidc-ecr" >> "$GITHUB_OUTPUT"
+              echo "role=arn:aws:iam::973422231492:role/github-oidc-ecr-push" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "role=arn:aws:iam::917902836630:role/github-oidc-ecr-push" >> "$GITHUB_OUTPUT"
