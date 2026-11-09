@@ -11,15 +11,17 @@ on:
       env-name:
         required: true
         type: string
+      tag-latest:
+        description: Tag build as latest image
+        required: false
+        type: boolean
+        default: false
 
 
 
 permissions:
   id-token: write
   contents: read
-
-env:
-  AWS_REGION : "us-east-1"
 
 #  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/report-server
 #  ECR_ADDRESS: 917902836630.dkr.ecr.us-east-1.amazonaws.com
@@ -46,7 +48,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::917902836630:role/github-oidc-build-secrets
           role-session-name: gha-oidc-secrets
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-east-1
 
       - name: Get secrets by name and by ARN
         uses: aws-actions/aws-secretsmanager-get-secrets@v2
@@ -61,7 +63,7 @@ jobs:
         with:
           role-to-assume: ${{ needs.setup-vars.outputs.ecr-role }}
           role-session-name: gha-oidc-build
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ needs.setup-vars.outputs.region }}
 
       - name: Login to ECR
         run: |
@@ -73,8 +75,19 @@ jobs:
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_OUTPUT
 
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ needs.setup-vars.outputs.ecr-repo }}/report-server
+          tags: |
+            type=sha
+            type=raw,value=${{ inputs.tag-name }}
+            type=ref,event=pr
+            type=raw,value=latest,enable=${{ inputs.tag-latest }}
+
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile
@@ -82,9 +95,23 @@ jobs:
           build-args: |
             DD_GIT_REPOSITORY_URL=${{ github.repositoryUrl }}
             DD_GIT_COMMIT_SHA=${{ github.sha }}
-          cache-to: mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ needs.setup-vars.outputs.ecr }}/report-server:cache
-          cache-from: type=registry,ref=${{ needs.setup-vars.outputs.ecr }}:cache
-          tags: |
-            ${{ needs.setup-vars.outputs.ecr }}/report-server:${{ inputs.image-tag }}
-            ${{ needs.setup-vars.outputs.ecr }}/report-server:sha-${{ steps.sha.outputs.SHORT_SHA }}
+          cache-to: mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ needs.setup-vars.outputs.ecr-repo }}/report-server:cache
+          cache-from: type=registry,ref=${{ needs.setup-vars.outputs.ecr-repo }}/report-server:cache
+          tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/arm64
+
+#      - name: Build and push
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: .
+#          file: Dockerfile
+#          push: true
+#          build-args: |
+#            DD_GIT_REPOSITORY_URL=${{ github.repositoryUrl }}
+#            DD_GIT_COMMIT_SHA=${{ github.sha }}
+#          cache-to: mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ needs.setup-vars.outputs.ecr }}/report-server:cache
+#          cache-from: type=registry,ref=${{ needs.setup-vars.outputs.ecr }}:cache
+#          tags: |
+#            ${{ needs.setup-vars.outputs.ecr }}/report-server:${{ inputs.image-tag }}
+#            ${{ needs.setup-vars.outputs.ecr }}/report-server:sha-${{ steps.sha.outputs.SHORT_SHA }}
+#          platforms: linux/arm64
