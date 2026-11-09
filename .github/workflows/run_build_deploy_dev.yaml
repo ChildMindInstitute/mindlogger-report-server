@@ -25,6 +25,7 @@ jobs:
     with:
       image-tag: latest
       env-name: dev
+      tag-latest: true
 
   deploy:
     name: Deploy to Dev
