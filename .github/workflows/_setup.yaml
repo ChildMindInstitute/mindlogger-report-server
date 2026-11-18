@@ -11,7 +11,7 @@ on:
       cluster:
         description: ECS Cluster name
         value: ${{ jobs.setup-vars.outputs.cluster }}
-      ecr:
+      ecr-repo:
         description: ECR repo name
         value: ${{ jobs.setup-vars.outputs.ecr }}
       ecr-role:
