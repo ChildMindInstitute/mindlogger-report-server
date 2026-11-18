@@ -54,7 +54,7 @@ jobs:
           result-encoding: string
           script: |
             let matrix = [{ "name": "report-server", "task-def": "report_server", "service": "report-server", "container": "report_server" }]
-            if ("${{ inputs.env-name }}" == "prod") {
+            if ("${{ inputs.env-name }}" == "prod" || "${{ inputs.env-name }}" == "prod-dr-us-west-2") {
               matrix.push({ "name": "ped-report-server", "task-def": "ped_screener_report_server", "service": "ped-screener-report-server", "container": "report_server" })
             }
             return JSON.stringify(matrix);
